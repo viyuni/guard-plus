@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Repeat2, WalletCards } from 'lucide-vue-next';
-import { motion } from 'motion-v';
 
 defineProps<{
   collapsed?: boolean;
@@ -13,68 +12,49 @@ const emit = defineEmits<{
 }>();
 
 const { balances, isAuthenticated, refreshUser } = useUser();
-
-const spring = {
-  type: 'spring',
-  stiffness: 380,
-  damping: 34,
-  mass: 0.8,
-} as const;
 </script>
 
 <template>
-  <motion.div
+  <div
     v-if="isAuthenticated"
-    layout
-    class="border-border bg-card/78 inline-flex max-w-full items-center overflow-hidden border shadow-sm backdrop-blur-xl"
+    class="border-border bg-card/78 inline-flex max-w-full items-center overflow-hidden border backdrop-blur-xl transition-[border-radius,min-height,padding,box-shadow] duration-150 ease-out"
     :class="
       collapsed
-        ? 'min-w-9 justify-center rounded-b-full border-t-0 px-1.5 pt-1 pb-1.5'
-        : 'rounded-2xl px-4 py-1'
+        ? 'min-w-9 justify-center rounded-b-full border-t-0 px-1.5 pt-1 pb-1'
+        : 'rounded-2xl px-4 py-1 shadow-sm'
     "
-    :animate="{
-      minHeight: collapsed ? 36 : 40,
-    }"
-    :transition="spring"
+    :style="{ minHeight: collapsed ? '36px' : '40px' }"
   >
-    <motion.button
+    <button
       v-if="collapsed"
-      layout
-      class="text-primary hover:text-primary/80 focus-visible:border-ring focus-visible:ring-ring/50 flex size-5 items-center justify-center rounded-full transition-colors outline-none focus-visible:ring-[3px]"
+      class="text-primary hover:text-primary/80 focus-visible:border-ring focus-visible:ring-ring/50 flex size-4 items-center justify-center rounded-full transition-colors outline-none focus-visible:ring-[3px]"
       type="button"
       aria-label="展开积分条"
-      :initial="false"
-      :animate="{ opacity: 1, scale: 1 }"
-      :transition="spring"
       @click="emit('expand')"
     >
-      <WalletCards class="size-4.5" />
-    </motion.button>
+      <WalletCards class="size-4" />
+    </button>
 
-    <motion.div
-      v-else
-      layout
-      class="inline-flex max-w-full flex-wrap items-center gap-x-5 gap-y-3"
-      :initial="false"
-      :animate="{ opacity: 1, scale: 1 }"
-      :transition="spring"
-    >
-      <button
+    <div v-else class="inline-flex max-w-full flex-wrap items-center gap-x-5 gap-y-3">
+      <div
         v-if="balances?.length"
-        class="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-2"
-        type="button"
+        class="focus-visible:border-ring focus-visible:ring-ring/50 flex min-w-0 flex-wrap items-center gap-x-5 gap-y-2 rounded-md outline-none focus-visible:ring-[3px]"
+        role="button"
+        tabindex="0"
         @click="refreshUser"
+        @keydown.enter="refreshUser"
+        @keydown.space.prevent="refreshUser"
       >
         <WalletCards class="text-muted-foreground size-5" />
         <span v-for="account in balances" :key="account.id" class="flex items-baseline gap-2">
           <span class="text-muted-foreground truncate text-sm">
             {{ account.pointType?.name ?? '积分' }}
           </span>
-          <span class="text-foreground text-xl font-semibold tracking-tight">
+          <span class="text-foreground text-lg font-semibold tracking-tight">
             {{ account.balance }}
           </span>
         </span>
-      </button>
+      </div>
 
       <Button
         class="text-primary rounded-full"
@@ -85,6 +65,6 @@ const spring = {
         <Repeat2 class="size-4" />
         积分转换
       </Button>
-    </motion.div>
-  </motion.div>
+    </div>
+  </div>
 </template>

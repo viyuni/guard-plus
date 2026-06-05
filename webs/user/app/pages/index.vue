@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useOverlay } from '@web/ui/components/ui/overlay';
-import { Skeleton } from '@web/ui/components/ui/skeleton';
 
 import { useCreateOrder } from '~/features/order';
 import { PointActions } from '~/features/point';
@@ -33,7 +32,7 @@ const pointActionsExpandedScrollTop = ref(0);
 const storefrontScrollTop = ref(0);
 
 const createOrderMutation = useCreateOrder();
-const { balances, isAuthenticated, isLoading: isUserLoading, refreshUser } = useUser();
+const { balances, isAuthenticated, refreshUser } = useUser();
 const hasPointAccounts = computed(() => balances.value.length > 0);
 const [openAuthDialogOverlay] = useOverlay(AuthDialog);
 const [openProfileDialog] = useOverlay(ProfileDialog);
@@ -152,13 +151,8 @@ async function buyProduct(product: Product) {
       class="sticky top-16 z-40 flex w-full justify-center px-5 transition-[padding] duration-200 md:px-8"
       :class="pointActionsCollapsed ? 'py-0' : 'py-8 md:py-8'"
     >
-      <Skeleton
-        v-if="isUserLoading"
-        class="h-10 w-full max-w-96 rounded-2xl"
-        aria-label="正在加载积分账户"
-      />
       <PointActions
-        v-else-if="hasPointAccounts"
+        v-if="hasPointAccounts"
         :collapsed="pointActionsCollapsed"
         @login="openAuthDialog('login')"
         @expand="expandPointActions"
