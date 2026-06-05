@@ -24,7 +24,7 @@
     "clsx": "catalog:",
     "ky": "catalog:",
     "lucide-vue-next": "catalog:",
-    "motion-v": "^2.2.1",
+    "motion-v": "catalog:",
     "nuxt": "catalog:",
     "pinia": "catalog:",
     "reka-ui": "catalog:",

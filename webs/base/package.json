@@ -7,8 +7,8 @@
   },
   "dependencies": {
     "@elysia/eden": "catalog:",
-    "@fontsource/limelight": "^5.2.7",
-    "@nuxt/fonts": "^0.14.0",
+    "@fontsource/limelight": "catalog:",
+    "@nuxt/fonts": "catalog:",
     "@pinia/colada": "catalog:",
     "@pinia/colada-nuxt": "catalog:",
     "@pinia/nuxt": "catalog:",
@@ -17,7 +17,7 @@
     "@vueuse/router": "catalog:",
     "@web/ui": "workspace:*",
     "ky": "catalog:",
-    "motion-v": "^2.2.1",
+    "motion-v": "catalog:",
     "nuxt": "catalog:",
     "pinia": "catalog:",
     "tailwindcss": "catalog:",
@@ -28,6 +28,6 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "catalog:",
-    "@vueuse/nuxt": "^14.3.0"
+    "@vueuse/nuxt": "catalog:"
   }
 }
