@@ -37,7 +37,7 @@ export default defineNuxtConfig({
         { name: 'color-scheme', content: 'light dark' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1.0' },
       ],
-      link: [{ rel: 'icon', href: 'https://assets.viyuni.top/viyuni.svg' }],
+      link: [{ rel: 'icon', href: 'https://assets.viyuni.top/guard-plus/misheng-head.ico' }],
     },
   },
 
