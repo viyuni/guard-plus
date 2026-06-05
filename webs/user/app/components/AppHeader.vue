@@ -1,18 +1,20 @@
 <script setup lang="ts">
-import { LogIn } from 'lucide-vue-next';
+import { LogIn, WalletCards } from 'lucide-vue-next';
 
 import { AccountDropdown, useLogout } from '~/features/account';
 
 const emit = defineEmits<{
   editProfile: [];
   login: [];
+  viewPoints: [];
   viewOrders: [];
   viewTransactions: [];
 }>();
 
 const logoutMutation = useLogout();
 const { isLoading: isLoggingOut } = logoutMutation;
-const { clearUser, isAuthenticated, refreshUser } = useUser();
+const { balances, clearUser, isAuthenticated, refreshUser } = useUser();
+const hasPointAccounts = computed(() => balances.value.length > 0);
 
 async function logout() {
   try {
@@ -40,8 +42,17 @@ async function logout() {
           <LogIn class="size-4" />
           <span>登录 / 注册</span>
         </Button>
+        <Button
+          v-if="isAuthenticated && hasPointAccounts"
+          variant="quaternary"
+          size="icon-sm"
+          aria-label="查看积分"
+          @click="emit('viewPoints')"
+        >
+          <WalletCards class="size-4" />
+        </Button>
         <AccountDropdown
-          v-else
+          v-if="isAuthenticated"
           :is-logging-out="isLoggingOut"
           @edit-profile="emit('editProfile')"
           @view-transactions="emit('viewTransactions')"
