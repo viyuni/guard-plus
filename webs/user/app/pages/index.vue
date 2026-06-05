@@ -32,7 +32,8 @@ const pointActionsExpandedScrollTop = ref(0);
 const storefrontScrollTop = ref(0);
 
 const createOrderMutation = useCreateOrder();
-const { isAuthenticated, refreshUser } = useUser();
+const { balances, isAuthenticated, refreshUser } = useUser();
+const hasPointAccounts = computed(() => balances.value.length > 0);
 const [openAuthDialogOverlay] = useOverlay(AuthDialog);
 const [openProfileDialog] = useOverlay(ProfileDialog);
 const [openOrdersDialog] = useOverlay(OrdersDialog);
@@ -151,6 +152,7 @@ async function buyProduct(product: Product) {
       :class="pointActionsCollapsed ? 'py-0' : 'py-8 md:py-8'"
     >
       <PointActions
+        v-if="hasPointAccounts"
         :collapsed="pointActionsCollapsed"
         @login="openAuthDialog('login')"
         @expand="expandPointActions"
