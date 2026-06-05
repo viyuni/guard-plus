@@ -4,6 +4,7 @@ import { useIntersectionObserver } from '@vueuse/core';
 import type { Product } from '~/features/product';
 
 import ProductCard from './ProductCard.vue';
+import ProductCardSkeleton from './ProductCardSkeleton.vue';
 
 defineProps<{
   buyingProductId?: string;
@@ -31,6 +32,7 @@ const {
     return lastPage?.meta.hasNextPage ? lastPage.meta.page + 1 : null;
   },
 });
+const isLoadingMore = ref(false);
 
 const products = computed(() => {
   const pages = productData.value?.pages;
@@ -52,8 +54,14 @@ const products = computed(() => {
 useIntersectionObserver(
   loadMoreTrigger,
   async ([entry]) => {
-    if (entry?.isIntersecting && hasNextPage.value) {
-      await loadNextPage();
+    if (entry?.isIntersecting && hasNextPage.value && !isLoadingMore.value) {
+      isLoadingMore.value = true;
+
+      try {
+        await loadNextPage();
+      } finally {
+        isLoadingMore.value = false;
+      }
     }
   },
   {
@@ -79,6 +87,13 @@ useIntersectionObserver(
 
     <div v-else class="rounded-3xl px-6 py-16 text-center text-sm">
       暂无可兑换商品，晚点再来看看吧
+    </div>
+
+    <div
+      v-if="isLoadingMore"
+      class="product-3:grid-cols-3 product-4:grid-cols-4 product-4:gap-x-8 product-5:grid-cols-5 product-6:grid-cols-6 mx-auto mt-8 grid w-full max-w-424 grid-cols-2 gap-x-3 gap-y-8"
+    >
+      <ProductCardSkeleton v-for="index in 10" :key="index" />
     </div>
 
     <div ref="loadMoreTrigger" class="h-px w-full" />
