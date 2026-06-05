@@ -30,7 +30,7 @@ export const BILI_REGISTER_COOKIE_OPTIONS = {
   httpOnly: true,
   sameSite: 'lax',
   secure: process.env.NODE_ENV === 'production',
-  path: '/auth',
+  path: '/',
   maxAge: BILI_REGISTER_EXPIRES_IN_SECONDS,
 } satisfies CookieOptions;
 
