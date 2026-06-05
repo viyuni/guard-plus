@@ -1,0 +1,33 @@
+<script setup lang="ts">
+import { reactiveOmit } from '@vueuse/core';
+import { cn } from '@web/ui/lib/utils';
+import { ChevronRightIcon } from 'lucide-vue-next';
+import type { ContextMenuSubTriggerProps } from 'reka-ui';
+import { ContextMenuSubTrigger, useForwardProps } from 'reka-ui';
+import type { HTMLAttributes } from 'vue';
+
+const props = defineProps<
+  ContextMenuSubTriggerProps & { class?: HTMLAttributes['class']; inset?: boolean }
+>();
+
+const delegatedProps = reactiveOmit(props, 'class');
+
+const forwardedProps = useForwardProps(delegatedProps);
+</script>
+
+<template>
+  <ContextMenuSubTrigger
+    data-slot="context-menu-sub-trigger"
+    :data-inset="inset ? '' : undefined"
+    v-bind="forwardedProps"
+    :class="
+      cn(
+        'focus:bg-accent focus:text-accent-foreground data-open:bg-accent data-open:text-accent-foreground flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-inset:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*=size-])]:size-4',
+        props.class,
+      )
+    "
+  >
+    <slot />
+    <ChevronRightIcon class="cn-rtl-flip ml-auto" />
+  </ContextMenuSubTrigger>
+</template>

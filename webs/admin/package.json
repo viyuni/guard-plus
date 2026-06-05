@@ -1,0 +1,37 @@
+{
+  "name": "@web/admin",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vp run @web/base#prepare && nuxt build"
+  },
+  "dependencies": {
+    "@elysia/eden": "catalog:",
+    "@pinia/colada": "catalog:",
+    "@pinia/colada-nuxt": "catalog:",
+    "@pinia/nuxt": "catalog:",
+    "@server/app": "workspace:*",
+    "@shared/schema": "workspace:*",
+    "@tanstack/vue-form": "catalog:",
+    "@tanstack/vue-table": "catalog:",
+    "@unovis/vue": "catalog:",
+    "@vee-validate/valibot": "catalog:",
+    "@vueuse/core": "catalog:",
+    "@vueuse/router": "catalog:",
+    "@web/ui": "workspace:*",
+    "ky": "catalog:",
+    "lucide-vue-next": "catalog:",
+    "nuxt": "catalog:",
+    "pinia": "catalog:",
+    "tailwindcss": "catalog:",
+    "vee-validate": "catalog:",
+    "vite": "catalog:",
+    "vue": "catalog:",
+    "vue-router": "catalog:",
+    "vue-sonner": "catalog:"
+  },
+  "devDependencies": {
+    "rolldown": "catalog:"
+  }
+}

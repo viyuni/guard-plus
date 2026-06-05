@@ -1,0 +1,46 @@
+{
+  "name": "@web/user",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vp run @web/base#prepare && nuxt build"
+  },
+  "dependencies": {
+    "@elysia/eden": "catalog:",
+    "@nuxt/kit": "catalog:",
+    "@nuxtjs/tailwindcss": "catalog:",
+    "@pinia/colada": "catalog:",
+    "@pinia/colada-nuxt": "catalog:",
+    "@pinia/nuxt": "catalog:",
+    "@server/app": "workspace:*",
+    "@shared/schema": "workspace:*",
+    "@tailwindcss/vite": "catalog:",
+    "@tanstack/vue-form": "catalog:",
+    "@tanstack/vue-table": "catalog:",
+    "@vueuse/core": "catalog:",
+    "@vueuse/router": "catalog:",
+    "@web/ui": "workspace:*",
+    "class-variance-authority": "catalog:",
+    "clsx": "catalog:",
+    "ky": "catalog:",
+    "lucide-vue-next": "catalog:",
+    "motion-v": "^2.2.1",
+    "nuxt": "catalog:",
+    "pinia": "catalog:",
+    "reka-ui": "catalog:",
+    "shadcn-vue": "catalog:",
+    "tailwind-merge": "catalog:",
+    "tailwindcss": "catalog:",
+    "tw-animate-css": "catalog:",
+    "unplugin-vue-components": "catalog:",
+    "uuid": "catalog:",
+    "vee-validate": "catalog:",
+    "vite": "catalog:",
+    "vue": "catalog:",
+    "vue-router": "catalog:",
+    "vue-sonner": "catalog:"
+  },
+  "devDependencies": {
+    "rolldown": "catalog:"
+  }
+}

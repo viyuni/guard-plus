@@ -1,0 +1,32 @@
+{
+  "name": "@shared/schema",
+  "private": true,
+  "type": "module",
+  "module": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tsconfig/common": "./tsconfig/common.json",
+    "./common": "./src/common.ts",
+    "./admin": "./src/admin.ts",
+    "./user": "./src/user.ts",
+    "./dashboard": "./src/dashboard.ts",
+    "./reward": "./src/reward.ts",
+    "./product": "./src/product.ts",
+    "./stock": "./src/stock.ts",
+    "./order": "./src/order.ts",
+    "./point-type": "./src/point-type.ts",
+    "./point-account": "./src/point-account.ts",
+    "./point-transaction": "./src/point-transaction.ts",
+    "./point-conversion": "./src/point-conversion.ts"
+  },
+  "dependencies": {
+    "valibot": "catalog:"
+  },
+  "devDependencies": {
+    "@typescript/native-preview": "catalog:",
+    "bun-types": "catalog:"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

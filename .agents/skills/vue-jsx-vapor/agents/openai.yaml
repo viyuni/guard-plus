@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Vue JSX Vapor'
+  short_description: 'Build and maintain Vue JSX Vapor components and configuration.'
+  default_prompt: 'Use Vue JSX Vapor conventions for this Vue TSX task.'

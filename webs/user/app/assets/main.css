@@ -1,0 +1,23 @@
+@import 'tailwindcss';
+@import '@web/ui/style.css';
+@source '../../../ui/src';
+
+@theme {
+  --font-limelight: 'Limelight', 'sans-serif';
+  --font-mi-sans: 'MiSans', 'Noto Sans SC', 'sans-serif';
+  --breakpoint-product-3: 40rem;
+  --breakpoint-product-4: 48rem;
+  --breakpoint-product-5: 72rem;
+  --breakpoint-product-6: 90rem;
+  --breakpoint-product-7: 110rem;
+}
+
+@layer base {
+  body {
+    min-height: 100vh;
+    min-height: 100svh;
+    overflow: hidden;
+    font-family: 'MiSans', 'Noto Sans SC', sans-serif;
+    font-weight: 450;
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    },
+    {
+      "path": "./tsconfig.app.json"
+    }
+  ],
+  "compilerOptions": {
+    // Match package-name imports used by shadcn-vue aliases inside this package.
+    "paths": {
+      "@web/ui/*": ["./src/*"]
+    }
+  }
+}

@@ -1,0 +1,32 @@
+<script setup lang="ts">
+import { Label } from '@web/ui/components/ui/label';
+import { cn } from '@web/ui/lib/utils';
+import type { HTMLAttributes } from 'vue';
+
+const props = withDefaults(
+  defineProps<{
+    class?: HTMLAttributes['class'];
+    required?: boolean;
+  }>(),
+  {
+    required: false,
+  },
+);
+</script>
+
+<template>
+  <Label
+    data-slot="field-label"
+    :class="
+      cn(
+        'has-data-checked:bg-primary/5 has-data-checked:border-primary/30 dark:has-data-checked:border-primary/20 dark:has-data-checked:bg-primary/10 group/field-label peer/field-label flex w-fit gap-2 leading-snug group-data-[disabled=true]/field:opacity-50 has-[>[data-slot=field]]:rounded-md has-[>[data-slot=field]]:border *:data-[slot=field]:p-3',
+        'has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col',
+        props.class,
+      )
+    "
+  >
+    <slot />
+
+    <span v-if="required" class="text-red-500">*</span>
+  </Label>
+</template>

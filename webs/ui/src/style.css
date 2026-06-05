@@ -1,0 +1,223 @@
+@import 'tailwindcss';
+
+@import 'tw-animate-css';
+
+@import 'shadcn-vue/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: 'Inter Variable', sans-serif;
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+
+  --color-error: var(--error);
+  --color-error-foreground: var(--error-foreground);
+}
+
+@layer base {
+  :root {
+    /* 基础背景 */
+    --background: oklch(100% 0 0);
+    --foreground: oklch(25% 0 0);
+
+    /* 卡片与弹窗 */
+    --card: oklch(100% 0 0);
+    --card-foreground: oklch(25% 0 0);
+    --popover: oklch(100% 0 0);
+    --popover-foreground: oklch(25% 0 0);
+
+    /* 主色调 */
+    --primary: oklch(0.6538 0.1782 359.41);
+    --primary-foreground: oklch(98.5% 0 0);
+
+    /* Info */
+    --info: oklch(59.042% 0.21374 266.065);
+    --info-foreground: oklch(98.5% 0 0);
+
+    /* Success */
+    --success: oklch(0.696 0.177 162.5);
+    --success-foreground: oklch(98.5% 0 0);
+
+    /* Warning */
+    --warning: oklch(0.769 0.141 70.1);
+    --warning-foreground: oklch(98.5% 0 0);
+
+    /* Error */
+    --error: oklch(65.446% 0.16845 22.062);
+    --error-foreground: oklch(98.5% 0 0);
+
+    /* 次要与静默 */
+    --secondary: oklch(96.115% 0 0); /* #f4f4f5 */
+    --secondary-foreground: oklch(35% 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(55.6% 0 0);
+
+    /* 强调与悬浮 */
+    --accent: oklch(90.625% 0 0); /* #e4e4e7 */
+    --accent-foreground: oklch(25% 0 0);
+
+    /* 破坏性操作 */
+    --destructive: var(--error);
+    --destructive-foreground: var(--error-foreground);
+
+    /* 边框与输入框 */
+    --border: oklch(90.625% 0 0);
+    --input: oklch(90.625% 0 0);
+    --ring: var(--primary);
+
+    /* 图表配色 */
+    --chart-1: oklch(87% 0 0);
+    --chart-2: oklch(55.6% 0 0);
+    --chart-3: oklch(43.9% 0 0);
+    --chart-4: oklch(37.1% 0 0);
+    --chart-5: oklch(26.9% 0 0);
+
+    /* 侧边栏 */
+    --sidebar: oklch(98.5% 0 0);
+    --sidebar-foreground: oklch(25% 0 0);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: oklch(100% 0 0);
+    --sidebar-accent: oklch(96.115% 0 0);
+    --sidebar-accent-foreground: oklch(25% 0 0);
+    --sidebar-border: oklch(90.625% 0 0);
+    --sidebar-ring: var(--primary);
+
+    --radius: 0.7rem;
+  }
+
+  .dark {
+    /* 基础背景 */
+    --background: oklch(14.5% 0 0); /* #09090b */
+    --foreground: oklch(87.609% 0 0);
+
+    /* 卡片与弹窗 */
+    --card: oklch(20.5% 0 0); /* #141415 */
+    --card-foreground: oklch(87.609% 0 0);
+    --popover: oklch(20.5% 0 0);
+    --popover-foreground: oklch(87.609% 0 0);
+
+    /* 主色调 */
+    --primary: oklch(0.6538 0.1782 359.41);
+    --primary-foreground: oklch(100% 0 0);
+
+    /* Info */
+    --info: oklch(59.042% 0.21374 266.065);
+    --info-foreground: oklch(98.5% 0 0);
+
+    /* Success */
+    --success: oklch(0.696 0.177 162.5);
+    --success-foreground: oklch(98.5% 0 0);
+
+    /* Warning */
+    --warning: oklch(0.769 0.141 70.1);
+    --warning-foreground: oklch(98.5% 0 0);
+
+    /* Error */
+    --error: oklch(65.446% 0.16845 22.062);
+    --error-foreground: oklch(98.5% 0 0);
+
+    /* 破坏性操作 */
+    --destructive: var(--error);
+    --destructive-foreground: var(--error-foreground);
+
+    /* 次要与静默 */
+    --secondary: oklch(26.9% 0 0); /* #202022 */
+    --secondary-foreground: oklch(87.609% 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(70.8% 0 0);
+
+    /* 强调与悬浮 */
+    --accent: oklch(26.9% 0 0);
+    --accent-foreground: oklch(98.5% 0 0);
+
+    /* 边框与输入框 */
+    --border: oklch(100% 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: var(--primary);
+
+    /* 图表配色 */
+    --chart-1: oklch(87% 0 0);
+    --chart-2: oklch(55.6% 0 0);
+    --chart-3: oklch(43.9% 0 0);
+    --chart-4: oklch(37.1% 0 0);
+    --chart-5: oklch(26.9% 0 0);
+
+    /* 侧边栏 */
+    --sidebar: oklch(17.764% 0.00002 271.152);
+    --sidebar-foreground: oklch(87.609% 0 0);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: oklch(100% 0 0);
+    --sidebar-accent: oklch(26.9% 0 0);
+    --sidebar-accent-foreground: oklch(98.5% 0 0);
+    --sidebar-border: oklch(100% 0 0 / 10%);
+    --sidebar-ring: var(--primary);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    @apply font-sans;
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}

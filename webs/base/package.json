@@ -1,0 +1,33 @@
+{
+  "name": "@web/base",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare": "nuxt prepare"
+  },
+  "dependencies": {
+    "@elysia/eden": "catalog:",
+    "@fontsource/limelight": "^5.2.7",
+    "@nuxt/fonts": "^0.14.0",
+    "@pinia/colada": "catalog:",
+    "@pinia/colada-nuxt": "catalog:",
+    "@pinia/nuxt": "catalog:",
+    "@server/app": "workspace:*",
+    "@vueuse/core": "catalog:",
+    "@vueuse/router": "catalog:",
+    "@web/ui": "workspace:*",
+    "ky": "catalog:",
+    "motion-v": "^2.2.1",
+    "nuxt": "catalog:",
+    "pinia": "catalog:",
+    "tailwindcss": "catalog:",
+    "vee-validate": "catalog:",
+    "vue": "catalog:",
+    "vue-router": "catalog:",
+    "vue-sonner": "catalog:"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "catalog:",
+    "@vueuse/nuxt": "^14.3.0"
+  }
+}

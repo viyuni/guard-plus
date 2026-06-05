@@ -1,0 +1,12 @@
+**/node_modules
+**/.nuxt
+**/.output
+**/dist
+**/tmp
+
+.git
+.vite-hooks
+.vscode
+.zed
+
+server/bunqueue.db*

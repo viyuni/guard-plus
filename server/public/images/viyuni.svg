@@ -1,0 +1,33 @@
+<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="16.000000" height="16.000000" fill="none" customFrame="#000000">
+	<defs>
+		<filter id="pixso_custom_mask_type_alpha">
+			<feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0 " />
+		</filter>
+		<clipPath id="clipPath_4">
+			<rect width="25.719604" height="23.632627" x="-4.859802" y="-3.816406" fill="rgb(255,255,255)" />
+		</clipPath>
+		<linearGradient id="paint_linear_4" x1="24.2095375" x2="-0.769451141" y1="4.9393158" y2="27.089159" gradientUnits="userSpaceOnUse">
+			<stop stop-color="rgb(226,170,60)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(228,87,141)" offset="0.441850245" stop-opacity="1" />
+			<stop stop-color="rgb(226,60,124)" offset="0.613127053" stop-opacity="1" />
+		</linearGradient>
+		<radialGradient id="paint_radial_4" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0.269111,2.80884,-17.537,1.68019,10.4451,9.70737)">
+			<stop stop-color="rgb(226,60,124)" offset="0" stop-opacity="1" />
+			<stop stop-color="rgb(226,60,124)" offset="1" stop-opacity="0" />
+		</radialGradient>
+	</defs>
+	<mask id="mask_2" width="16.000000" height="16.000000" x="0.000000" y="0.000000" maskUnits="userSpaceOnUse">
+		<g filter="url(#pixso_custom_mask_type_alpha)">
+			<rect id="矩形 3" width="16.000000" height="16.000000" x="0.000000" y="0.000000" fill="rgb(196,196,196)" />
+		</g>
+	</mask>
+	<g id="组合 19">
+		<g id="蒙版" mask="url(#mask_2)">
+			<g id="矢量 20" customFrame="url(#clipPath_4)">
+				<rect id="矢量 20" width="25.719604" height="23.632627" x="-4.859802" y="-3.816406" fill="rgb(255,255,255)" fill-opacity="0" />
+				<path id="矢量 17" d="M7.69214 6.3307L9.06953 3.16325C9.59242 1.96082 11.2978 1.96082 11.8207 3.16325L13.1981 6.3307C13.36 6.70311 13.666 6.99394 14.0462 7.13673L17.1516 8.30315C18.4484 8.79021 18.4484 10.6245 17.1516 11.1116L14.0462 12.278C13.666 12.4208 13.36 12.7116 13.1981 13.084L11.8207 16.2515C11.2978 17.4539 9.59241 17.4539 9.06953 16.2515L7.69214 13.084C7.53019 12.7116 7.22417 12.4208 6.844 12.278L3.73856 11.1116C2.4418 10.6245 2.4418 8.79022 3.73856 8.30315L6.844 7.13673C7.22417 6.99394 7.53019 6.70311 7.69214 6.3307Z" fill="url(#paint_linear_4)" fill-rule="evenodd" transform="matrix(0.971003,0.239067,-0.279952,0.960014,0.575378,-3.81641)" />
+				<path id="矢量 17" d="M7.69214 6.3307L9.06953 3.16325C9.59242 1.96082 11.2978 1.96082 11.8207 3.16325L13.1981 6.3307C13.36 6.70311 13.666 6.99394 14.0462 7.13673L17.1516 8.30315C18.4484 8.79021 18.4484 10.6245 17.1516 11.1116L14.0462 12.278C13.666 12.4208 13.36 12.7116 13.1981 13.084L11.8207 16.2515C11.2978 17.4539 9.59241 17.4539 9.06953 16.2515L7.69214 13.084C7.53019 12.7116 7.22417 12.4208 6.844 12.278L3.73856 11.1116C2.4418 10.6245 2.4418 8.79022 3.73856 8.30315L6.844 7.13673C7.22417 6.99394 7.53019 6.70311 7.69214 6.3307Z" fill="url(#paint_radial_4)" fill-opacity="0.200000003" fill-rule="evenodd" transform="matrix(0.971003,0.239067,-0.279952,0.960014,0.575378,-3.81641)" />
+			</g>
+		</g>
+	</g>
+</svg>
