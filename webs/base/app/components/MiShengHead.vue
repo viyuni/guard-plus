@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import headBlinkUrl from '~/assets/misheng-head-blink.png';
-import headUrl from '~/assets/misheng-head.png';
+import headBlinkUrl from '../assets/misheng-head-blink.png';
+import headUrl from '../assets/misheng-head.png';
 
 const isBlinking = ref(false);
 const isShaking = ref(false);
