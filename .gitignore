@@ -37,3 +37,5 @@ gr*.exe
 bunqueue.db*
 
 .data
+
+docker-compose.prod.yml
