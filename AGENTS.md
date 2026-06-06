@@ -17,20 +17,6 @@ Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.de
 
 <!-- PROJECT IMPORTS START -->
 
-<!--VPP START-->
-
-# Using vpp
-
-When this project already has `vpp` available, prefer it for test commands.
-
-- Use `vpp test` instead of `vp test`.
-- Use `vpp test <args...>` instead of `vp test <args...>`.
-- Keep using existing Vite+ commands for non-test tasks, such as `vp check`,
-  `vp pack`, and `vp run <script>`.
-- Fall back to `vp test` only if `vpp` is not available.
-
-<!--VPP END-->
-
 # Import Conventions
 
 For imports that cross workspace package boundaries, prefer real package names:
@@ -102,3 +88,71 @@ This command updates `webs/ui` component metadata: package exports, the componen
 This command executes linting, formatting, and type checking.
 
 <!-- PROJECT SCRIPT END -->
+
+<!-- PROJECT COMMITS START -->
+
+# Commit Conventions
+
+Use Conventional Commits:
+
+```txt
+<type>(<scope>): <subject>
+```
+
+Keep the subject concise, imperative, and lowercase unless it contains a proper noun.
+
+## Types
+
+- `feat`: new feature
+- `fix`: bug fix
+- `refactor`: code restructuring without behavior changes
+- `perf`: performance improvement
+- `style`: formatting or visual styling changes
+- `docs`: documentation
+- `test`: tests
+- `build`: build system, dependency, or package configuration
+- `ci`: CI configuration
+- `chore`: maintenance work
+- `revert`: revert a previous change
+
+## Scopes
+
+- `server`: backend changes
+- `server/app`: backend routes, modules, use cases, and app wiring
+- `server/db`: database schema, repositories, migrations, and query helpers
+- `server/auth`: authentication and authorization
+- `web/ui`: shared UI components and UI utilities
+- `web/admin`: admin Nuxt app
+- `web/user`: user Nuxt app
+- `web/base`: shared Nuxt base configuration
+- `shared`: shared schemas, contracts, and types
+- `schema`: `packages/schema`
+- `deps`: dependency updates
+- `config`: repository and tool configuration
+- `release`: release and changelog work
+
+## Examples
+
+```txt
+feat(server): add reward rule fulfillment service
+fix(server/db): correct order status enum mapping
+refactor(server/auth): simplify session guard
+
+feat(web/admin): add landing page app entry button
+fix(web/admin): move version label to header
+style(web/user): adjust mobile reward card spacing
+refactor(web/ui): extract shared image cropper controls
+
+feat(shared): add point transaction schema
+build(deps): update nuxt and vue catalog versions
+docs(readme): add local development guide
+chore(release): prepare v0.1.0
+```
+
+For breaking changes, add `!` after the scope or include a `BREAKING CHANGE:` footer:
+
+```txt
+feat(server)!: replace legacy reward rule API
+```
+
+<!-- PROJECT COMMITS END -->
