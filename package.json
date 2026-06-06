@@ -10,12 +10,17 @@
   ],
   "type": "module",
   "scripts": {
+    "changelog": "changelogen",
+    "release": "changelogen --release",
+    "release:github": "changelogen gh release",
+    "release:prepare": "changelogen --bump",
     "prepare": "vp config"
   },
   "devDependencies": {
     "@tsconfig/node24": "catalog:",
     "@typescript/native-preview": "catalog:",
     "bun-types": "catalog:",
+    "changelogen": "catalog:",
     "typescript": "catalog:",
     "vite-plus": "catalog:"
   },
@@ -48,6 +53,7 @@
     "@vueuse/router": "^14.2.0",
     "bun-types": "^1.3.14",
     "class-variance-authority": "^0.7.1",
+    "changelogen": "^0.6.2",
     "clsx": "^2.1.1",
     "ky": "^2.0.2",
     "leafer-ui": "^2.1.0",
