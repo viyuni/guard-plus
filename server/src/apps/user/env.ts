@@ -20,9 +20,9 @@ export const userEnv = createEnv({
     DATA_SECRET: v.string(),
 
     /**
-     * JWT 密钥
+     * 用户 JWT 密钥
      */
-    JWT_SECRET: v.string(),
+    USER_JWT_SECRET: v.string(),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

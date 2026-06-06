@@ -10,7 +10,13 @@ import { AdminRepository } from './modules/admin/repository';
 import { AdminUseCase } from './modules/admin/usecase';
 import { AdminAuthUseCase } from './modules/auth/usecase';
 
-export const { context, container: adminContainer } = createAppContext({ db, env: adminEnv });
+export const { context, container: adminContainer } = createAppContext({
+  db,
+  env: {
+    ...adminEnv,
+    JWT_SECRET: adminEnv.ADMIN_JWT_SECRET,
+  },
+});
 
 const {
   useCases: { authUseCase, rewardUseCase },

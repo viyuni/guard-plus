@@ -11,7 +11,10 @@ import { NotifyWorker } from './modules/email/worker';
 
 const { context } = createAppContext({
   db,
-  env: userEnv,
+  env: {
+    ...userEnv,
+    JWT_SECRET: userEnv.USER_JWT_SECRET,
+  },
 });
 
 const emailUseCase = new EmailUseCase({

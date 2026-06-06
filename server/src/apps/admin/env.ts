@@ -21,9 +21,9 @@ export const adminEnv = createEnv({
     DATA_SECRET: v.string(),
 
     /**
-     * JWT 密钥
+     * 管理员 JWT 密钥
      */
-    JWT_SECRET: v.string(),
+    ADMIN_JWT_SECRET: v.string(),
 
     /**
      * B站直播间 ID
