@@ -2,6 +2,85 @@
 @import '@web/ui/style.css';
 @source '../../../ui/src';
 
+@layer base {
+  body {
+    font-family: 'MiSans', 'Noto Sans SC', sans-serif;
+    font-weight: 450;
+  }
+}
+
+@layer components {
+  .changelog {
+    @apply mt-6 text-sm;
+  }
+
+  .changelog h2 {
+    @apply scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight transition-colors first:mt-0;
+  }
+
+  .changelog h3 {
+    @apply mt-8 scroll-m-20 text-xl font-semibold tracking-tight;
+  }
+
+  .changelog h4 {
+    @apply mt-8 scroll-m-20 text-lg font-semibold tracking-tight;
+  }
+
+  .changelog p {
+    @apply leading-7;
+  }
+
+  .changelog p:not(:first-child) {
+    @apply mt-6;
+  }
+
+  .changelog ul {
+    @apply my-6 ml-6 list-disc;
+  }
+
+  .changelog li {
+    @apply mt-2;
+  }
+
+  .changelog blockquote {
+    @apply mt-6 border-l-2 pl-6 italic;
+  }
+
+  .changelog a {
+    @apply text-primary font-medium underline underline-offset-4;
+  }
+
+  .changelog code {
+    @apply bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold;
+  }
+
+  .changelog table {
+    @apply my-6 w-full overflow-y-auto;
+  }
+
+  .changelog tr {
+    @apply even:bg-muted m-0 border-t p-0;
+  }
+
+  .changelog th {
+    @apply border px-4 py-2 text-left font-bold;
+  }
+
+  .changelog td {
+    @apply border px-4 py-2 text-left;
+  }
+
+  .changelog th[align='center'],
+  .changelog td[align='center'] {
+    @apply text-center;
+  }
+
+  .changelog th[align='right'],
+  .changelog td[align='right'] {
+    @apply text-right;
+  }
+}
+
 .page-enter-active,
 .page-leave-active {
   transition:

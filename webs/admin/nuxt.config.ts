@@ -5,7 +5,7 @@ export default defineNuxtConfig({
   css: ['~/assets/main.css'],
   app: {
     head: {
-      title: 'Viyuni - Guard+',
+      title: 'Viyuni Guard+',
       meta: [
         { charset: 'UTF-8' },
         { name: 'color-scheme', content: 'light dark' },
