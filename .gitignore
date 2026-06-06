@@ -39,3 +39,4 @@ bunqueue.db*
 .data
 
 docker-compose.prod.yml
+nginx.prod.conf
