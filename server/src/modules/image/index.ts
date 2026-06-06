@@ -1,11 +1,15 @@
+import { mkdirSync } from 'node:fs';
+
 import { staticPlugin } from '@elysia/static';
 import Elysia from 'elysia';
 
 export * from './usecase';
 export * from './domain';
 
-export const image = ({ assets }: { assets: string }) =>
-  new Elysia({ name: 'ImageModule' }).use(
+export const image = ({ assets }: { assets: string }) => {
+  mkdirSync(assets, { recursive: true });
+
+  return new Elysia({ name: 'ImageModule' }).use(
     staticPlugin({
       assets,
       prefix: '/images',
@@ -38,3 +42,4 @@ export const image = ({ assets }: { assets: string }) =>
       },
     }),
   );
+};
