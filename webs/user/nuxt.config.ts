@@ -22,7 +22,7 @@ export default defineNuxtConfig({
 
   routeRules: {
     '/': {
-      // swr: 60,
+      swr: 60,
     },
   },
 });
