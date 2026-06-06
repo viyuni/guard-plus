@@ -59,7 +59,11 @@ export default defineConfig({
       },
       'db:push': {
         cache: false,
-        command: bunEnv('drizzle-kit push') + '&&' + bunTest('drizzle-kit push'),
+        command: bunEnv('drizzle-kit push'),
+      },
+      'db:push:test': {
+        cache: false,
+        command: bunTest('drizzle-kit push'),
       },
       'db:seed': {
         cache: false,
