@@ -41,12 +41,12 @@ jobs:
           VERSION: ${{ inputs.version }}
         run: |
           if [ -n "$VERSION" ]; then
-            vp run release -- -r "$VERSION" --push
+            bunx changelogen --release -r "$VERSION" --push
           else
-            vp run release -- --push
+            bunx changelogen --release --push
           fi
 
       - name: Sync GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: vp run release:github
+        run: bunx changelogen gh release
