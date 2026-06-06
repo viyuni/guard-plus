@@ -1,18 +1,18 @@
-FROM viyuni/bun-viteplus:latest AS base
+FROM oven/bun:1.3.14 AS base
 
 WORKDIR /app
 
 COPY . .
 
-RUN vp install
+RUN bun install --frozen-lockfile --ignore-scripts
 
 ENV NODE_ENV=production
 
 FROM base AS db-push
 
-WORKDIR /app
+WORKDIR /app/server
 
-CMD ["sh", "-c", "set -ex; vp run @server/app#db:push"]
+CMD ["bunx", "drizzle-kit", "push"]
 
 FROM base AS admin-server
 
@@ -26,7 +26,7 @@ FROM base AS user-server
 
 WORKDIR /app/server
 
-EXPOSE 3999
+EXPOSE 3800
 
 CMD ["bun", "run", "src/apps/user/index.ts"]
 
