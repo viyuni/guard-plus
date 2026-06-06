@@ -190,8 +190,13 @@ export class AdminUseCase {
       'superAdmin',
     );
 
-    logger.info(
-      `Creating default admin, UID: ${uid}, UserName: ${username}, Password: ${password}`,
-    );
+    if (Bun.env.NODE_ENV === 'development') {
+      logger.info(
+        `Creating default admin, UID: ${uid}, UserName: ${username}, Password: ${password}`,
+      );
+      return;
+    }
+
+    logger.info(`Creating default admin, UID: ${uid}, UserName: ${username}`);
   }
 }
