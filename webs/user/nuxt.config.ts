@@ -16,10 +16,6 @@ export default defineNuxtConfig({
     },
   },
 
-  nitro: {
-    preset: 'bun',
-  },
-
   routeRules: {
     '/': {
       swr: 60,
