@@ -4,9 +4,8 @@ import { ArrowRight, Github } from 'lucide-vue-next';
 import { createMarkdownExit } from 'markdown-exit';
 
 import changeLog from '../../../../CHANGELOG.md?raw';
-import packageJson from '../../package.json';
+import { version } from '../../../../package.json';
 
-const appVersion = packageJson.version;
 const md = createMarkdownExit();
 const changeLogContent = md.render(changeLog);
 </script>
@@ -20,9 +19,7 @@ const changeLogContent = md.render(changeLog);
         <AppLogo />
       </div>
       <div class="flex items-center gap-1.5">
-        <span class="text-muted-foreground text-sm font-medium select-none">
-          v{{ appVersion }}
-        </span>
+        <span class="text-muted-foreground text-sm font-medium select-none"> v{{ version }} </span>
 
         <Button as-child variant="ghost" size="icon-sm" class="rounded-full" aria-label="GitHub">
           <a href="https://github.com/viyuni/guard-plus" target="_blank" rel="noreferrer">
