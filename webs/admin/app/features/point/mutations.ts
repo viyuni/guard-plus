@@ -44,14 +44,8 @@ export const useCreatePointType = defineMutation(() => {
       showToast: true,
       successMessage: '积分类型已创建',
     },
-    async mutation(body: CreatePointTypeBody) {
-      const response = await $api.points.types.post(body);
-
-      if (response.data?.id) {
-        await $api.points.types({ pointTypeId: response.data.id }).disable.patch();
-      }
-
-      return response;
+    mutation(body: CreatePointTypeBody) {
+      return $api.points.types.post(body);
     },
     onSettled: invalidatePoints,
   });

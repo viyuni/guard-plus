@@ -79,7 +79,7 @@ const { canSubmit, handleSubmit, isLoading } = usePopoverForm({
         </FormFieldItem>
 
         <FormFieldItem v-slot="{ field }" name="enabled" label="启用状态">
-          <Switch :checked="field.value" @update:checked="field.onChange" />
+          <Switch :model-value="field.value" @update:model-value="field.onChange" />
         </FormFieldItem>
 
         <FormFieldItem

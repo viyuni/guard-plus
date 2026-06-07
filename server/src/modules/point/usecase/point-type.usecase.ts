@@ -41,7 +41,7 @@ export class PointTypeUseCase {
       throw new PointTypeNameExistsError();
     }
 
-    return this.deps.pointTypeRepo.create(data);
+    return this.deps.pointTypeRepo.create({ ...data, status: 'disabled' });
   }
 
   async update(pointTypeId: string, data: UpdatePointTypeBody) {

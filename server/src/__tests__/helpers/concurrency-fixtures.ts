@@ -98,11 +98,12 @@ export function createDeps() {
 }
 
 export async function seedPointType(name: string) {
-  const pointType = await createDeps().pointTypeUseCase.create({
+  const { pointTypeUseCase } = createDeps();
+  const pointType = await pointTypeUseCase.create({
     name,
   });
 
-  return expectSeeded(pointType, 'seed point type failed');
+  return expectSeeded(await pointTypeUseCase.enable(pointType.id), 'seed point type failed');
 }
 
 export async function seedUser(name: string, biliUid?: `${number}`) {
