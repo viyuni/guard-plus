@@ -17,6 +17,7 @@ export default defineConfig({
       },
       typecheck: {
         command: 'nuxt typecheck',
+        input: [{ auto: true }, '!**/*.tsbuildinfo', '!.nuxt/**'],
       },
     },
   },

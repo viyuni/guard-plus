@@ -99,9 +99,12 @@ export function createDeps() {
 
 export async function seedPointType(name: string) {
   const { pointTypeUseCase } = createDeps();
-  const pointType = await pointTypeUseCase.create({
-    name,
-  });
+  const pointType = expectSeeded(
+    await pointTypeUseCase.create({
+      name,
+    }),
+    'seed point type failed',
+  );
 
   return expectSeeded(await pointTypeUseCase.enable(pointType.id), 'seed point type failed');
 }

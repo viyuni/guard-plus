@@ -42,7 +42,7 @@ Build backend binaries and Eden type declarations:
 
 ```bash
 vpr @server/app#build
-vpr @server/app#dts
+vpr @server/app#build:types
 ```
 
 ## Database

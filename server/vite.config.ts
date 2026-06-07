@@ -8,6 +8,14 @@ const dev = bunEnv.with('--bun --no-clear-screen --watch');
 
 const inputs = {
   admin: './src/apps/admin/index.ts',
+  dbPush: [
+    'drizzle/**',
+    'drizzle.config.ts',
+    'src/db/schema/**',
+    'src/db/relations.ts',
+    'package.json',
+    'bunfig.toml',
+  ],
   user: './src/apps/user/index.ts',
   event: './src/apps/event/index.ts',
 } as const;
@@ -26,44 +34,57 @@ export default defineConfig({
       dev: {
         cache: false,
         command: 'bun scripts/dev.ts',
+        dependsOn: ['db:push'],
       },
       'dev:admin': {
         cache: false,
         command: dev(inputs.admin),
+        dependsOn: ['db:push'],
       },
       'dev:user': {
         cache: false,
         command: dev(inputs.user),
+        dependsOn: ['db:push'],
       },
       'dev:event': {
         cache: false,
         command: dev(inputs.event),
+        dependsOn: ['db:push'],
       },
       build: {
         command: 'bun scripts/build.ts',
       },
-      dts: {
+      'build:types': {
+        cache: true,
         command: 'vp pack',
+        input: [{ auto: true }, '!**/*.tsbuildinfo', '!dist/**'],
+        output: ['dist/**'],
       },
       typecheck: {
+        cache: true,
         command: 'tsgo --build',
+        input: [{ auto: true }, '!**/*.tsbuildinfo'],
       },
       check: {
         command: 'vp check',
       },
       test: {
         command: bunTest('test'),
+        dependsOn: ['db:push:test'],
       },
       'db:generate': {
         command: bunEnv('drizzle-kit generate'),
+        input: [...inputs.dbPush, '.env'],
       },
       'db:push': {
-        cache: false,
+        cache: true,
         command: bunEnv('drizzle-kit push'),
+        input: [...inputs.dbPush, '.env'],
       },
       'db:push:test': {
-        cache: false,
+        cache: true,
         command: bunTest('drizzle-kit push'),
+        input: [...inputs.dbPush, '.env.test'],
       },
       'db:seed': {
         cache: false,
@@ -73,10 +94,6 @@ export default defineConfig({
       'db:studio': {
         cache: false,
         command: bunEnv('drizzle-kit studio'),
-      },
-      'docker-compose': {
-        cache: false,
-        command: 'docker compose up -d',
       },
     },
   },

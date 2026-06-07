@@ -34,6 +34,7 @@
     "tw-animate-css": "catalog:",
     "unplugin-vue-components": "catalog:",
     "uuid": "catalog:",
+    "valibot": "catalog:",
     "vee-validate": "catalog:",
     "vite": "catalog:",
     "vue": "catalog:",
@@ -41,6 +42,7 @@
     "vue-sonner": "catalog:"
   },
   "devDependencies": {
-    "rolldown": "catalog:"
+    "rolldown": "catalog:",
+    "vue-tsc": "catalog:"
   }
 }

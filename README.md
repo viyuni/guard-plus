@@ -81,15 +81,16 @@ Build backend binaries and generated Eden types:
 
 ```bash
 vpr @server/app#build
-vpr @server/app#dts
+vpr @server/app#build:types
 ```
 
 Run targeted type checks:
 
 ```bash
-vpr tsc
-vpr tsc:server
-vpr tsc:web
+vpr typecheck
+vpr typecheck:schema
+vpr typecheck:server
+vpr typecheck:web
 vpr @server/app#typecheck
 ```
 

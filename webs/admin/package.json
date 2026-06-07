@@ -33,6 +33,7 @@
     "vue-sonner": "catalog:"
   },
   "devDependencies": {
-    "rolldown": "catalog:"
+    "rolldown": "catalog:",
+    "vue-tsc": "catalog:"
   }
 }

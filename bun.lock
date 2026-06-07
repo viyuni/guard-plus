@@ -93,6 +93,7 @@
       },
       "devDependencies": {
         "rolldown": "catalog:",
+        "vue-tsc": "catalog:",
       },
     },
     "webs/base": {
@@ -191,6 +192,7 @@
         "tw-animate-css": "catalog:",
         "unplugin-vue-components": "catalog:",
         "uuid": "catalog:",
+        "valibot": "catalog:",
         "vee-validate": "catalog:",
         "vite": "catalog:",
         "vue": "catalog:",
@@ -199,6 +201,7 @@
       },
       "devDependencies": {
         "rolldown": "catalog:",
+        "vue-tsc": "catalog:",
       },
     },
   },

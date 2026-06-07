@@ -7,10 +7,12 @@ export default defineConfig({
         command: 'vp check',
       },
       typecheck: {
-        command: 'vp exec vue-tsc --build',
+        cache: true,
+        command: 'vue-tsc --build',
         input: [{ auto: true }, '!**/*.tsbuildinfo'],
       },
       'generate:manifest': {
+        cache: true,
         command: 'bun scripts/generateManifest.ts',
       },
     },

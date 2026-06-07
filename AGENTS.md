@@ -73,7 +73,7 @@ Use an explicit `<template #default>` only when the component also has named slo
 
 ## Type Check
 
-`vpr tsc`
+`vpr typecheck`
 
 ## Generate UI Component Manifest
 

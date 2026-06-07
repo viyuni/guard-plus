@@ -11,24 +11,40 @@ export default defineConfig({
     },
     tasks: {
       check: {
-        command: 'vp fmt && vp lint && vpr tsc',
+        command: 'vp fmt && vp lint && vpr typecheck',
       },
-      tsc: {
-        command: 'vpr -r --parallel typecheck',
-        input: [{ auto: true }, '!**/*.tsbuildinfo'],
+      typecheck: {
+        command: 'vpr -r --concurrency-limit 1 typecheck',
       },
-      'tsc:server': {
-        command: 'vpr --parallel --filter "@server/*" --filter "@shared/schema" typecheck',
-        input: [{ auto: true }, '!**/*.tsbuildinfo'],
+      'typecheck:schema': {
+        command: 'vpr --filter "@shared/schema" typecheck',
       },
-      'tsc:web': {
-        command: 'vpr --parallel --filter "@web/*" --filter "@shared/schema" typecheck',
-        input: [{ auto: true }, '!**/*.tsbuildinfo'],
+      'typecheck:server': {
+        command: 'vpr --concurrency-limit 1 --filter "@server/*" typecheck',
+      },
+      'typecheck:web': {
+        command: [
+          'vpr @server/app#build:types',
+          'vpr --concurrency-limit 1 --filter "@web/*" typecheck',
+        ],
       },
       test: {
         command: 'vpr -r test',
+        dependsOn: ['@server/app#db:push:test'],
       },
-      'deploy:prod': {
+      changelog: {
+        command: 'changelogen',
+      },
+      release: {
+        command: 'changelogen --release',
+      },
+      'release:github': {
+        command: 'changelogen gh release',
+      },
+      'release:prepare': {
+        command: 'changelogen --bump',
+      },
+      deploy: {
         cache: false,
         command:
           'sudo docker compose --env-file server/.env.prod -f server/docker-compose.prod.yml up -d --build --force-recreate',

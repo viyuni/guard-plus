@@ -10,10 +10,6 @@
   ],
   "type": "module",
   "scripts": {
-    "changelog": "changelogen",
-    "release": "changelogen --release",
-    "release:github": "changelogen gh release",
-    "release:prepare": "changelogen --bump",
     "prepare": "vp config"
   },
   "devDependencies": {
