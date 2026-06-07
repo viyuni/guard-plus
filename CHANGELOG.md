@@ -1,3 +1,16 @@
+## v0.0.1-beta.3
+
+[compare changes](https://github.com/viyuni/guard-plus/compare/v0.0.1-beta.2...v0.0.1-beta.3)
+
+### 🩹 Fixes
+
+- **web/admin:** Display point conversion type names ([44f5e69](https://github.com/viyuni/guard-plus/commit/44f5e69))
+- **web/admin:** Sync point and reward switches ([838d6dc](https://github.com/viyuni/guard-plus/commit/838d6dc))
+
+### ❤️ Contributors
+
+- Byc ([@YanChenBai](https://github.com/YanChenBai))
+
 ## v0.0.1-beta.2
 
 [compare changes](https://github.com/viyuni/guard-plus/compare/v0.0.1-beta.1...v0.0.1-beta.2)
