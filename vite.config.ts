@@ -11,7 +11,7 @@ export default defineConfig({
     },
     tasks: {
       check: {
-        command: 'vp fmt && vp lint && vpr typecheck',
+        command: ['vpr @server/app#build:types', 'vp fmt', 'vp lint', 'vpr typecheck'],
       },
       typecheck: {
         command: 'vpr -r --concurrency-limit 1 typecheck',
