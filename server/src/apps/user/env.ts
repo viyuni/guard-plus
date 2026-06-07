@@ -15,6 +15,14 @@ export const userEnv = createEnv({
     USER_PORT: v.optional(v.port(), 3800),
 
     /**
+     * 用户前端地址，多个地址用英文逗号分隔
+     */
+    USER_ORIGINS: v.optional(
+      v.envOrigins,
+      'http://localhost:3000,http://guard-plus.localhost:3000',
+    ),
+
+    /**
      * 数据密钥
      */
     DATA_SECRET: v.string(),

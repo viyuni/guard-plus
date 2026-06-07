@@ -244,3 +244,9 @@ export const envEmails = v.pipe(
   v.transform(input => input.split(',').filter(Boolean)),
   v.array(v.pipe(v.string(), v.trim(), v.email())),
 );
+
+export const envOrigins = v.pipe(
+  v.string(),
+  v.transform(input => input.split(',').filter(Boolean)),
+  v.array(v.pipe(v.string(), v.trim(), v.url())),
+);

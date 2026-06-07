@@ -1,4 +1,4 @@
-import { port, bilibiliUid } from '@shared/schema';
+import { port, bilibiliUid, envOrigins } from '@shared/schema';
 import { createEnv } from '@t3-oss/env-core';
 import * as v from 'valibot';
 
@@ -14,6 +14,14 @@ export const adminEnv = createEnv({
      * 管理员服务端口
      */
     ADMIN_PORT: v.optional(port(), 3600),
+
+    /**
+     * 管理后台前端地址，多个地址用英文逗号分隔
+     */
+    ADMIN_ORIGINS: v.optional(
+      envOrigins,
+      'http://localhost:3001,http://admin.guard-plus.localhost:3001',
+    ),
 
     /**
      * 数据密钥

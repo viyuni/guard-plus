@@ -28,7 +28,7 @@ export const app = new Elysia({
 })
   .use(
     cors({
-      origin: true,
+      origin: adminEnv.ADMIN_ORIGINS,
       allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
       credentials: true,
     }),
