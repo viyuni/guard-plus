@@ -14,5 +14,12 @@ services:
     volumes:
       - guard-plus-db-test-data:/var/lib/postgresql
 
+  guard-plus-redis-test:
+    image: redis:8-alpine
+    container_name: gp-redis-test
+    restart: unless-stopped
+    ports:
+      - '8798:6379'
+
 volumes:
   guard-plus-db-test-data:

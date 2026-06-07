@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check and test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
+
+      - name: Install dependencies
+        run: vp install --frozen-lockfile
+
+      - name: Start test services
+        run: docker compose -f server/docker-compose.test.yml up -d
+
+      - name: Configure test environment
+        run: |
+          cat > server/.env.test <<'EOF'
+          NODE_ENV=test
+          DATABASE_URL=postgres://admin:guard_plus@localhost:8799/guard-plus-test
+          TEST_DATABASE_URL=postgres://admin:guard_plus@localhost:8799/guard-plus-test
+          DATA_SECRET=test-data-secret-test-data-secret
+          ADMIN_JWT_SECRET=test-admin-jwt-secret
+          USER_JWT_SECRET=test-user-jwt-secret
+          BILI_ROOM=721
+          BILI_REGISTER_CODE_TTL_SECONDS=300
+          LOG_LEVEL=error
+          REDIS_URL=redis://localhost:8798
+          TEST_REDIS_URL=redis://localhost:8798
+          REDIS_CONNECTION_TIMEOUT_MS=5000
+          REDIS_IDLE_TIMEOUT_MS=0
+          REDIS_MAX_RETRIES=100
+          EOF
+
+      - name: Wait for test database
+        run: |
+          for i in {1..30}; do
+            if docker exec gp-db-test pg_isready -U admin -d guard-plus-test; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs gp-db-test
+          exit 1
+
+      - name: Wait for test Redis
+        run: |
+          for i in {1..30}; do
+            if docker exec gp-redis-test redis-cli ping | grep -q PONG; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs gp-redis-test
+          exit 1
+
+      - name: Check
+        run: vpr check
+
+      - name: Test
+        run: vpr test
