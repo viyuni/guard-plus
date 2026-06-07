@@ -28,8 +28,8 @@ export type PointConversionColumns = readonly ColumnDef<PointConversion>[];
 <script setup lang="ts">
 const columns = [
   { accessorKey: 'name', header: '规则名称' },
-  { accessorKey: 'fromPointTypeName', header: '来源积分' },
-  { accessorKey: 'toPointTypeName', header: '目标积分' },
+  { accessorKey: 'fromPointType', header: '来源积分' },
+  { accessorKey: 'toPointType', header: '目标积分' },
   { accessorKey: 'toAmount', header: '目标数量' },
   { accessorKey: 'minConvertAmount', header: '最小转换' },
   { accessorKey: 'maxConvertAmount', header: '最大转换' },
@@ -67,6 +67,14 @@ function toggleConversionRuleEnabled(conversion: PointConversion, enabled: boole
           添加积分转换
         </Button>
       </div>
+    </template>
+
+    <template #fromPointType="{ value }">
+      {{ value?.name }}
+    </template>
+
+    <template #toPointType="{ value }">
+      {{ value?.name }}
     </template>
 
     <template #toAmount="{ value }">
