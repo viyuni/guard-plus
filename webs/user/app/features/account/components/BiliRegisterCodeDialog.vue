@@ -27,12 +27,9 @@ const emit = defineEmits<{
 
 const status = defineModel<BiliRegisterStatus>('status', { default: 'idle' });
 
-const {
-  public: { biliRoomId },
-} = useRuntimeConfig();
-
+const biliRoomId = ref<number>();
 const biliRoomUrl = computed(() =>
-  biliRoomId ? `https://live.bilibili.com/${biliRoomId}` : undefined,
+  biliRoomId.value ? `https://live.bilibili.com/${biliRoomId.value}` : undefined,
 );
 const code = ref<string>();
 const expiresAt = ref<string>();
@@ -105,6 +102,7 @@ async function createCode() {
     }
 
     code.value = data.code;
+    biliRoomId.value = data.roomId;
     status.value = 'pending';
     startCountdown(data.expiresAt);
     open.value = true;
@@ -122,6 +120,7 @@ async function confirmCode() {
     });
 
     status.value = data.status;
+    biliRoomId.value = data.roomId;
 
     if (data.status === 'expired') {
       expireCode();

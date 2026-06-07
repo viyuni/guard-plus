@@ -12,6 +12,7 @@ import {
   REFRESH_TOKEN_COOKIE_OPTIONS,
 } from '#modules/auth';
 
+import { userEnv } from '../../env';
 import { AuthUseCase } from './usecase';
 export * from './usecase';
 
@@ -43,6 +44,7 @@ export const auth = new Elysia({
     userAuthUseCase: new AuthUseCase({
       authUseCase,
       biliRegisterUseCase,
+      biliRoom: userEnv.BILI_ROOM,
       rewardUseCase,
       userUseCase,
     }),

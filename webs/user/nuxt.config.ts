@@ -15,10 +15,4 @@ export default defineNuxtConfig({
       link: [{ rel: 'icon', href: 'https://assets.viyuni.top/guard-plus/misheng-head.ico' }],
     },
   },
-
-  routeRules: {
-    '/': {
-      swr: 60,
-    },
-  },
 });

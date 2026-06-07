@@ -33,6 +33,7 @@ function createUseCase(challenge: BiliRegisterChallenge | null) {
   const useCase = new AuthUseCase({
     authUseCase: {} as SharedAuthUseCase,
     biliRegisterUseCase: { consumeChallenge } as unknown as BiliRegisterUseCase,
+    biliRoom: 8315781,
     rewardUseCase: { replayRewardBiliGuardByUserId } as unknown as RewardUseCase,
     userUseCase: { create } as unknown as UserUseCase,
   });

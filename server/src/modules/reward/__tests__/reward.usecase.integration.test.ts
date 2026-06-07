@@ -505,6 +505,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
               }
             : null,
       } as unknown as BiliRegisterUseCase,
+      biliRoom: 8315781,
       rewardUseCase,
       userUseCase,
     });

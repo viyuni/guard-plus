@@ -23,6 +23,11 @@ export const userEnv = createEnv({
     ),
 
     /**
+     * B站直播间 ID
+     */
+    BILI_ROOM: v.pipe(v.string(), v.toNumber()),
+
+    /**
      * 数据密钥
      */
     DATA_SECRET: v.string(),

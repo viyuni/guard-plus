@@ -13,6 +13,7 @@ export class AuthUseCase {
     private readonly deps: {
       authUseCase: SharedAuthUseCase;
       biliRegisterUseCase?: BiliRegisterUseCase;
+      biliRoom: number;
       rewardUseCase: RewardUseCase;
       userUseCase: UserUseCase;
     },
@@ -72,6 +73,7 @@ export class AuthUseCase {
     return {
       code: challenge.code,
       expiresAt: challenge.expiresAt,
+      roomId: this.deps.biliRoom,
       verifier,
     };
   }
@@ -80,6 +82,7 @@ export class AuthUseCase {
     if (!code) {
       return {
         status: 'expired' as const,
+        roomId: this.deps.biliRoom,
       };
     }
 
@@ -88,6 +91,7 @@ export class AuthUseCase {
     if (!challenge || challenge.status === 'consumed') {
       return {
         status: 'expired' as const,
+        roomId: this.deps.biliRoom,
       };
     }
 
@@ -96,6 +100,7 @@ export class AuthUseCase {
         status: 'matched' as const,
         code: challenge.code,
         expiresAt: challenge.expiresAt,
+        roomId: this.deps.biliRoom,
         biliUser: {
           uid: challenge.biliUid!,
           name: challenge.biliName,
@@ -107,6 +112,7 @@ export class AuthUseCase {
       status: 'pending' as const,
       code: challenge.code,
       expiresAt: challenge.expiresAt,
+      roomId: this.deps.biliRoom,
     };
   }
 
