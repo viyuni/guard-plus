@@ -30,7 +30,6 @@ export default defineConfig({
       },
       test: {
         command: 'vpr -r test',
-        dependsOn: ['@server/app#db:push:test'],
       },
       changelog: {
         command: 'changelogen',
