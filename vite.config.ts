@@ -28,6 +28,11 @@ export default defineConfig({
       test: {
         command: 'vpr -r test',
       },
+      'deploy:prod': {
+        cache: false,
+        command:
+          'sudo docker compose --env-file server/.env.prod -f server/docker-compose.prod.yml up -d --build --force-recreate',
+      },
     },
   },
   fmt: {
