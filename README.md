@@ -6,7 +6,23 @@
   </picture>
 </p>
 
- <h1 align="center" style="margin-top: 2rem">Guard Plus - Bilibili Live Fleet Rewards System</h1>
+<h1 align="center" style="margin-top: 2rem">Guard Plus - Bilibili Live Fleet Rewards System</h1>
+
+<p align="center">
+  <a href="./package.json"> 
+    <img src="https://img.shields.io/github/package-json/v/viyuni/guard-plus?filename=package.json&label=version" alt="Version" />
+  </a> 
+  <a href="https://github.com/viyuni/guard-plus/actions/workflows/ci.yml">
+    <img src="https://github.com/viyuni/guard-plus/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  </a>
+  <a href="./LICENSE">
+    <img src="https://img.shields.io/github/license/viyuni/guard-plus" alt="License" />
+  </a>
+  <img src="https://img.shields.io/badge/TypeScript-6.x-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Bun-runtime-000000?logo=bun&logoColor=white" alt="Bun" />
+  <img src="https://img.shields.io/badge/Nuxt-4-00DC82?logo=nuxt&logoColor=white" alt="Nuxt" />
+  <img src="https://img.shields.io/badge/Elysia-backend-7C3AED" alt="Elysia" />
+</p>
 
 Guard Plus is a rewards management and fulfillment system for Bilibili Live Fleet memberships. It helps streamers, operators, and administrators manage reward rules, fulfillment records, and claim flows for Fleet members such as Captain, Admiral, and Governor supporters.
 
@@ -107,7 +123,7 @@ The backend package is `@server/app` in `server/`.
 - `server/src/context.ts`: shared dependency container, Elysia context wiring, and event container wiring.
 - `server/src/eden.ts`: Eden type export surface consumed by web packages.
 
-Database tasks:
+## Database tasks
 
 ```bash
 vpr @server/app#db:generate
@@ -115,7 +131,6 @@ vpr @server/app#db:push
 vpr @server/app#db:push:test
 vpr @server/app#db:seed
 vpr @server/app#db:studio
-vpr @server/app#db:studio:test
 ```
 
 Use `.env` for local development commands and `.env.test` for test database commands.
