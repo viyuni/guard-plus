@@ -6,10 +6,8 @@ export const USER_QUERY_KEYS = {
 };
 
 export const userPageQuery = defineQueryOptions((query: UserPageQuery = {}) => {
-  const { $api } = useNuxtApp();
-
   return {
     key: USER_QUERY_KEYS.page(query),
-    query: () => $api.users.get({ query }).then(res => res.data),
+    query: () => api.users.get({ query }).then(res => res.data),
   };
 });

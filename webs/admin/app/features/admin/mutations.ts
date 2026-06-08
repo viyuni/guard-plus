@@ -16,7 +16,6 @@ function useInvalidateAdmins() {
 }
 
 export const useCreateAdmin = defineMutation(() => {
-  const { $api } = useNuxtApp();
   const invalidateAdmins = useInvalidateAdmins();
 
   return useMutation({
@@ -25,14 +24,13 @@ export const useCreateAdmin = defineMutation(() => {
       successMessage: '管理员已创建',
     },
     mutation(body: AdminCreateBody) {
-      return $api.admin.post(body);
+      return api.admin.post(body);
     },
     onSettled: invalidateAdmins,
   });
 });
 
 export const useUpdateAdmin = defineMutation(() => {
-  const { $api } = useNuxtApp();
   const invalidateAdmins = useInvalidateAdmins();
 
   return useMutation({
@@ -41,14 +39,13 @@ export const useUpdateAdmin = defineMutation(() => {
       successMessage: '管理员已更新',
     },
     mutation(input: { adminId: string; body: SuperAdminUpdateBody }) {
-      return $api.admin({ adminId: input.adminId }).patch(input.body);
+      return api.admin({ adminId: input.adminId }).patch(input.body);
     },
     onSettled: invalidateAdmins,
   });
 });
 
 export const useUpdateCurrentAdmin = defineMutation(() => {
-  const { $api } = useNuxtApp();
   const authStore = useAuthStore();
 
   return useMutation({
@@ -57,7 +54,7 @@ export const useUpdateCurrentAdmin = defineMutation(() => {
       successMessage: '账户信息已更新',
     },
     mutation(body: AdminUpdateBody) {
-      return $api.admin.me.patch(body);
+      return api.admin.me.patch(body);
     },
     onSuccess({ data }) {
       if (data && authStore.user) {
@@ -71,21 +68,18 @@ export const useUpdateCurrentAdmin = defineMutation(() => {
 });
 
 export const useUpdateCurrentAdminPassword = defineMutation(() => {
-  const { $api } = useNuxtApp();
-
   return useMutation({
     meta: {
       showToast: true,
       successMessage: '账户密码已修改',
     },
     mutation(body: AdminUpdatePasswordBody) {
-      return $api.admin.updatePassword.patch(body);
+      return api.admin.updatePassword.patch(body);
     },
   });
 });
 
 export const useBanAdmin = defineMutation(() => {
-  const { $api } = useNuxtApp();
   const invalidateAdmins = useInvalidateAdmins();
 
   return useMutation({
@@ -94,14 +88,13 @@ export const useBanAdmin = defineMutation(() => {
       successMessage: '管理员已封禁',
     },
     mutation(adminId: string) {
-      return $api.admin({ adminId }).ban.patch();
+      return api.admin({ adminId }).ban.patch();
     },
     onSettled: invalidateAdmins,
   });
 });
 
 export const useRestoreAdmin = defineMutation(() => {
-  const { $api } = useNuxtApp();
   const invalidateAdmins = useInvalidateAdmins();
 
   return useMutation({
@@ -110,22 +103,20 @@ export const useRestoreAdmin = defineMutation(() => {
       successMessage: '管理员已恢复',
     },
     mutation(adminId: string) {
-      return $api.admin({ adminId }).restore.patch();
+      return api.admin({ adminId }).restore.patch();
     },
     onSettled: invalidateAdmins,
   });
 });
 
 export const useResetAdminPassword = defineMutation(() => {
-  const { $api } = useNuxtApp();
-
   return useMutation({
     meta: {
       showToast: true,
       successMessage: '管理员密码已重置',
     },
     mutation(adminId: string) {
-      return $api.admin({ adminId }).resetPassword.patch();
+      return api.admin({ adminId }).resetPassword.patch();
     },
   });
 });

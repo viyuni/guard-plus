@@ -15,7 +15,6 @@ function useInvalidateProducts() {
 }
 
 export const useAdjustProductStock = defineMutation(() => {
-  const { $api } = useNuxtApp();
   const invalidateProducts = useInvalidateProducts();
 
   return useMutation({
@@ -24,14 +23,13 @@ export const useAdjustProductStock = defineMutation(() => {
       successMessage: '库存已调整',
     },
     mutation(input: { productId: string; body: StockAdjustmentBody }) {
-      return $api.products({ productId: input.productId }).stock.adjust.patch(input.body);
+      return api.products({ productId: input.productId }).stock.adjust.patch(input.body);
     },
     onSettled: invalidateProducts,
   });
 });
 
 export const useCreateProduct = defineMutation(() => {
-  const { $api } = useNuxtApp();
   const invalidateProducts = useInvalidateProducts();
 
   return useMutation({
@@ -40,14 +38,13 @@ export const useCreateProduct = defineMutation(() => {
       successMessage: '商品已创建',
     },
     mutation(body: CreateProductBody) {
-      return $api.products.post(body);
+      return api.products.post(body);
     },
     onSettled: invalidateProducts,
   });
 });
 
 export const useUpdateProduct = defineMutation(() => {
-  const { $api } = useNuxtApp();
   const invalidateProducts = useInvalidateProducts();
 
   return useMutation({
@@ -56,14 +53,13 @@ export const useUpdateProduct = defineMutation(() => {
       successMessage: '商品已更新',
     },
     mutation(input: { productId: string; body: UpdateProductBody }) {
-      return $api.products({ productId: input.productId }).put(input.body);
+      return api.products({ productId: input.productId }).put(input.body);
     },
     onSettled: invalidateProducts,
   });
 });
 
 export const useUpdateProductCover = defineMutation(() => {
-  const { $api } = useNuxtApp();
   const invalidateProducts = useInvalidateProducts();
 
   return useMutation({
@@ -72,14 +68,13 @@ export const useUpdateProductCover = defineMutation(() => {
       successMessage: '商品封面已更新',
     },
     mutation(input: { productId: string; body: ProductCoverUploadBody }) {
-      return $api.products({ productId: input.productId }).cover.put(input.body);
+      return api.products({ productId: input.productId }).cover.put(input.body);
     },
     onSettled: invalidateProducts,
   });
 });
 
 export const useEnableProduct = defineMutation(() => {
-  const { $api } = useNuxtApp();
   const invalidateProducts = useInvalidateProducts();
 
   return useMutation({
@@ -88,14 +83,13 @@ export const useEnableProduct = defineMutation(() => {
       successMessage: '商品已上架',
     },
     mutation(productId: string) {
-      return $api.products({ productId }).enable.patch();
+      return api.products({ productId }).enable.patch();
     },
     onSettled: invalidateProducts,
   });
 });
 
 export const useDisableProduct = defineMutation(() => {
-  const { $api } = useNuxtApp();
   const invalidateProducts = useInvalidateProducts();
 
   return useMutation({
@@ -104,14 +98,13 @@ export const useDisableProduct = defineMutation(() => {
       successMessage: '商品已下架',
     },
     mutation(productId: string) {
-      return $api.products({ productId }).disable.patch();
+      return api.products({ productId }).disable.patch();
     },
     onSettled: invalidateProducts,
   });
 });
 
 export const useDeleteProduct = defineMutation(() => {
-  const { $api } = useNuxtApp();
   const invalidateProducts = useInvalidateProducts();
 
   return useMutation({
@@ -120,7 +113,7 @@ export const useDeleteProduct = defineMutation(() => {
       successMessage: '商品已删除',
     },
     mutation(productId: string) {
-      return $api.products({ productId }).delete();
+      return api.products({ productId }).delete();
     },
     onSettled: invalidateProducts,
   });
