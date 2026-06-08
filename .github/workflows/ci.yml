@@ -77,7 +77,7 @@ jobs:
         run: vpr check
 
       - name: Test
-        run: vpr test:ci
+        run: vpr @server/app#test:ci
 
       - name: Show test service logs
         if: failure()
