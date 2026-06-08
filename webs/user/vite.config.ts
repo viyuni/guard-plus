@@ -12,11 +12,8 @@ export default defineConfig({
       preview: {
         command: 'nuxt preview',
       },
-      postinstall: {
-        command: 'nuxt prepare',
-      },
       typecheck: {
-        command: 'nuxt typecheck',
+        command: 'golar typecheck',
         input: [{ auto: true }, '!**/*.tsbuildinfo', '!.nuxt/**'],
       },
     },

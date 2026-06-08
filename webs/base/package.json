@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prepare": "nuxt prepare"
+    "prepare": "nuxt prepare",
+    "postinstall": "nuxt prepare"
   },
   "dependencies": {
     "@elysia/eden": "catalog:",
@@ -27,7 +28,9 @@
     "vue-sonner": "catalog:"
   },
   "devDependencies": {
+    "@golar/vue": "catalog:",
     "@tailwindcss/vite": "catalog:",
-    "@vueuse/nuxt": "catalog:"
+    "@vueuse/nuxt": "catalog:",
+    "golar": "catalog:"
   }
 }

@@ -85,12 +85,13 @@
     "vue-sonner": "catalog:"
   },
   "devDependencies": {
+    "@golar/vue": "catalog:",
     "@nuxt/kit": "catalog:",
     "@tsconfig/node24": "catalog:",
     "@typescript/native-preview": "catalog:",
     "@vue/tsconfig": "catalog:",
     "bun-types": "catalog:",
-    "typescript": "catalog:",
-    "vue-tsc": "catalog:"
+    "golar": "catalog:",
+    "typescript": "catalog:"
   }
 }

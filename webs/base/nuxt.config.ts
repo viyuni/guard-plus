@@ -57,7 +57,7 @@ export default defineNuxtConfig({
       },
     },
     sharedTsConfig: {
-      include: ['../colada.options.ts'],
+      include: ['../colada.options.ts', '../golar.config.ts'],
     },
   },
   fonts: {
