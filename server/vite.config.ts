@@ -28,12 +28,13 @@ export default defineConfig({
     dts: {
       emitDtsOnly: true,
     },
+    clean: false,
   },
   run: {
     tasks: {
       dev: {
         cache: false,
-        command: 'bun scripts/dev.ts',
+        command: 'bun scripts/dev/index.ts',
         dependsOn: ['db:push'],
       },
       'dev:admin': {
