@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "vp run @web/base#prepare && nuxt build"
+    "build": "vp run @web/base#prepare && nuxt build",
+    "prepare": "nuxt prepare",
+    "postinstall": "nuxt prepare"
   },
   "dependencies": {
     "@elysia/eden": "catalog:",
@@ -33,7 +35,8 @@
     "vue-sonner": "catalog:"
   },
   "devDependencies": {
-    "rolldown": "catalog:",
-    "vue-tsc": "catalog:"
+    "@golar/vue": "catalog:",
+    "golar": "catalog:",
+    "rolldown": "catalog:"
   }
 }
