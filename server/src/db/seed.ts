@@ -586,15 +586,19 @@ export async function seedV2(targetDb = db) {
 }
 
 if (import.meta.main) {
-  const databaseUrl = Bun.env.DATABASE_URL;
+  try {
+    const databaseUrl = Bun.env.DATABASE_URL;
 
-  if (!databaseUrl) {
-    throw new Error('DATABASE_URL is required to seed database.');
+    if (!databaseUrl) {
+      throw new Error('DATABASE_URL is required to seed database.');
+    }
+
+    const result = await seedV2(createDatabase(databaseUrl));
+
+    console.log(
+      `Seed completed: ${result.admins} admins, ${result.users} users, ${result.pointTypes} point types, ${result.rewardRules} reward rules, ${result.pointConversionRules} point conversion rules, ${result.biliEvents} bili guard events, ${result.products} products, ${result.productStockMovements} product stock movements.`,
+    );
+  } catch (e) {
+    console.error(e);
   }
-
-  const result = await seedV2(createDatabase(databaseUrl));
-
-  console.log(
-    `Seed completed: ${result.admins} admins, ${result.users} users, ${result.pointTypes} point types, ${result.rewardRules} reward rules, ${result.pointConversionRules} point conversion rules, ${result.biliEvents} bili guard events, ${result.products} products, ${result.productStockMovements} product stock movements.`,
-  );
 }

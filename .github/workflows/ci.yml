@@ -28,7 +28,7 @@ jobs:
         run: vp install --frozen-lockfile
 
       - name: Start test services
-        run: docker compose -f server/docker-compose.test.yml up -d
+        run: docker compose -f server/compose.test.yml up -d
 
       - name: Configure test environment
         run: |
@@ -75,4 +75,4 @@ jobs:
         run: vpr check
 
       - name: Test
-        run: vpr test
+        run: vpr test:ci

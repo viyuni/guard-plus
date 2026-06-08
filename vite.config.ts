@@ -43,11 +43,6 @@ export default defineConfig({
       'release:prepare': {
         command: 'changelogen --bump',
       },
-      deploy: {
-        cache: false,
-        command:
-          'sudo docker compose --env-file server/.env.prod -f server/docker-compose.prod.yml up -d --build --force-recreate',
-      },
     },
   },
   fmt: {
