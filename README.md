@@ -25,9 +25,9 @@
 </p>
 
 <p align="center">
-  <a href="./README.md">English</a>
+  <strong>English</strong>
   ·
-  <strong>简体中文</strong>
+  <a href="./README.zh-CN.md">简体中文</a>
 </p>
 
 Guard Plus is a rewards management and fulfillment system for Bilibili Live Fleet memberships. It helps streamers, operators, and administrators manage reward rules, fulfillment records, and claim flows for Fleet members such as Captain, Admiral, and Governor supporters.
