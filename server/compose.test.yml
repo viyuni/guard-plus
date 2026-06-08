@@ -1,0 +1,30 @@
+name: guard-plus-test
+
+services:
+  db:
+    image: postgres:18-alpine
+    container_name: gp-db-test
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: guard_plus
+      POSTGRES_DB: guard-plus-test
+    ports:
+      - '8799:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U admin -d guard-plus-test']
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 5s
+
+  redis:
+    image: redis:8-alpine
+    container_name: gp-redis-test
+    ports:
+      - '8798:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 2s

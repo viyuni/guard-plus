@@ -1,0 +1,82 @@
+name: guard-plus-dev
+
+x-logging: &logging
+  driver: local
+  options:
+    max-size: 20m
+    max-file: 5
+
+services:
+  db:
+    image: postgres:18-alpine
+    container_name: db-dev
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-guard_plus}
+      POSTGRES_DB: ${POSTGRES_DB:-guard-plus}
+    ports:
+      - target: 5432
+        published: ${GUARD_PLUS_POSTGRES_PUBLISHED_PORT:-8699}
+        protocol: tcp
+        host_ip: 127.0.0.1
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - guard-plus-dev
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis-dev
+    restart: unless-stopped
+    logging: *logging
+    command:
+      - redis-server
+      - --appendonly
+      - 'yes'
+      - --appendfsync
+      - everysec
+      - --save
+      - '900 1'
+      - --save
+      - '300 10'
+      - --save
+      - '60 10000'
+    ports:
+      - target: 6379
+        published: ${GUARD_PLUS_REDIS_PUBLISHED_PORT:-6379}
+        protocol: tcp
+        host_ip: 127.0.0.1
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - ping
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - guard-plus-dev
+
+volumes:
+  postgres-data:
+    name: guard-plus-dev-postgres-data
+
+  redis-data:
+    name: guard-plus-dev-redis-data
+
+networks:
+  guard-plus-dev:
+    name: guard-plus-dev

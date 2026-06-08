@@ -68,6 +68,14 @@ export default defineConfig({
       check: {
         command: 'vp check',
       },
+      test: {
+        command: [
+          'docker compose -f compose.test.yml down',
+          'docker compose -f compose.test.yml up -d --wait',
+          'vpr db:push:test',
+          bunTest('test'),
+        ],
+      },
       'db:generate': {
         command: bunEnv('drizzle-kit generate'),
         input: [...inputs.dbPush, '.env'],
@@ -90,6 +98,27 @@ export default defineConfig({
       'db:studio': {
         cache: false,
         command: bunEnv('drizzle-kit studio'),
+      },
+      'infra:up': {
+        cache: false,
+        command: ['docker compose -f compose.infra.yml up -d', 'vpr db:push', 'vpr db:seed'],
+      },
+      'infra:down': {
+        cache: false,
+        command: 'docker compose -f compose.infra.yml down',
+      },
+      'infra:logs': {
+        cache: false,
+        command: 'docker compose -f compose.infra.yml logs -f',
+      },
+      'infra:reset': {
+        cache: false,
+        command: ['vpr infra:down', 'vpr infra:up'],
+      },
+      deploy: {
+        cache: false,
+        command:
+          'docker compose --env-file .env.prod -f compose.prod.yml up -d --build --force-recreate',
       },
     },
   },
