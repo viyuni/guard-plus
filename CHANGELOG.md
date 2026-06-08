@@ -1,3 +1,49 @@
+## v0.0.1-beta.4
+
+[compare changes](https://github.com/viyuni/guard-plus/compare/v0.0.1-beta.3...v0.0.1-beta.4)
+
+### 🩹 Fixes
+
+- **test:** Limit CI test concurrency to prevent OOM ([a105284](https://github.com/viyuni/guard-plus/commit/a105284))
+- **ci:** Align test container names with workflow ([de40c41](https://github.com/viyuni/guard-plus/commit/de40c41))
+- **ci:** Run server test task by workspace name ([a9764b8](https://github.com/viyuni/guard-plus/commit/a9764b8))
+- **ci:** Avoid duplicate runs for pull request branches ([1b62a96](https://github.com/viyuni/guard-plus/commit/1b62a96))
+
+### 💅 Refactors
+
+- **web/admin:** Centralize api access utility ([ffda631](https://github.com/viyuni/guard-plus/commit/ffda631))
+- **web/admin:** Remove duplicate login mutation hook ([8ccd854](https://github.com/viyuni/guard-plus/commit/8ccd854))
+- **server:** Add alias for shared test helpers ([859acde](https://github.com/viyuni/guard-plus/commit/859acde))
+- **server:** Improve dev runner with process filters and type watching ([32176d7](https://github.com/viyuni/guard-plus/commit/32176d7))
+
+### 📖 Documentation
+
+- Add project badges to README ([f315819](https://github.com/viyuni/guard-plus/commit/f315819))
+- Add Chinese README ([6ed8158](https://github.com/viyuni/guard-plus/commit/6ed8158))
+
+### 📦 Build
+
+- **config:** Add production deploy task ([d1279d0](https://github.com/viyuni/guard-plus/commit/d1279d0))
+- **config:** Update vite plus tasks ([5726031](https://github.com/viyuni/guard-plus/commit/5726031))
+- **config:** Prepare server types before check ([b494216](https://github.com/viyuni/guard-plus/commit/b494216))
+
+### 🏡 Chore
+
+- **server:** Reorganize compose files and add workflow scripts ([66a7445](https://github.com/viyuni/guard-plus/commit/66a7445))
+
+### ✅ Tests
+
+- **server:** Enable smol test mode ([d486dc8](https://github.com/viyuni/guard-plus/commit/d486dc8))
+- **server:** Stabilize integration test resources ([c13cc4f](https://github.com/viyuni/guard-plus/commit/c13cc4f))
+
+### 🤖 CI
+
+- **config:** Add check and test workflow ([371dbb1](https://github.com/viyuni/guard-plus/commit/371dbb1))
+
+### ❤️ Contributors
+
+- Byc ([@YanChenBai](https://github.com/YanChenBai))
+
 ## v0.0.1-beta.3
 
 [compare changes](https://github.com/viyuni/guard-plus/compare/v0.0.1-beta.2...v0.0.1-beta.3)
