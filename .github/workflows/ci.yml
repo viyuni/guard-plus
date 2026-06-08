@@ -27,9 +27,6 @@ jobs:
       - name: Install dependencies
         run: vp install --frozen-lockfile
 
-      - name: Start test services
-        run: docker compose -f server/compose.test.yml up -d
-
       - name: Configure test environment
         run: |
           cat > server/.env.test <<'EOF'
@@ -49,6 +46,9 @@ jobs:
           REDIS_MAX_RETRIES=100
           EOF
 
+      - name: Start test services
+        run: docker compose -f server/compose.test.yml up -d
+
       - name: Wait for test database
         run: |
           for i in {1..30}; do
@@ -57,6 +57,7 @@ jobs:
             fi
             sleep 1
           done
+
           docker logs gp-db-test
           exit 1
 
@@ -68,6 +69,7 @@ jobs:
             fi
             sleep 1
           done
+
           docker logs gp-redis-test
           exit 1
 
@@ -76,3 +78,11 @@ jobs:
 
       - name: Test
         run: vpr test:ci
+
+      - name: Show test service logs
+        if: failure()
+        run: docker compose -f server/compose.test.yml logs --no-color
+
+      - name: Stop test services
+        if: always()
+        run: docker compose -f server/compose.test.yml down
