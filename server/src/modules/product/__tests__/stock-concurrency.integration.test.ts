@@ -3,13 +3,7 @@ import { expect, it } from 'bun:test';
 import { count, eq } from 'drizzle-orm';
 
 import { productStockMovements } from '#db/schema';
-
-import { StockIdempotencyKey } from '..';
-import {
-  countFulfilled,
-  countRejected,
-  runConcurrent,
-} from '../../../__tests__/helpers/concurrency';
+import { countFulfilled, countRejected, runConcurrent } from '#test-helpers/concurrency';
 import {
   createDeps,
   db,
@@ -20,7 +14,9 @@ import {
   newBatch,
   seedPointType,
   seedProduct,
-} from '../../../__tests__/helpers/concurrency-fixtures';
+} from '#test-helpers/concurrency-fixtures';
+
+import { StockIdempotencyKey } from '..';
 import { ProductNameExistsError, StockAmountInvalidError } from '../domain';
 
 installConcurrencyTestHooks();

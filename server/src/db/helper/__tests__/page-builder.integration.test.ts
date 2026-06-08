@@ -5,8 +5,7 @@ import { like } from 'drizzle-orm';
 import type { DbClient } from '#db';
 import { QueryPageBuilder } from '#db/helper';
 import { pointTypes } from '#db/schema';
-
-import { getTestDatabase } from '../../../__tests__/helpers/test-database';
+import { getTestDatabase } from '#test-helpers/test-database';
 
 const testDatabaseUrl = Bun.env.TEST_DATABASE_URL;
 const describeWithDatabase = testDatabaseUrl ? describe : describe.skip;

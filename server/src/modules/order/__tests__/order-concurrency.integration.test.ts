@@ -6,12 +6,7 @@ import { orders, pointTransactions, productStockMovements } from '#db/schema';
 import { OrderIdempotencyKey } from '#modules/order';
 import { PointIdempotencyKey } from '#modules/point';
 import { ProductUnavailableError, StockIdempotencyKey } from '#modules/product';
-
-import {
-  countFulfilled,
-  countRejected,
-  runConcurrent,
-} from '../../../__tests__/helpers/concurrency';
+import { countFulfilled, countRejected, runConcurrent } from '#test-helpers/concurrency';
 import {
   createDeps,
   db,
@@ -24,7 +19,7 @@ import {
   seedPointType,
   seedProduct,
   seedUser,
-} from '../../../__tests__/helpers/concurrency-fixtures';
+} from '#test-helpers/concurrency-fixtures';
 
 installConcurrencyTestHooks();
 

@@ -3,19 +3,7 @@ import { expect, it } from 'bun:test';
 import { count, eq } from 'drizzle-orm';
 
 import { pointTransactions } from '#db/schema';
-
-import {
-  PointAccountMismatchError,
-  PointAmountInvalidError,
-  PointIdempotencyKey,
-  PointTransactionAlreadyReversedError,
-  PointTransactionIdempotencyConflictError,
-} from '..';
-import {
-  countFulfilled,
-  countRejected,
-  runConcurrent,
-} from '../../../__tests__/helpers/concurrency';
+import { countFulfilled, countRejected, runConcurrent } from '#test-helpers/concurrency';
 import {
   createDeps,
   db,
@@ -26,7 +14,15 @@ import {
   newBatch,
   seedPointType,
   seedUser,
-} from './concurrency-test-utils';
+} from '#test-helpers/concurrency-fixtures';
+
+import {
+  PointAccountMismatchError,
+  PointAmountInvalidError,
+  PointIdempotencyKey,
+  PointTransactionAlreadyReversedError,
+  PointTransactionIdempotencyConflictError,
+} from '..';
 
 installConcurrencyTestHooks();
 

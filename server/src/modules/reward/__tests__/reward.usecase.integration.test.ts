@@ -5,7 +5,6 @@ import { count, eq } from 'drizzle-orm';
 import { AuthUseCase as UserAuthUseCase } from '#apps/user/modules/auth/usecase';
 import { pointTransactions } from '#db/schema';
 import type { BiliRegisterUseCase } from '#modules/auth';
-
 import {
   createDeps,
   createBiliGuardEvent,
@@ -18,7 +17,8 @@ import {
   newBatch,
   seedPointType,
   seedUser,
-} from '../../../__tests__/helpers/concurrency-fixtures';
+} from '#test-helpers/concurrency-fixtures';
+
 import { PointIdempotencyKey } from '../../point';
 import { type BiliGuardRewardEvent, RewardRuleNameExistsError } from '../domain';
 

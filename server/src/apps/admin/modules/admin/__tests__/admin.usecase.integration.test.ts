@@ -4,10 +4,10 @@ import { eq, inArray, like } from 'drizzle-orm';
 
 import type { DbClient } from '#db';
 import { admins } from '#db/schema';
+import { getTestDatabase } from '#test-helpers/test-database';
 import { InvalidCredentialsError } from '#utils';
 import { PasswordUtil } from '#utils';
 
-import { getTestDatabase } from '../../../../../__tests__/helpers/test-database';
 import { AdminNotFoundError, AdminSuperAdminCannotBeBannedError } from '../domain/errors';
 import { AdminRepository } from '../repository';
 import { AdminUseCase } from '../usecase';

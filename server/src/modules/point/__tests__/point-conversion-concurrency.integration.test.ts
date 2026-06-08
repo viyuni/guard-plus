@@ -3,21 +3,7 @@ import { expect, it } from 'bun:test';
 import { and, count, eq } from 'drizzle-orm';
 
 import { pointAccounts, pointConversionRules, pointTransactions } from '#db/schema';
-
-import {
-  PointAccountBannedError,
-  PointConversionRuleInvalidError,
-  PointConversionRuleNameExistsError,
-  PointConversionRulePairExistsError,
-  PointTypeNameExistsError,
-  PointConversionRuleUnavailableError,
-  PointIdempotencyKey,
-} from '..';
-import {
-  countFulfilled,
-  countRejected,
-  runConcurrent,
-} from '../../../__tests__/helpers/concurrency';
+import { countFulfilled, countRejected, runConcurrent } from '#test-helpers/concurrency';
 import {
   createConversionRule,
   createDeps,
@@ -30,7 +16,17 @@ import {
   seedConversionFixture,
   seedPointType,
   seedUser,
-} from './concurrency-test-utils';
+} from '#test-helpers/concurrency-fixtures';
+
+import {
+  PointAccountBannedError,
+  PointConversionRuleInvalidError,
+  PointConversionRuleNameExistsError,
+  PointConversionRulePairExistsError,
+  PointTypeNameExistsError,
+  PointConversionRuleUnavailableError,
+  PointIdempotencyKey,
+} from '..';
 
 installConcurrencyTestHooks();
 

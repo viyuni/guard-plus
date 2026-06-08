@@ -37,7 +37,8 @@
       "#utils": ["./src/utils/index.ts"],
       "#utils/*": ["./src/utils/*"],
       "#packages/schema/*": ["../packages/schema/src/*"],
-      "#queues": ["./src/queues/index.ts"]
+      "#queues": ["./src/queues/index.ts"],
+      "#test-helpers/*": ["./src/__tests__/helpers/*"]
     }
   }
 }
