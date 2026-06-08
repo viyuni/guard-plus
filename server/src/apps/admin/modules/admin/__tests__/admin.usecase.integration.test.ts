@@ -1,12 +1,13 @@
-import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test';
 
 import { eq, inArray, like } from 'drizzle-orm';
 
-import { createDatabase, type DbClient } from '#db';
+import type { DbClient } from '#db';
 import { admins } from '#db/schema';
 import { InvalidCredentialsError } from '#utils';
 import { PasswordUtil } from '#utils';
 
+import { getTestDatabase } from '../../../../../__tests__/helpers/test-database';
 import { AdminNotFoundError, AdminSuperAdminCannotBeBannedError } from '../domain/errors';
 import { AdminRepository } from '../repository';
 import { AdminUseCase } from '../usecase';
@@ -82,9 +83,13 @@ async function clearAdmins() {
   await db.delete(admins);
 }
 
+beforeAll(() => {
+  if (!testDatabaseUrl) return;
+  db = getTestDatabase();
+});
+
 beforeEach(async () => {
   if (!testDatabaseUrl) return;
-  db = createDatabase(testDatabaseUrl);
   await clearAdmins();
 });
 
@@ -97,7 +102,6 @@ afterEach(async () => {
     }
   } finally {
     batches.clear();
-    await db.$client.end();
   }
 });
 

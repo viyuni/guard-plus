@@ -1,10 +1,10 @@
-import { afterEach, beforeEach, describe, expect } from 'bun:test';
+import { afterEach, beforeAll, describe, expect } from 'bun:test';
 
 import type { CreatePointConversionRuleBody } from '@shared/schema/point-conversion';
 import type { CreateRewardRuleBody } from '@shared/schema/reward';
 import { and, inArray, like } from 'drizzle-orm';
 
-import { createDatabase, type DbClient } from '#db';
+import type { DbClient } from '#db';
 import {
   orders,
   biliEvents,
@@ -20,6 +20,7 @@ import {
 
 import { createContainer } from '../../context';
 import type { BiliGuardRewardEvent } from '../../modules/reward';
+import { getTestDatabase } from './test-database';
 
 const testDatabaseUrl = Bun.env.TEST_DATABASE_URL;
 const batches = new Set<string>();
@@ -29,9 +30,9 @@ export const describeWithDatabase = testDatabaseUrl ? describe : describe.skip;
 export let db: DbClient;
 
 export function installConcurrencyTestHooks() {
-  beforeEach(() => {
+  beforeAll(() => {
     if (!testDatabaseUrl) return;
-    db = createDatabase(testDatabaseUrl);
+    db = getTestDatabase();
   });
 
   afterEach(async () => {
@@ -43,7 +44,6 @@ export function installConcurrencyTestHooks() {
       }
     } finally {
       batches.clear();
-      await db.$client.end();
     }
   });
 }

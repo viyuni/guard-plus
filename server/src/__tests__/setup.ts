@@ -12,3 +12,9 @@ Bun.env.IMAGE_SAVE_PATH ??= './tmp/test-images';
 Bun.env.PORT ??= '0';
 
 mkdirSync(Bun.env.IMAGE_SAVE_PATH, { recursive: true });
+
+process.once('beforeExit', async () => {
+  const { closeTestDatabase } = await import('./helpers/test-database');
+
+  await closeTestDatabase();
+});

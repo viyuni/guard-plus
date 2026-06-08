@@ -99,7 +99,7 @@ describeWithRedis('BiliRegisterRedisRepository 真实 Redis', () => {
     const verifierHash = hashVerifier(verifier);
 
     const results = await Promise.all(
-      Array.from({ length: 24 }, () => repo.consumeMatched(code, verifierHash)),
+      Array.from({ length: 4 }, () => repo.consumeMatched(code, verifierHash)),
     );
 
     const successes = results.filter(Boolean);

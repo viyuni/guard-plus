@@ -6,6 +6,9 @@
   "exports": {
     ".": "./dist/eden.d.mts"
   },
+  "scripts": {
+    "test": "vp run db:push:test && bun --bun --env-file=.env.test test --concurrent --max-concurrency 1"
+  },
   "dependencies": {
     "@elysia/cors": "^1.4.2",
     "@elysia/html": "^1.4.1",

@@ -68,10 +68,6 @@ export default defineConfig({
       check: {
         command: 'vp check',
       },
-      test: {
-        command: bunTest('test'),
-        dependsOn: ['db:push:test'],
-      },
       'db:generate': {
         command: bunEnv('drizzle-kit generate'),
         input: [...inputs.dbPush, '.env'],
