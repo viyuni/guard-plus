@@ -69,7 +69,7 @@ export default defineConfig({
         command: 'vp check',
       },
       test: {
-        command: bunTest('test --parallel=1 --max-concurrency=4'),
+        command: bunTest('test'),
         dependsOn: ['db:push:test'],
       },
       'db:generate': {
