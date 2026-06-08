@@ -11,7 +11,6 @@ function useInvalidateUsers() {
 }
 
 export const useCreateUser = defineMutation(() => {
-  const { $api } = useNuxtApp();
   const invalidateUsers = useInvalidateUsers();
 
   return useMutation({
@@ -20,14 +19,13 @@ export const useCreateUser = defineMutation(() => {
       successMessage: '用户创建成功',
     },
     mutation(body: UserRegisterBody) {
-      return $api.users.post(body);
+      return api.users.post(body);
     },
     onSettled: invalidateUsers,
   });
 });
 
 export const useBanUser = defineMutation(() => {
-  const { $api } = useNuxtApp();
   const invalidateUsers = useInvalidateUsers();
 
   return useMutation({
@@ -36,14 +34,13 @@ export const useBanUser = defineMutation(() => {
       successMessage: '用户已封禁',
     },
     mutation(userId: string) {
-      return $api.users({ userId }).ban.patch();
+      return api.users({ userId }).ban.patch();
     },
     onSettled: invalidateUsers,
   });
 });
 
 export const useUpdateUser = defineMutation(() => {
-  const { $api } = useNuxtApp();
   const invalidateUsers = useInvalidateUsers();
 
   return useMutation({
@@ -52,14 +49,13 @@ export const useUpdateUser = defineMutation(() => {
       successMessage: '用户信息已更新',
     },
     mutation(input: { userId: string; body: UpdateUserBody }) {
-      return $api.users({ userId: input.userId }).patch(input.body);
+      return api.users({ userId: input.userId }).patch(input.body);
     },
     onSettled: invalidateUsers,
   });
 });
 
 export const useRestoreUser = defineMutation(() => {
-  const { $api } = useNuxtApp();
   const invalidateUsers = useInvalidateUsers();
 
   return useMutation({
@@ -68,28 +64,25 @@ export const useRestoreUser = defineMutation(() => {
       successMessage: '用户已恢复',
     },
     mutation(userId: string) {
-      return $api.users({ userId }).restore.patch();
+      return api.users({ userId }).restore.patch();
     },
     onSettled: invalidateUsers,
   });
 });
 
 export const useResetUserPassword = defineMutation(() => {
-  const { $api } = useNuxtApp();
-
   return useMutation({
     meta: {
       showToast: true,
       successMessage: '密码已重置',
     },
     mutation(userId: string) {
-      return $api.users({ userId }).resetPassword.patch();
+      return api.users({ userId }).resetPassword.patch();
     },
   });
 });
 
 export const useAdjustUserPoints = defineMutation(() => {
-  const { $api } = useNuxtApp();
   const invalidateUsers = useInvalidateUsers();
 
   return useMutation({
@@ -98,7 +91,7 @@ export const useAdjustUserPoints = defineMutation(() => {
       successMessage: '积分调整成功',
     },
     mutation(body: AdjustBalanceBody) {
-      return $api.points.accounts.balance.adjust.patch(body);
+      return api.points.accounts.balance.adjust.patch(body);
     },
     onSettled: invalidateUsers,
   });

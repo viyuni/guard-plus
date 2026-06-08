@@ -15,7 +15,6 @@ function useInvalidateOrders() {
 }
 
 export const useCompleteOrder = defineMutation(() => {
-  const { $api } = useNuxtApp();
   const invalidateOrders = useInvalidateOrders();
 
   return useMutation({
@@ -24,14 +23,13 @@ export const useCompleteOrder = defineMutation(() => {
       successMessage: '订单已完成',
     },
     mutation(orderId: string) {
-      return $api.orders({ orderId }).complete.patch();
+      return api.orders({ orderId }).complete.patch();
     },
     onSettled: invalidateOrders,
   });
 });
 
 export const useRefundOrder = defineMutation(() => {
-  const { $api } = useNuxtApp();
   const invalidateOrders = useInvalidateOrders();
 
   return useMutation({
@@ -40,14 +38,13 @@ export const useRefundOrder = defineMutation(() => {
       successMessage: '订单已退款',
     },
     mutation(input: { orderId: string; body: RefundOrderBody }) {
-      return $api.orders({ orderId: input.orderId }).refund.patch(input.body);
+      return api.orders({ orderId: input.orderId }).refund.patch(input.body);
     },
     onSettled: invalidateOrders,
   });
 });
 
 export const useUpdateOrderExpress = defineMutation(() => {
-  const { $api } = useNuxtApp();
   const invalidateOrders = useInvalidateOrders();
 
   return useMutation({
@@ -56,14 +53,13 @@ export const useUpdateOrderExpress = defineMutation(() => {
       successMessage: '快递信息已更新',
     },
     mutation(input: { orderId: string; body: UpdateOrderExpressBody }) {
-      return $api.orders({ orderId: input.orderId }).express.patch(input.body);
+      return api.orders({ orderId: input.orderId }).express.patch(input.body);
     },
     onSettled: invalidateOrders,
   });
 });
 
 export const useUpdateOrderReceiver = defineMutation(() => {
-  const { $api } = useNuxtApp();
   const invalidateOrders = useInvalidateOrders();
 
   return useMutation({
@@ -72,22 +68,20 @@ export const useUpdateOrderReceiver = defineMutation(() => {
       successMessage: '收货信息已更新',
     },
     mutation(input: { orderId: string; body: UpdateOrderReceiverBody }) {
-      return $api.orders({ orderId: input.orderId }).receiver.patch(input.body);
+      return api.orders({ orderId: input.orderId }).receiver.patch(input.body);
     },
     onSettled: invalidateOrders,
   });
 });
 
 export const useExportOrders = defineMutation(() => {
-  const { $api } = useNuxtApp();
-
   return useMutation({
     meta: {
       showToast: true,
       successMessage: '订单已导出',
     },
     mutation(body: ExportOrdersBody) {
-      return $api.orders.export.post(body);
+      return api.orders.export.post(body);
     },
   });
 });

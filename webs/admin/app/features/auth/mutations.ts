@@ -7,7 +7,6 @@ export const useLogin = defineMutation(() => {
   const { updateSession } = useAuthStore();
   const route = useRoute();
   const router = useRouter();
-  const { $api } = useNuxtApp();
 
   return useMutation({
     meta: {
@@ -15,7 +14,7 @@ export const useLogin = defineMutation(() => {
       successMessage: '登录成功',
     },
     mutation(body: AdminLoginBody) {
-      return $api.auth.login.post(body);
+      return api.auth.login.post(body);
     },
     onSuccess({ data }) {
       if (data) {
@@ -31,7 +30,6 @@ export const useLogin = defineMutation(() => {
 export const useLogout = defineMutation(() => {
   const { clearSession } = useAuthStore();
   const router = useRouter();
-  const { $api } = useNuxtApp();
 
   return useMutation({
     meta: {
@@ -39,7 +37,7 @@ export const useLogout = defineMutation(() => {
       successMessage: '已退出登录',
     },
     mutation() {
-      return $api.auth.logout.post();
+      return api.auth.logout.post();
     },
     onSettled() {
       clearSession();

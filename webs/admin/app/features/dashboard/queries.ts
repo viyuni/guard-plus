@@ -7,10 +7,8 @@ export const DASHBOARD_QUERY_KEYS = {
 };
 
 export const dashboardOverviewQuery = defineQueryOptions((query: DashboardOverviewQuery = {}) => {
-  const { $api } = useNuxtApp();
-
   return {
     key: DASHBOARD_QUERY_KEYS.overview(query),
-    query: () => $api.dashboard.overview.get({ query }).then(res => res.data),
+    query: () => api.dashboard.overview.get({ query }).then(res => res.data),
   };
 });
