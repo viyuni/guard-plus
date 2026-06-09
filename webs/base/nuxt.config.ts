@@ -18,7 +18,7 @@ export default defineNuxtConfig({
   },
   css: [join(currentDir, './app/assets/main.css')],
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [tailwindcss() as any],
     optimizeDeps: {
       include: [
         '@elysia/eden',

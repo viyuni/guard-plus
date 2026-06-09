@@ -14,7 +14,7 @@ export default defineConfig({
         command: ['vpr @server/app#build:types', 'vp fmt', 'vp lint', 'vpr typecheck'],
       },
       typecheck: {
-        command: 'vpr -r --concurrency-limit 1 typecheck',
+        command: 'golar typecheck',
       },
       'typecheck:schema': {
         command: 'vpr --filter "@shared/schema" typecheck',
