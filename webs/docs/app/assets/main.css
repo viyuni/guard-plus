@@ -1,0 +1,174 @@
+@import 'tailwindcss';
+@import '@web/ui/style.css';
+@source '../../../ui/src';
+
+@theme {
+  --font-limelight: 'Limelight', 'sans-serif';
+  --font-mi-sans: 'MiSans', 'Noto Sans SC', 'sans-serif';
+}
+
+@layer base {
+  body {
+    --header-height: 72px;
+    min-height: 100vh;
+    min-height: 100svh;
+    overflow: hidden;
+    font-family: 'MiSans', 'Noto Sans SC', sans-serif;
+    font-weight: 450;
+  }
+}
+
+@layer base {
+  .markdown {
+    @apply text-foreground;
+  }
+
+  .markdown h1 {
+    @apply scroll-m-20 text-4xl font-extrabold tracking-tight text-balance;
+  }
+
+  .markdown h2 {
+    @apply mt-10 scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight transition-colors;
+  }
+
+  .markdown h3 {
+    @apply mt-8 scroll-m-20 text-2xl font-semibold tracking-tight;
+  }
+
+  .markdown h4 {
+    @apply mt-8 scroll-m-20 text-xl font-semibold tracking-tight;
+  }
+
+  .markdown h5 {
+    @apply mt-6 scroll-m-20 text-lg font-semibold tracking-tight;
+  }
+
+  .markdown h6 {
+    @apply mt-6 scroll-m-20 text-base font-semibold tracking-tight;
+  }
+
+  .markdown p {
+    @apply leading-7;
+  }
+
+  .markdown p:not(:first-child) {
+    @apply mt-6;
+  }
+
+  .markdown blockquote {
+    @apply mt-6 border-l-2 pl-6 italic;
+  }
+
+  .markdown ul {
+    @apply my-6 ml-6 list-disc;
+  }
+
+  .markdown ol {
+    @apply my-6 ml-6 list-decimal;
+  }
+
+  .markdown li {
+    @apply mt-2;
+  }
+
+  .markdown ul ul,
+  .markdown ul ol,
+  .markdown ol ul,
+  .markdown ol ol {
+    @apply my-2;
+  }
+
+  .markdown a {
+    @apply text-primary font-medium underline underline-offset-4;
+  }
+
+  .markdown strong {
+    @apply font-semibold;
+  }
+
+  .markdown em {
+    @apply italic;
+  }
+
+  .markdown del {
+    @apply text-muted-foreground line-through;
+  }
+
+  .markdown :not(pre) > code {
+    @apply bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold;
+  }
+
+  .markdown pre {
+    @apply bg-muted my-6 overflow-x-auto rounded-lg border p-4;
+  }
+
+  .markdown pre code {
+    @apply bg-transparent p-0 font-mono text-sm font-normal;
+  }
+
+  .markdown table {
+    @apply my-6 w-full border-collapse overflow-hidden;
+  }
+
+  .markdown thead tr {
+    @apply border-t;
+  }
+
+  .markdown tbody tr {
+    @apply even:bg-muted/50 border-t;
+  }
+
+  .markdown th {
+    @apply border px-4 py-2 text-left font-bold;
+  }
+
+  .markdown td {
+    @apply border px-4 py-2 text-left;
+  }
+
+  .markdown th[align='center'],
+  .markdown td[align='center'] {
+    @apply text-center;
+  }
+
+  .markdown th[align='right'],
+  .markdown td[align='right'] {
+    @apply text-right;
+  }
+
+  .markdown hr {
+    @apply border-border my-8;
+  }
+
+  .markdown img {
+    @apply my-6 h-auto max-w-full rounded-md;
+  }
+
+  .markdown figure {
+    @apply my-6;
+  }
+
+  .markdown figcaption {
+    @apply text-muted-foreground mt-2 text-center text-sm;
+  }
+
+  .markdown kbd {
+    @apply bg-muted text-muted-foreground pointer-events-none inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium select-none;
+  }
+
+  .markdown dl {
+    @apply my-6;
+  }
+
+  .markdown dt {
+    @apply mt-4 font-semibold;
+  }
+
+  .markdown dd {
+    @apply text-muted-foreground mt-1;
+  }
+
+  .markdown input[type='checkbox'] {
+    @apply mr-2 align-middle;
+  }
+}

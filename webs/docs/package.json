@@ -1,0 +1,22 @@
+{
+  "name": "docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vp run @web/base#prepare && nuxt build",
+    "prepare": "nuxt prepare",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@nuxt/content": "^3.14.0",
+    "@web/ui": "workspace:*",
+    "better-sqlite3": "^12.10.0",
+    "nuxt": "^4.4.7",
+    "vue": "^3.5.35",
+    "vue-router": "^5.1.0"
+  },
+  "devDependencies": {
+    "@golar/vue": "catalog:",
+    "golar": "catalog:"
+  }
+}
