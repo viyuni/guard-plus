@@ -24,27 +24,27 @@
   }
 
   .markdown h1 {
-    @apply scroll-m-20 text-4xl font-extrabold tracking-tight text-balance;
+    @apply scroll-m-20 text-3xl font-extrabold tracking-tight text-balance;
   }
 
   .markdown h2 {
-    @apply mt-10 scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight transition-colors;
+    @apply mt-10 scroll-m-20 pb-2 text-2xl font-semibold tracking-tight transition-colors;
   }
 
   .markdown h3 {
-    @apply mt-8 scroll-m-20 text-2xl font-semibold tracking-tight;
-  }
-
-  .markdown h4 {
     @apply mt-8 scroll-m-20 text-xl font-semibold tracking-tight;
   }
 
+  .markdown h4 {
+    @apply mt-8 scroll-m-20 text-lg font-semibold tracking-tight;
+  }
+
   .markdown h5 {
-    @apply mt-6 scroll-m-20 text-lg font-semibold tracking-tight;
+    @apply mt-6 scroll-m-20 text-base font-semibold tracking-tight;
   }
 
   .markdown h6 {
-    @apply mt-6 scroll-m-20 text-base font-semibold tracking-tight;
+    @apply mt-6 scroll-m-20 text-sm font-semibold tracking-tight;
   }
 
   .markdown p {
@@ -79,7 +79,7 @@
   }
 
   .markdown a {
-    @apply text-primary font-medium underline underline-offset-4;
+    @apply text-primary font-medium;
   }
 
   .markdown strong {
@@ -99,15 +99,17 @@
   }
 
   .markdown pre {
-    @apply bg-muted my-6 overflow-x-auto rounded-lg border p-4;
+    @apply overflow-x-auto rounded-lg;
   }
 
   .markdown pre code {
-    @apply bg-transparent p-0 font-mono text-sm font-normal;
+    @apply p-0 font-mono text-sm font-normal;
   }
 
   .markdown table {
-    @apply my-6 w-full border-collapse overflow-hidden;
+    @apply my-6 w-full border-collapse;
+    display: block;
+    overflow-x: auto;
   }
 
   .markdown thead tr {
@@ -170,5 +172,77 @@
 
   .markdown input[type='checkbox'] {
     @apply mr-2 align-middle;
+  }
+
+  .changelog {
+    @apply mt-6 text-sm;
+  }
+
+  .changelog h2 {
+    @apply scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight transition-colors first:mt-0;
+  }
+
+  .changelog h3 {
+    @apply mt-8 scroll-m-20 text-xl font-semibold tracking-tight;
+  }
+
+  .changelog h4 {
+    @apply mt-8 scroll-m-20 text-lg font-semibold tracking-tight;
+  }
+
+  .changelog p {
+    @apply leading-7;
+  }
+
+  .changelog p:not(:first-child) {
+    @apply mt-6;
+  }
+
+  .changelog ul {
+    @apply my-6 ml-6 list-disc;
+  }
+
+  .changelog li {
+    @apply mt-2;
+  }
+
+  .changelog blockquote {
+    @apply mt-6 border-l-2 pl-6 italic;
+  }
+
+  .changelog a {
+    @apply text-primary font-medium underline underline-offset-4;
+  }
+
+  .changelog code {
+    @apply bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold;
+  }
+
+  .changelog table {
+    @apply my-6 w-full;
+    display: block;
+    overflow-x: auto;
+  }
+
+  .changelog tr {
+    @apply even:bg-muted/50 m-0 border-t p-0;
+  }
+
+  .changelog th {
+    @apply border px-4 py-2 text-left font-bold;
+  }
+
+  .changelog td {
+    @apply border px-4 py-2 text-left;
+  }
+
+  .changelog th[align='center'],
+  .changelog td[align='center'] {
+    @apply text-center;
+  }
+
+  .changelog th[align='right'],
+  .changelog td[align='right'] {
+    @apply text-right;
   }
 }
