@@ -1,5 +1,5 @@
 {
   "permissions": {
-    "allow": []
+    "allow": ["WebFetch(domain:nuxt.com)", "Bash(timeout 15 npx nuxt dev)"]
   }
 }

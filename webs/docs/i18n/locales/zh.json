@@ -1,0 +1,31 @@
+{
+  "nav": {
+    "about": "关于",
+    "changelog": "更新日志",
+    "deploy": "部署指南"
+  },
+  "home": {
+    "title": "Guard Plus",
+    "subtitle": "Bilibili Live 大航海奖励系统",
+    "description": "Bilibili Live 大航海会员的奖励管理与发放系统。帮助主播、运营和管理员管理大航海成员的奖励规则、发放记录和领取流程。",
+    "features": "功能特性",
+    "featureRewards": "大航海奖励管理",
+    "featureRewardsDesc": "围绕 Bilibili Live 大航海会员等级（舰长、提督、总督）配置和运营奖励。",
+    "featureAdmin": "管理后台",
+    "featureAdminDesc": "通过功能完善的管理仪表盘，审核、配置和处理奖励相关数据。",
+    "featureUser": "用户领取门户",
+    "featureUserDesc": "大航海成员可通过直观的用户界面浏览和领取可用奖励。",
+    "featureEvent": "事件与队列处理",
+    "featureEventDesc": "通过事件接入和后台作业处理实现异步奖励工作流。",
+    "techStack": "技术栈",
+    "frontend": "前端",
+    "backend": "后端",
+    "tooling": "工具链",
+    "getStarted": "快速开始",
+    "viewOnGithub": "在 GitHub 上查看 →"
+  },
+  "meta": {
+    "title": "Guard Plus 文档",
+    "description": "Guard Plus — Bilibili Live 大航海奖励系统文档。了解项目设置、部署指南和更新日志。"
+  }
+}

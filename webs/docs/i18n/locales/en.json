@@ -1,0 +1,31 @@
+{
+  "nav": {
+    "about": "About",
+    "changelog": "Changelog",
+    "deploy": "Deploy"
+  },
+  "home": {
+    "title": "Guard Plus",
+    "subtitle": "Bilibili Live Guard Rewards System",
+    "description": "A rewards management and fulfillment system for Bilibili Live Guard memberships. Helps streamers, operators, and administrators manage reward rules, fulfillment records, and claim flows for Guard supporters.",
+    "features": "Features",
+    "featureRewards": "Guard Rewards Management",
+    "featureRewardsDesc": "Configure and operate rewards around Bilibili Live Guard membership tiers (Captain, Admiral, Governor).",
+    "featureAdmin": "Admin Console",
+    "featureAdminDesc": "Review, configure, and process reward-related data for operators through a full-featured admin dashboard.",
+    "featureUser": "User Claim Portal",
+    "featureUserDesc": "Guard members can browse and claim available rewards through an intuitive user-facing interface.",
+    "featureEvent": "Event & Queue Processing",
+    "featureEventDesc": "Asynchronous reward workflows powered by event ingestion and background job processing.",
+    "techStack": "Tech Stack",
+    "frontend": "Frontend",
+    "backend": "Backend",
+    "tooling": "Tooling",
+    "getStarted": "Get Started",
+    "viewOnGithub": "View on GitHub →"
+  },
+  "meta": {
+    "title": "Guard Plus Docs",
+    "description": "Guard Plus — Bilibili Live Guard Rewards System documentation. Learn about setup, deployment, and changelog."
+  }
+}

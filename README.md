@@ -6,7 +6,7 @@
   </picture>
 </p>
 
-<h1 align="center" style="margin-top: 2rem">Guard Plus - Bilibili Live Fleet Rewards System</h1>
+<h1 align="center" style="margin-top: 2rem">Guard Plus - Bilibili Live Guard Rewards System</h1>
 
 <p align="center">
   <a href="./package.json"> 
@@ -30,21 +30,21 @@
   <a href="./README.zh-CN.md">简体中文</a>
 </p>
 
-Guard Plus is a rewards management and fulfillment system for Bilibili Live Fleet memberships. It helps streamers, operators, and administrators manage reward rules, fulfillment records, and claim flows for Fleet members such as Captain, Admiral, and Governor supporters.
+Guard Plus is a rewards management and fulfillment system for Bilibili Live Guard memberships. It helps streamers, operators, and administrators manage reward rules, fulfillment records, and claim flows for Guard members such as Captain, Admiral, and Governor supporters.
 
 The project is a Vite+ TypeScript monorepo containing Nuxt admin and user apps, a shared Vue UI package, an Elysia backend, background queues, and shared cross-package TypeScript contracts.
 
 ## Features
 
-- Fleet rewards management: configure and operate rewards around Bilibili Live Fleet membership tiers.
+- Guard rewards management: configure and operate rewards around Bilibili Live Guard membership tiers.
 - Admin console: review, configure, and process reward-related data for operators.
-- User claim portal: let Fleet members look up and claim available rewards.
+- User claim portal: let Guard members look up and claim available rewards.
 - Event and queue processing: handle asynchronous reward workflows through event ingestion and background jobs.
 - Type-safe collaboration: keep backend, frontend, and shared schemas aligned through TypeScript contracts.
 
 ## Packages
 
-- `@server/app` in `server/`: Elysia API apps for admin and user clients, event ingestion, background queues, shared backend modules, Drizzle schema, migrations, and Eden type exports for the Bilibili live fleet rewards workflow.
+- `@server/app` in `server/`: Elysia API apps for admin and user clients, event ingestion, background queues, shared backend modules, Drizzle schema, migrations, and Eden type exports for the Bilibili live guard rewards workflow.
 - `@shared/schema` in `packages/schema/`: Valibot API schemas, request/response types, and cross-package contracts.
 - `@web/admin` in `webs/admin/`: Nuxt admin console for reward configuration and operations.
 - `@web/user` in `webs/user/`: Nuxt user-facing app for reward lookup and claiming.

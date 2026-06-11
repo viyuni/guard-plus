@@ -2,7 +2,7 @@
   "name": "guard-plus",
   "version": "0.0.1-beta.4",
   "private": true,
-  "description": "Bilibili Live Fleet rewards management and fulfillment system",
+  "description": "Bilibili Live Guard rewards management and fulfillment system",
   "workspaces": [
     "server",
     "webs/*",
@@ -33,6 +33,7 @@
     "@fontsource/limelight": "^5.2.7",
     "@nuxt/kit": "^4.4.8",
     "@nuxt/fonts": "^0.14.0",
+    "@nuxtjs/i18n": "^10.3.0",
     "@nuxtjs/tailwindcss": "6.14.0",
     "@pinia/colada": "^1.3.1",
     "@pinia/colada-nuxt": "^1.0.1",
