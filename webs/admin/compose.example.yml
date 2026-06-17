@@ -1,0 +1,26 @@
+name: guard-plus-web
+
+x-logging: &logging
+  driver: local
+  options:
+    max-size: 20m
+    max-file: 10
+
+services:
+  admin:
+    container_name: admin
+
+    build:
+      context: ../../
+      dockerfile: webs/admin/Dockerfile
+      target: web-admin
+
+    restart: unless-stopped
+
+    logging: *logging
+
+    ports:
+      - target: 80
+        published: 3996
+        protocol: tcp
+        host_ip: 0.0.0.0
