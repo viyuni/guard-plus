@@ -1,0 +1,23 @@
+name: guard-plus-web
+
+services:
+  user:
+    container_name: user
+
+    build:
+      context: ../../
+      dockerfile: webs/user/Dockerfile
+
+    restart: unless-stopped
+
+    env_file:
+      - .env.prod
+
+    environment:
+      NODE_ENV: production
+      NITRO_PRESET: bun
+      HOST: 0.0.0.0
+      PORT: 3000
+
+    ports:
+      - '3998:3000'
