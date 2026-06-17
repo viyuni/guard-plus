@@ -14,8 +14,4 @@ export default defineNuxtConfig({
       link: [{ rel: 'icon', href: 'https://assets.viyuni.top/viyuni.svg' }],
     },
   },
-  ssr: false,
-  nitro: {
-    preset: 'static',
-  },
 });

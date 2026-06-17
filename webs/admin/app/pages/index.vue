@@ -3,14 +3,19 @@ import { Button } from '@web/ui/components/ui/button';
 import { ArrowRight, Github } from 'lucide-vue-next';
 import { createMarkdownExit } from 'markdown-exit';
 
+import { adminMeQuery, useAdminMe } from '~/features/auth';
+
 import changeLog from '../../../../CHANGELOG.md?raw';
 import { version } from '../../../../package.json';
 
 const md = createMarkdownExit();
 const changeLogContent = md.render(changeLog);
+
+const { authenticated } = useAdminMe();
 </script>
 
 <template>
+  {{ authenticated }}
   <div class="grid min-h-dvh w-full grid-rows-[auto_1fr]">
     <div
       class="border-base-300 container mx-auto flex items-center justify-between border-x border-b px-5 py-4 sm:px-8"
