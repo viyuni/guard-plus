@@ -3,12 +3,12 @@ import { Button } from '@web/ui/components/ui/button';
 import { useOverlay } from '@web/ui/components/ui/overlay';
 import { KeyRound, LogOut, UserRound } from 'lucide-vue-next';
 
+import { useAdminSession } from '../../auth';
 import { useLogout } from '../../auth/mutations';
-import { useAuthStore } from '../../auth/store';
 import AccountPasswordDialog from './AccountPasswordDialog.vue';
 import AccountProfileDialog from './AccountProfileDialog.vue';
 
-const { user } = storeToRefs(useAuthStore());
+const { user } = useAdminSession();
 const { mutate: logout } = useLogout();
 
 const [openAccountProfileDialog] = useOverlay(AccountProfileDialog);

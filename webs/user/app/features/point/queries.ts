@@ -1,5 +1,7 @@
+import { useUserSession } from '~/composables/useUserSession';
+
 export function useUserPointTransactionsQuery() {
-  const { user } = useUser();
+  const { user } = useUserSession();
 
   return useQuery({
     key: () => ['pointTransactions', user.value?.id ?? null],

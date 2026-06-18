@@ -1,4 +1,4 @@
-name: guard-plus-web
+name: guard-plus-app
 
 x-logging: &logging
   driver: local
@@ -7,20 +7,29 @@ x-logging: &logging
     max-file: 10
 
 services:
-  admin:
-    container_name: admin
+  admin-web:
+    container_name: admin-web
 
     build:
       context: ../../
       dockerfile: webs/admin/Dockerfile
-      target: web-admin
+      target: admin-web
 
     restart: unless-stopped
 
     logging: *logging
 
+    env_file:
+      - .env.prod
+
+    environment:
+      NODE_ENV: production
+      NITRO_PRESET: bun
+      HOST: 0.0.0.0
+      PORT: 3000
+
     ports:
-      - target: 80
+      - target: 3000
         published: 3996
         protocol: tcp
         host_ip: 0.0.0.0

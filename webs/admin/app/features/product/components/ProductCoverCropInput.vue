@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { Button } from '@web/ui/components/ui/button';
-import { ImageCropper, type ImageCropperResult } from '@web/ui/components/ui/image-cropper';
+import type { ImageCropperResult } from '@web/ui/components/ui/image-cropper';
 import { ImagePlus, Upload, X } from 'lucide-vue-next';
 
 defineOptions({
   inheritAttrs: false,
 });
+
+const ImageCropper = defineAsyncComponent(() =>
+  import('@web/ui/components/ui/image-cropper').then(module => module.ImageCropper),
+);
 
 const props = withDefaults(
   defineProps<{
@@ -110,12 +114,14 @@ onBeforeUnmount(() => {
   <div class="grid gap-4">
     <div class="w-full rounded-md" :class="sourceUrl ? undefined : 'aspect-square overflow-hidden'">
       <div v-if="sourceUrl">
-        <ImageCropper
-          ref="cropper"
-          :src="sourceUrl"
-          :preview-size="previewSize"
-          :output-size="512"
-        />
+        <ClientOnly>
+          <ImageCropper
+            ref="cropper"
+            :src="sourceUrl"
+            :preview-size="previewSize"
+            :output-size="512"
+          />
+        </ClientOnly>
       </div>
       <img
         v-else-if="currentCoverUrl"

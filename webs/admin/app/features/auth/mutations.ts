@@ -1,10 +1,16 @@
-import { defineMutation, useMutation } from '@pinia/colada';
+import { defineMutation, useMutation, useQueryCache } from '@pinia/colada';
 import type { AdminLoginBody } from '@shared/schema/admin';
 
-import { useAuthStore } from './store';
+import { AUTH_QUERY_KEYS } from './queries';
+
+function useInvalidateAdminSession() {
+  const queryCache = useQueryCache();
+
+  return () => queryCache.invalidateQueries({ key: AUTH_QUERY_KEYS.session() });
+}
 
 export const useLogin = defineMutation(() => {
-  const { updateSession } = useAuthStore();
+  const invalidateAdminSession = useInvalidateAdminSession();
   const route = useRoute();
   const router = useRouter();
 
@@ -18,7 +24,7 @@ export const useLogin = defineMutation(() => {
     },
     onSuccess({ data }) {
       if (data) {
-        updateSession(data);
+        invalidateAdminSession();
         const redirect =
           typeof route.query.redirect === 'string' ? route.query.redirect : '/app/users';
         router.push(redirect);
@@ -28,7 +34,7 @@ export const useLogin = defineMutation(() => {
 });
 
 export const useLogout = defineMutation(() => {
-  const { clearSession } = useAuthStore();
+  const invalidateAdminSession = useInvalidateAdminSession();
   const router = useRouter();
 
   return useMutation({
@@ -40,7 +46,7 @@ export const useLogout = defineMutation(() => {
       return api.auth.logout.post();
     },
     onSettled() {
-      clearSession();
+      invalidateAdminSession();
       router.push('/login');
     },
   });

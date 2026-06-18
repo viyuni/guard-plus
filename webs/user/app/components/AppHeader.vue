@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { LogIn, WalletCards } from 'lucide-vue-next';
 
+import { useUserSession } from '~/composables/useUserSession';
 import { AccountDropdown, useLogout } from '~/features/account';
 
 const emit = defineEmits<{
@@ -13,14 +14,13 @@ const emit = defineEmits<{
 
 const logoutMutation = useLogout();
 const { isLoading: isLoggingOut } = logoutMutation;
-const { balances, clearUser, isAuthenticated, refreshUser } = useUser();
+const { balances, isAuthenticated, refreshUserSession } = useUserSession();
 const hasPointAccounts = computed(() => balances.value.length > 0);
 
 async function logout() {
   try {
     await logoutMutation.mutateAsync();
-    clearUser();
-    await refreshUser();
+    await refreshUserSession();
   } catch {
     // The global mutation handler reports request errors.
   }

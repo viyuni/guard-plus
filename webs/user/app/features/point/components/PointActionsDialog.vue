@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { History, RefreshCw, Repeat2 } from 'lucide-vue-next';
 
+import { useUserSession } from '~/composables/useUserSession';
+
 type PointActionsDialogAction = 'conversion' | 'transactions';
 
 const open = defineModel<boolean>('open', { required: true });
@@ -9,10 +11,10 @@ const emit = defineEmits<{
   resolve: [action?: PointActionsDialogAction];
 }>();
 
-const { balances, refreshUser } = useUser();
+const { balances, refreshUserSession } = useUserSession();
 
 async function refreshBalances() {
-  await refreshUser();
+  await refreshUserSession();
 }
 
 function selectAction(action: PointActionsDialogAction) {

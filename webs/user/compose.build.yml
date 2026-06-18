@@ -1,0 +1,8 @@
+services:
+  user-web:
+    build:
+      context: ../../
+      dockerfile: webs/user/Dockerfile
+      target: user-web
+
+    image: ${IMAGE_REGISTRY:-local}/guard-plus-user-web:latest

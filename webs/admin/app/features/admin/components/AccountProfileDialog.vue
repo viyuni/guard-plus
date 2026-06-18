@@ -4,12 +4,12 @@ import { Button } from '@web/ui/components/ui/button';
 import { FormFieldItem, usePopoverForm } from '@web/ui/components/ui/form';
 import { Loader2 } from 'lucide-vue-next';
 
-import { useAuthStore } from '../../auth/store';
+import { useAdminSession } from '../../auth';
 import { useUpdateCurrentAdmin } from '../mutations';
 
 const open = defineModel<boolean>('open', { default: false });
 
-const { user } = storeToRefs(useAuthStore());
+const { user } = useAdminSession();
 const updateCurrentAdminMutation = useUpdateCurrentAdmin();
 
 const { canSubmit, handleSubmit, isLoading } = usePopoverForm({

@@ -6,7 +6,7 @@ import type {
   SuperAdminUpdateBody,
 } from '@shared/schema/admin';
 
-import { useAuthStore } from '../auth/store';
+import { AUTH_QUERY_KEYS } from '../auth';
 import { ADMIN_QUERY_KEYS } from './queries';
 
 function useInvalidateAdmins() {
@@ -46,7 +46,7 @@ export const useUpdateAdmin = defineMutation(() => {
 });
 
 export const useUpdateCurrentAdmin = defineMutation(() => {
-  const authStore = useAuthStore();
+  const queryCache = useQueryCache();
 
   return useMutation({
     meta: {
@@ -56,14 +56,7 @@ export const useUpdateCurrentAdmin = defineMutation(() => {
     mutation(body: AdminUpdateBody) {
       return api.admin.me.patch(body);
     },
-    onSuccess({ data }) {
-      if (data && authStore.user) {
-        authStore.updateUser({
-          ...authStore.user,
-          ...data,
-        });
-      }
-    },
+    onSuccess: () => queryCache.invalidateQueries({ key: AUTH_QUERY_KEYS.session() }),
   });
 });
 

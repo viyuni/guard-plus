@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useOverlay } from '@web/ui/components/ui/overlay';
 
+import { useUserSession } from '~/composables/useUserSession';
 import { useCreateOrder } from '~/features/order';
 import { PointActions } from '~/features/point';
 import { ProductGrid, PurchaseConfirmDialog } from '~/features/product';
@@ -33,7 +34,7 @@ const PointTransactionsDialog = defineAsyncComponent(
 const buyingProductId = ref<string>();
 
 const createOrderMutation = useCreateOrder();
-const { isAuthenticated, refreshUser } = useUser();
+const { isAuthenticated, refreshUserSession } = useUserSession();
 const [openAuthDialogOverlay] = useOverlay(AuthDialog);
 const [openProfileDialog] = useOverlay(ProfileDialog);
 const [openOrdersDialog] = useOverlay(OrdersDialog);
@@ -111,7 +112,7 @@ async function buyProduct(product: Product) {
       });
     }
 
-    await refreshUser();
+    await refreshUserSession();
   } catch {
     // The global mutation handler reports request errors.
   } finally {

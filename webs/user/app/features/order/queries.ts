@@ -1,5 +1,7 @@
+import { useUserSession } from '~/composables/useUserSession';
+
 export function useUserOrdersQuery() {
-  const { user } = useUser();
+  const { user } = useUserSession();
 
   return useQuery({
     key: () => ['orders', user.value?.id ?? null],

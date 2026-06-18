@@ -3,11 +3,15 @@ import { Button } from '@web/ui/components/ui/button';
 import { ArrowRight, Github } from 'lucide-vue-next';
 import { createMarkdownExit } from 'markdown-exit';
 
+import { useAdminSession } from '~/features/auth';
+
 import changeLog from '../../../../CHANGELOG.md?raw';
 import { version } from '../../../../package.json';
 
 const md = createMarkdownExit();
 const changeLogContent = md.render(changeLog);
+
+const { authenticated } = useAdminSession();
 </script>
 
 <template>
@@ -50,13 +54,13 @@ const changeLogContent = md.render(changeLog);
           </p>
 
           <div class="mt-12 flex flex-wrap items-center gap-3">
-            <Button as-child size="lg" class="px-5">
+            <Button v-if="authenticated" as-child size="lg" class="px-5">
               <NuxtLink to="/app">
                 进入控制台
                 <ArrowRight data-icon="inline-end" />
               </NuxtLink>
             </Button>
-            <Button as-child variant="outline" size="lg" class="px-5">
+            <Button v-else as-child variant="outline" size="lg" class="px-5">
               <NuxtLink to="/login">管理员登录</NuxtLink>
             </Button>
           </div>

@@ -140,6 +140,30 @@ services:
     networks:
       - guard-plus
 
+  admin-web:
+    build:
+      <<: *app-build
+      target: admin-web
+    container_name: admin-web
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      NITRO_HOST: 0.0.0.0
+      PORT: 3000
+      NUXT_API_BASE_URL: http://admin-server:3600
+      NUXT_PUBLIC_API_BASE_URL: ${ADMIN_PUBLIC_API_BASE_URL:?set ADMIN_PUBLIC_API_BASE_URL in .env.prod}
+    ports:
+      - target: 3000
+        published: ${GUARD_PLUS_ADMIN_WEB_PUBLISHED_PORT:-39961}
+        protocol: tcp
+        host_ip: 0.0.0.0
+    depends_on:
+      admin-server:
+        condition: service_started
+    networks:
+      - guard-plus
+
   user-server:
     build:
       <<: *app-build
@@ -167,6 +191,30 @@ services:
     volumes:
       - /home/guard-plus-data/public:/app/server/public
     depends_on: *app-depends-on
+    networks:
+      - guard-plus
+
+  user-web:
+    build:
+      <<: *app-build
+      target: user-web
+    container_name: user-web
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      NITRO_HOST: 0.0.0.0
+      PORT: 3000
+      NUXT_API_BASE_URL: http://user-server:3800
+      NUXT_PUBLIC_API_BASE_URL: ${USER_PUBLIC_API_BASE_URL:?set USER_PUBLIC_API_BASE_URL in .env.prod}
+    ports:
+      - target: 3000
+        published: ${GUARD_PLUS_USER_WEB_PUBLISHED_PORT:-39981}
+        protocol: tcp
+        host_ip: 0.0.0.0
+    depends_on:
+      user-server:
+        condition: service_started
     networks:
       - guard-plus
 

@@ -1,14 +1,23 @@
-name: guard-plus-web
+name: guard-plus-app
+
+x-logging: &logging
+  driver: local
+  options:
+    max-size: 20m
+    max-file: 10
 
 services:
-  user:
-    container_name: user
+  user-web:
+    container_name: user-web
 
     build:
       context: ../../
       dockerfile: webs/user/Dockerfile
+      target: user-web
 
     restart: unless-stopped
+
+    logging: *logging
 
     env_file:
       - .env.prod
@@ -20,4 +29,7 @@ services:
       PORT: 3000
 
     ports:
-      - '3998:3000'
+      - target: 3000
+        published: 3996
+        protocol: tcp
+        host_ip: 0.0.0.0
