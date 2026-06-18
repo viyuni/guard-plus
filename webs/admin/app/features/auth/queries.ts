@@ -1,23 +1,14 @@
 export const AUTH_QUERY_KEYS = {
   root: ['auth'] as const,
-  me: () => [...AUTH_QUERY_KEYS.root, 'me'] as const,
+  session: () => [...AUTH_QUERY_KEYS.root, 'session'] as const,
 };
 
-export const adminMeQuery = defineQueryOptions(() => {
+export const adminSessionQuery = defineQueryOptions(() => {
   return {
-    key: AUTH_QUERY_KEYS.me(),
+    key: AUTH_QUERY_KEYS.session(),
+    staleTime: Infinity,
     query: async () => {
-      const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined;
-
-      if (import.meta.server && !headers?.cookie) {
-        return {
-          authenticated: false,
-          user: null,
-        } as const;
-      }
-
       const { error, data } = await api.admin.me.get({
-        headers,
         throwHttpError: error => error.status !== 401,
       });
 

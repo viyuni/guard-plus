@@ -21,7 +21,7 @@ WORKDIR /app/webs/user
 
 RUN bun run build
 
-FROM build AS web-user
+FROM build AS user-web
 
 WORKDIR /app/webs/user
 

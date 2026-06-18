@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { LogOut, ReceiptText, ShoppingBag, UserRound, ChevronDown } from 'lucide-vue-next';
 
+import { useUserSession } from '~/composables/useUserSession';
+
 defineProps<{
   isLoggingOut?: boolean;
 }>();
@@ -12,7 +14,7 @@ const emit = defineEmits<{
   logout: [];
 }>();
 
-const { user } = useUser();
+const { user } = useUserSession();
 </script>
 
 <template>

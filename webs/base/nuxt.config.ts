@@ -9,6 +9,7 @@ const currentDir = dirname(fileURLToPath(import.meta.url));
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   runtimeConfig: {
+    apiBaseUrl: process.env.NUXT_API_BASE_URL || process.env.NUXT_PUBLIC_API_BASE_URL,
     public: {
       apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL,
     },
@@ -144,5 +145,8 @@ export default defineNuxtConfig({
         weight: '900',
       },
     ],
+  },
+  nitro: {
+    // noExternals:true
   },
 });

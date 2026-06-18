@@ -2,14 +2,14 @@
 import type { SidebarProps } from '@web/ui/components/ui/sidebar';
 
 import { menus } from '~/configs/menus';
-import { useAuthStore } from '~/features/auth/store';
+import { useAdminSession } from '~/features/auth';
 import type { MenuItem } from '~/types';
 
 import { version } from '../../package.json';
 
 const props = defineProps<SidebarProps>();
 
-const { user } = storeToRefs(useAuthStore());
+const { user } = useAdminSession();
 const isSuperAdmin = computed(() => user.value?.role === 'superAdmin');
 
 function canShowMenuItem(item: { superAdminOnly?: boolean }) {

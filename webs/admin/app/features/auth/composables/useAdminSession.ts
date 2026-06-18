@@ -1,7 +1,7 @@
-import { adminMeQuery } from '~/features/auth';
+import { adminSessionQuery } from '~/features/auth';
 
-export const useAdminMe = defineQuery(() => {
-  const { data, ...rest } = useQuery(adminMeQuery());
+export const useAdminSession = defineQuery(() => {
+  const { data, ...rest } = useQuery(adminSessionQuery());
 
   const user = computed(() => data.value?.user);
   const authenticated = computed(() => !!data.value?.authenticated);

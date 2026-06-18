@@ -2,6 +2,8 @@
 import { cn } from '@web/ui/lib/utils';
 import { Repeat2, WalletCards } from 'lucide-vue-next';
 
+import { useUserSession } from '~/composables/useUserSession';
+
 defineProps<{
   class?: string;
 }>();
@@ -11,7 +13,7 @@ const emit = defineEmits<{
   openConversion: [];
 }>();
 
-const { balances, isAuthenticated, refreshUser } = useUser();
+const { balances, isAuthenticated, refreshUserSession } = useUserSession();
 const hasPointAccounts = computed(() => balances.value.length > 0);
 </script>
 
@@ -31,9 +33,9 @@ const hasPointAccounts = computed(() => balances.value.length > 0);
         class="focus-visible:border-ring focus-visible:ring-ring/50 flex min-w-0 flex-wrap items-center gap-x-5 gap-y-2 rounded-md outline-none focus-visible:ring-[3px]"
         role="button"
         tabindex="0"
-        @click="refreshUser"
-        @keydown.enter="refreshUser"
-        @keydown.space.prevent="refreshUser"
+        @click="refreshUserSession"
+        @keydown.enter="refreshUserSession"
+        @keydown.space.prevent="refreshUserSession"
       >
         <WalletCards class="text-muted-foreground size-5" />
         <span v-for="account in balances" :key="account.id" class="flex items-baseline gap-2">

@@ -1,0 +1,8 @@
+services:
+  admin-web:
+    build:
+      context: ../../
+      dockerfile: webs/admin/Dockerfile
+      target: admin-web
+
+    image: ${IMAGE_REGISTRY:-local}/guard-plus-admin-web:latest

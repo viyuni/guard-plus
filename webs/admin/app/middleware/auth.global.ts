@@ -1,16 +1,20 @@
-import { useAuthStore } from '~/features/auth/store';
+import { useAdminSession } from '~/features/auth';
 
 const appHomePath = '/app/users';
 const loginPath = '/login';
 
-export default defineNuxtRouteMiddleware(to => {
-  const authStore = useAuthStore();
-  authStore.clearExpiredSession();
-
-  const isAuthenticated = authStore.isAuthenticated;
+export default defineNuxtRouteMiddleware(async to => {
   const isAppRoute = to.path === '/app' || to.path.startsWith('/app/');
+  const isLoginRoute = to.path === loginPath;
 
-  if (isAppRoute && !isAuthenticated) {
+  if (!isAppRoute && !isLoginRoute) {
+    return;
+  }
+
+  const { authenticated, refetch } = useAdminSession();
+  await refetch();
+
+  if (isAppRoute && !authenticated.value) {
     return navigateTo({
       path: loginPath,
       query: {
@@ -19,7 +23,7 @@ export default defineNuxtRouteMiddleware(to => {
     });
   }
 
-  if (to.path === loginPath && isAuthenticated) {
+  if (isLoginRoute && authenticated.value) {
     return navigateTo(appHomePath);
   }
 });

@@ -4,12 +4,14 @@ import { Button } from '@web/ui/components/ui/button';
 import { FormFieldItem, usePopoverForm } from '@web/ui/components/ui/form';
 import { Loader2 } from 'lucide-vue-next';
 
+import { useUserSession } from '~/composables/useUserSession';
+
 import { useConvertPoint } from '../mutations';
 
 const open = defineModel<boolean>('open', { required: true });
 
 const convertPointMutation = useConvertPoint();
-const { conversionRules, refreshUser } = useUser();
+const { conversionRules, refreshUserSession } = useUserSession();
 
 function createNonce() {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
@@ -55,7 +57,7 @@ const conversionDescription = computed(() => {
 });
 
 onSubmitSuccess(async () => {
-  await refreshUser();
+  await refreshUserSession();
 });
 </script>
 

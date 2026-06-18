@@ -7,6 +7,7 @@ declare module '*.vue' {
 declare global {
   interface ImportMetaEnv {
     readonly VITE_SERVER_BASE_URL: string;
+    readonly NUXT_API_BASE_URL: string;
     readonly NUXT_PUBLIC_API_BASE_URL: string;
   }
 
