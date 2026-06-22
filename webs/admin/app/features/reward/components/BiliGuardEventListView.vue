@@ -118,6 +118,8 @@ function formatDateTime(value: Date | string | number | null | undefined) {
           手动创建
         </Button>
       </div>
+
+      <BiliGuardManualCreateDialog v-model:open="manualCreateDialogOpen" />
     </template>
 
     <template #status="{ value }">
@@ -244,6 +246,4 @@ function formatDateTime(value: Date | string | number | null | undefined) {
       </div>
     </template>
   </DataTable>
-
-  <BiliGuardManualCreateDialog v-model:open="manualCreateDialogOpen" />
 </template>

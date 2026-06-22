@@ -1,7 +1,10 @@
-import { userSessionQuery } from '~/features/account';
+import { USER_UNAUTHENTICATED_SESSION, userSessionQuery } from '~/features/account';
 
 export const useUserSession = defineQuery(() => {
-  const query = useQuery(userSessionQuery());
+  const query = useQuery({
+    ...userSessionQuery(),
+    placeholderData: previousData => previousData ?? USER_UNAUTHENTICATED_SESSION,
+  });
   const user = computed(() => query.data.value?.user);
   const isAuthenticated = computed(() => !!query.data.value?.authenticated);
   const balances = computed(() => user.value?.pointAccounts ?? []);

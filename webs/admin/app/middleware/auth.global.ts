@@ -1,5 +1,3 @@
-import { useAdminSession } from '~/features/auth';
-
 const appHomePath = '/app/users';
 const loginPath = '/login';
 
@@ -11,10 +9,9 @@ export default defineNuxtRouteMiddleware(async to => {
     return;
   }
 
-  const { authenticated, refetch } = useAdminSession();
-  await refetch();
+  const { isAuthenticated } = useAuthState();
 
-  if (isAppRoute && !authenticated.value) {
+  if (isAppRoute && !isAuthenticated.value) {
     return navigateTo({
       path: loginPath,
       query: {
@@ -23,7 +20,7 @@ export default defineNuxtRouteMiddleware(async to => {
     });
   }
 
-  if (isLoginRoute && authenticated.value) {
+  if (isLoginRoute && isAuthenticated.value) {
     return navigateTo(appHomePath);
   }
 });

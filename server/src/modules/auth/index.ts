@@ -7,6 +7,9 @@ import {
   ACCESS_TOKEN_COOKIE_NAME,
   ACCESS_TOKEN_COOKIE_OPTIONS,
   AUTH_COOKIE_NAME,
+  AUTH_STATE_COOKIE_NAME,
+  AUTH_STATE_COOKIE_OPTIONS,
+  AUTH_STATE_COOKIE_VALUE,
   REFRESH_TOKEN_COOKIE_NAME,
 } from './constants';
 import type { AuthPayload } from './domain';
@@ -70,6 +73,10 @@ export const createAuthGuard = (authUseCase: AuthUseCase) => {
         ctx.cookie[ACCESS_TOKEN_COOKIE_NAME]!.set({
           ...ACCESS_TOKEN_COOKIE_OPTIONS,
           value: accessToken,
+        });
+        ctx.cookie[AUTH_STATE_COOKIE_NAME]!.set({
+          ...AUTH_STATE_COOKIE_OPTIONS,
+          value: AUTH_STATE_COOKIE_VALUE,
         });
 
         setAuth(ctx, {
