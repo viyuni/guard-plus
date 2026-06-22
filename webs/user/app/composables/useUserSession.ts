@@ -1,4 +1,4 @@
-import { USER_UNAUTHENTICATED_SESSION, userSessionQuery } from '~/features/account';
+import { USER_UNAUTHENTICATED_SESSION, userSessionQuery } from '~/features/account/queries';
 
 export const useUserSession = defineQuery(() => {
   const query = useQuery({

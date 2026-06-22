@@ -34,7 +34,7 @@ const PointTransactionsDialog = defineAsyncComponent(
 const buyingProductId = ref<string>();
 
 const createOrderMutation = useCreateOrder();
-const { isAuthenticated, refreshUserSession } = useUserSession();
+const { isAuthenticated } = useUserSession();
 const [openAuthDialogOverlay] = useOverlay(AuthDialog);
 const [openProfileDialog] = useOverlay(ProfileDialog);
 const [openOrdersDialog] = useOverlay(OrdersDialog);
@@ -111,8 +111,6 @@ async function buyProduct(product: Product) {
         detail,
       });
     }
-
-    await refreshUserSession();
   } catch {
     // The global mutation handler reports request errors.
   } finally {

@@ -11,9 +11,9 @@ import { useUpdateCurrentUser } from '../mutations';
 const open = defineModel<boolean>('open', { required: true });
 
 const updateCurrentUserMutation = useUpdateCurrentUser();
-const { refreshUserSession, user } = useUserSession();
+const { user } = useUserSession();
 
-const { canSubmit, handleSubmit, isLoading, onSubmitSuccess } = usePopoverForm({
+const { canSubmit, handleSubmit, isLoading } = usePopoverForm({
   schema: UserUpdateSchema,
   open,
   initialValues: () => ({
@@ -31,10 +31,6 @@ const { canSubmit, handleSubmit, isLoading, onSubmitSuccess } = usePopoverForm({
       address: values.address || undefined,
     };
   },
-});
-
-onSubmitSuccess(async () => {
-  await refreshUserSession();
 });
 </script>
 

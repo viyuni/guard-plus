@@ -1,23 +1,9 @@
-import { defineMutation, useMutation, useQueryCache } from '@pinia/colada';
+import { defineMutation, useMutation } from '@pinia/colada';
 import type { UpdateUserBody, UserLoginBody, UserRegisterBody } from '@shared/schema/user';
 import { toast } from 'vue-sonner';
 
-import { USER_SESSION_QUERY_KEYS } from './queries';
-
-function useInvalidateUserSession() {
-  const queryCache = useQueryCache();
-
-  return () => queryCache.invalidateQueries({ key: USER_SESSION_QUERY_KEYS.session() });
-}
-
-function syncAuthenticatedSession() {
-  const { setAuthenticatedState } = useAuthState();
-
-  setAuthenticatedState();
-}
-
 export const useLogin = defineMutation(() => {
-  const invalidateUserSession = useInvalidateUserSession();
+  const { syncAuthenticatedSession } = useUserSessionSync();
 
   return useMutation({
     meta: {
@@ -27,15 +13,12 @@ export const useLogin = defineMutation(() => {
     mutation(body: UserLoginBody) {
       return api.auth.login.post(body);
     },
-    onSuccess() {
-      syncAuthenticatedSession();
-      invalidateUserSession();
-    },
+    onSuccess: syncAuthenticatedSession,
   });
 });
 
 export const useRegister = defineMutation(() => {
-  const invalidateUserSession = useInvalidateUserSession();
+  const { syncAuthenticatedSession } = useUserSessionSync();
 
   return useMutation({
     meta: {
@@ -45,10 +28,7 @@ export const useRegister = defineMutation(() => {
     mutation(body: UserRegisterBody) {
       return api.auth.register.post(body);
     },
-    onSuccess() {
-      syncAuthenticatedSession();
-      invalidateUserSession();
-    },
+    onSuccess: syncAuthenticatedSession,
   });
 });
 
@@ -89,7 +69,7 @@ export const useConfirmBiliRegisterCode = defineMutation(() => {
 });
 
 export const useUpdateCurrentUser = defineMutation(() => {
-  const invalidateUserSession = useInvalidateUserSession();
+  const { refreshSyncedSession } = useUserSessionSync();
 
   return useMutation({
     meta: {
@@ -99,13 +79,12 @@ export const useUpdateCurrentUser = defineMutation(() => {
     mutation(body: UpdateUserBody) {
       return api.me.put(body);
     },
-    onSuccess: invalidateUserSession,
+    onSuccess: refreshSyncedSession,
   });
 });
 
 export const useLogout = defineMutation(() => {
-  const invalidateUserSession = useInvalidateUserSession();
-  const { clearAuthState } = useAuthState();
+  const { syncUnauthenticatedSession } = useUserSessionSync();
 
   return useMutation({
     meta: {
@@ -115,9 +94,6 @@ export const useLogout = defineMutation(() => {
     mutation() {
       return api.auth.logout.post();
     },
-    onSettled() {
-      clearAuthState();
-      invalidateUserSession();
-    },
+    onSettled: syncUnauthenticatedSession,
   });
 });

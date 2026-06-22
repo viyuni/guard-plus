@@ -2,6 +2,8 @@ import { defineMutation, useMutation } from '@pinia/colada';
 import type { CreateOrderBody } from '@shared/schema/order';
 
 export const useCreateOrder = defineMutation(() => {
+  const { refreshSyncedSession } = useUserSessionSync();
+
   return useMutation({
     meta: {
       showToast: true,
@@ -10,5 +12,6 @@ export const useCreateOrder = defineMutation(() => {
     mutation(body: CreateOrderBody) {
       return api.orders.post(body);
     },
+    onSuccess: refreshSyncedSession,
   });
 });
