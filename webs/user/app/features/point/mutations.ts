@@ -2,8 +2,6 @@ import { defineMutation, useMutation } from '@pinia/colada';
 import type { UserConvertPointBody } from '@shared/schema/point-conversion';
 
 export const useConvertPoint = defineMutation(() => {
-  const { refreshSyncedSession } = useUserSessionSync();
-
   return useMutation({
     meta: {
       showToast: true,
@@ -12,6 +10,5 @@ export const useConvertPoint = defineMutation(() => {
     mutation(body: UserConvertPointBody) {
       return api.pointConversions.convert.post(body);
     },
-    onSuccess: refreshSyncedSession,
   });
 });

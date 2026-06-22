@@ -4,18 +4,20 @@ import { Button } from '@web/ui/components/ui/button';
 import { FormFieldItem, usePopoverForm } from '@web/ui/components/ui/form';
 import { Loader2 } from 'lucide-vue-next';
 
+import { useUserSession } from '~/composables/useUserSession';
+
 import { useConvertPoint } from '../mutations';
 
 const open = defineModel<boolean>('open', { required: true });
 
 const convertPointMutation = useConvertPoint();
-const { conversionRules } = useUserSession();
+const { conversionRules, refreshUserSession } = useUserSession();
 
 function createNonce() {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
 }
 
-const { canSubmit, handleSubmit, isLoading, values } = usePopoverForm({
+const { canSubmit, handleSubmit, isLoading, onSubmitSuccess, values } = usePopoverForm({
   schema: UserConvertPointSchema,
   open,
   initialValues: () => ({
@@ -52,6 +54,10 @@ const conversionDescription = computed(() => {
   return `${values.fromAmount || 0} ${selectedRule.value.fromPointType?.name} 可转换为 ${
     preview.value ?? 0
   } ${selectedRule.value.toPointType?.name}`;
+});
+
+onSubmitSuccess(async () => {
+  await refreshUserSession();
 });
 </script>
 

@@ -4,6 +4,8 @@ import { Button } from '@web/ui/components/ui/button';
 import { FormFieldItem, useForm } from '@web/ui/components/ui/form';
 import { Loader2 } from 'lucide-vue-next';
 
+import { useUserSession } from '~/composables/useUserSession';
+
 import { useLogin } from '../mutations';
 
 const emit = defineEmits<{
@@ -11,6 +13,7 @@ const emit = defineEmits<{
 }>();
 
 const loginMutation = useLogin();
+const { refreshUserSession } = useUserSession();
 
 const { canSubmit, handleSubmit, isLoading, onSubmitSuccess, resetForm } = useForm({
   schema: UserLoginSchema,
@@ -22,7 +25,8 @@ const { canSubmit, handleSubmit, isLoading, onSubmitSuccess, resetForm } = useFo
   mutation: loginMutation,
 });
 
-onSubmitSuccess(() => {
+onSubmitSuccess(async () => {
+  await refreshUserSession();
   emit('authenticated');
 });
 

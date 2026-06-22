@@ -14,12 +14,13 @@ const emit = defineEmits<{
 
 const logoutMutation = useLogout();
 const { isLoading: isLoggingOut } = logoutMutation;
-const { balances, isAuthenticated } = useUserSession();
+const { balances, isAuthenticated, refreshUserSession } = useUserSession();
 const hasPointAccounts = computed(() => balances.value.length > 0);
 
 async function logout() {
   try {
     await logoutMutation.mutateAsync();
+    await refreshUserSession();
   } catch {
     // The global mutation handler reports request errors.
   }
