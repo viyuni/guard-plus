@@ -11,9 +11,13 @@ function useInvalidateUserSession() {
 }
 
 function syncAuthenticatedSession() {
-  const { setAuthenticatedState } = useAuthState();
+  const { setAuthState } = useAuthState();
 
-  setAuthenticatedState();
+  setAuthState();
+}
+
+function reloadPage() {
+  window.location.reload();
 }
 
 export const useLogin = defineMutation(() => {
@@ -30,6 +34,7 @@ export const useLogin = defineMutation(() => {
     onSuccess() {
       syncAuthenticatedSession();
       invalidateUserSession();
+      reloadPage();
     },
   });
 });
@@ -118,6 +123,7 @@ export const useLogout = defineMutation(() => {
     onSettled() {
       clearAuthState();
       invalidateUserSession();
+      reloadPage();
     },
   });
 });

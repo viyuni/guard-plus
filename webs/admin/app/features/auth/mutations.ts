@@ -12,7 +12,6 @@ function useInvalidateAdminSession() {
 export const useLogin = defineMutation(() => {
   const invalidateAdminSession = useInvalidateAdminSession();
   const route = useRoute();
-  const router = useRouter();
 
   return useMutation({
     meta: {
@@ -24,13 +23,13 @@ export const useLogin = defineMutation(() => {
     },
     onSuccess({ data }) {
       if (data) {
-        const { setAuthenticatedState } = useAuthState();
+        const { setAuthState } = useAuthState();
 
-        setAuthenticatedState();
+        setAuthState();
         invalidateAdminSession();
         const redirect =
           typeof route.query.redirect === 'string' ? route.query.redirect : '/app/users';
-        router.push(redirect);
+        window.location.assign(redirect);
       }
     },
   });
@@ -38,7 +37,6 @@ export const useLogin = defineMutation(() => {
 
 export const useLogout = defineMutation(() => {
   const invalidateAdminSession = useInvalidateAdminSession();
-  const router = useRouter();
   const { clearAuthState } = useAuthState();
 
   return useMutation({
@@ -52,7 +50,7 @@ export const useLogout = defineMutation(() => {
     onSettled() {
       clearAuthState();
       invalidateAdminSession();
-      router.replace('/login');
+      window.location.replace('/login');
     },
   });
 });
