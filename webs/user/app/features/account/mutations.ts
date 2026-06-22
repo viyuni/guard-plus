@@ -105,6 +105,7 @@ export const useUpdateCurrentUser = defineMutation(() => {
 
 export const useLogout = defineMutation(() => {
   const invalidateUserSession = useInvalidateUserSession();
+  const { clearAuthState } = useAuthState();
 
   return useMutation({
     meta: {
@@ -114,6 +115,9 @@ export const useLogout = defineMutation(() => {
     mutation() {
       return api.auth.logout.post();
     },
-    onSettled: invalidateUserSession,
+    onSettled() {
+      clearAuthState();
+      invalidateUserSession();
+    },
   });
 });

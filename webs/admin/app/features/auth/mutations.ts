@@ -39,6 +39,7 @@ export const useLogin = defineMutation(() => {
 export const useLogout = defineMutation(() => {
   const invalidateAdminSession = useInvalidateAdminSession();
   const router = useRouter();
+  const { clearAuthState } = useAuthState();
 
   return useMutation({
     meta: {
@@ -49,8 +50,9 @@ export const useLogout = defineMutation(() => {
       return api.auth.logout.post();
     },
     onSettled() {
+      clearAuthState();
       invalidateAdminSession();
-      router.push('/login');
+      router.replace('/login');
     },
   });
 });
