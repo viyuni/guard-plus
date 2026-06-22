@@ -2,6 +2,8 @@ import type { CookieOptions } from 'elysia';
 
 export const ACCESS_TOKEN_COOKIE_NAME = 'accessToken';
 export const REFRESH_TOKEN_COOKIE_NAME = 'refreshToken';
+export const AUTH_STATE_COOKIE_NAME = 'authState';
+export const AUTH_STATE_COOKIE_VALUE = 'authenticated';
 export const AUTH_COOKIE_NAME = ACCESS_TOKEN_COOKIE_NAME;
 export const BILI_REGISTER_CODE_COOKIE_NAME = 'biliRegisterCode';
 export const BILI_REGISTER_VERIFIER_COOKIE_NAME = 'biliRegisterVerifier';
@@ -20,6 +22,14 @@ export const ACCESS_TOKEN_COOKIE_OPTIONS = {
 
 export const REFRESH_TOKEN_COOKIE_OPTIONS = {
   httpOnly: true,
+  sameSite: 'lax',
+  secure: process.env.NODE_ENV === 'production',
+  path: '/',
+  maxAge: REFRESH_TOKEN_EXPIRES_IN_SECONDS,
+} satisfies CookieOptions;
+
+export const AUTH_STATE_COOKIE_OPTIONS = {
+  httpOnly: false,
   sameSite: 'lax',
   secure: process.env.NODE_ENV === 'production',
   path: '/',

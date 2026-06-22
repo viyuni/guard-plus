@@ -5,6 +5,9 @@ import { appContext } from '#apps/user/context';
 import {
   ACCESS_TOKEN_COOKIE_NAME,
   ACCESS_TOKEN_COOKIE_OPTIONS,
+  AUTH_STATE_COOKIE_NAME,
+  AUTH_STATE_COOKIE_OPTIONS,
+  AUTH_STATE_COOKIE_VALUE,
   BILI_REGISTER_CODE_COOKIE_NAME,
   BILI_REGISTER_COOKIE_OPTIONS,
   BILI_REGISTER_VERIFIER_COOKIE_NAME,
@@ -62,6 +65,10 @@ export const auth = new Elysia({
         ...REFRESH_TOKEN_COOKIE_OPTIONS,
         value: refreshToken,
       });
+      cookie[AUTH_STATE_COOKIE_NAME]!.set({
+        ...AUTH_STATE_COOKIE_OPTIONS,
+        value: AUTH_STATE_COOKIE_VALUE,
+      });
 
       return user;
     },
@@ -83,6 +90,7 @@ export const auth = new Elysia({
 
       cookie[ACCESS_TOKEN_COOKIE_NAME]!.remove();
       cookie[REFRESH_TOKEN_COOKIE_NAME]!.remove();
+      cookie[AUTH_STATE_COOKIE_NAME]!.remove();
 
       return {
         success: true,
