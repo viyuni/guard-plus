@@ -6,6 +6,10 @@ export function useAuthState() {
 
   const isAuthenticated = computed(() => authState.value === AUTH_STATE_COOKIE_VALUE);
 
+  function setAuthenticatedState() {
+    authState.value = AUTH_STATE_COOKIE_VALUE;
+  }
+
   function clearAuthState() {
     authState.value = null;
   }
@@ -14,5 +18,6 @@ export function useAuthState() {
     authState,
     clearAuthState,
     isAuthenticated,
+    setAuthenticatedState,
   };
 }

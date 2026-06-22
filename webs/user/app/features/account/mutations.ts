@@ -10,6 +10,12 @@ function useInvalidateUserSession() {
   return () => queryCache.invalidateQueries({ key: USER_SESSION_QUERY_KEYS.session() });
 }
 
+function syncAuthenticatedSession() {
+  const { setAuthenticatedState } = useAuthState();
+
+  setAuthenticatedState();
+}
+
 export const useLogin = defineMutation(() => {
   const invalidateUserSession = useInvalidateUserSession();
 
@@ -21,7 +27,10 @@ export const useLogin = defineMutation(() => {
     mutation(body: UserLoginBody) {
       return api.auth.login.post(body);
     },
-    onSuccess: invalidateUserSession,
+    onSuccess() {
+      syncAuthenticatedSession();
+      invalidateUserSession();
+    },
   });
 });
 
@@ -36,7 +45,10 @@ export const useRegister = defineMutation(() => {
     mutation(body: UserRegisterBody) {
       return api.auth.register.post(body);
     },
-    onSuccess: invalidateUserSession,
+    onSuccess() {
+      syncAuthenticatedSession();
+      invalidateUserSession();
+    },
   });
 });
 

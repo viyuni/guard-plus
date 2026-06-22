@@ -24,6 +24,9 @@ export const useLogin = defineMutation(() => {
     },
     onSuccess({ data }) {
       if (data) {
+        const { setAuthenticatedState } = useAuthState();
+
+        setAuthenticatedState();
         invalidateAdminSession();
         const redirect =
           typeof route.query.redirect === 'string' ? route.query.redirect : '/app/users';
