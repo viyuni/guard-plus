@@ -356,7 +356,7 @@ export class RewardUseCase {
         ? `${uname} 开通了${guard.name}`
         : `${uname} 开通了${guard.name}${displayTotal}${unit}`;
     const roomId = this.deps.biliRoom ?? 0;
-    const id = `${sendTime}:${guardStartTime}:${roomId}:${input.guardType}:${price}`;
+    const id = `${sendTime}:${guardStartTime}:${roomId}:${input.uid}:${input.guardType}:${price}`;
 
     return {
       cmd: 'USER_TOAST_MSG_V2',
