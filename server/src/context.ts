@@ -31,8 +31,7 @@ export interface CreateSharedContextOptions {
 export interface CreateEventContextOptions {
   db: DbClient;
   env: SharedEnv &
-    RedisEnv &
-    ImageEnv & {
+    RedisEnv & {
       DATA_SECRET: string;
       BILI_ROOM?: number;
     };
