@@ -11,6 +11,11 @@ export const redisEnv = createEnv({
     REDIS_URL: v.optional(v.string(), 'redis://localhost:6379'),
 
     /**
+     * Redis 访问密码
+     */
+    REDIS_PASSWORD: v.optional(v.string()),
+
+    /**
      * Redis 连接超时时间（毫秒）
      */
     REDIS_CONNECTION_TIMEOUT_MS: v.optional(numberish(), 5000),

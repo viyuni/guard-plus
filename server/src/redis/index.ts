@@ -9,6 +9,7 @@ export type RedisClient = RedisClientType<any, any, any, 2 | 3>;
 export function createRedisClient(env: RedisEnv = redisEnv): RedisClient {
   const options: RedisClientOptions = {
     url: env.REDIS_URL,
+    password: env.REDIS_PASSWORD,
     socket: {
       connectTimeout: env.REDIS_CONNECTION_TIMEOUT_MS,
       socketTimeout: env.REDIS_IDLE_TIMEOUT_MS || undefined,

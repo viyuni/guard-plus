@@ -14,6 +14,7 @@ x-app-environment: &app-environment
   NODE_ENV: ${NODE_ENV:-production}
   DATABASE_URL: postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-guard_plus}@db:5432/${POSTGRES_DB:-guard-plus}
   REDIS_URL: redis://redis:6379
+  REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD in .env.prod}
   IMAGE_SAVE_PATH: /app/server/public/images
   LOG_LEVEL: ${LOG_LEVEL:-info}
   DATA_SECRET: ${DATA_SECRET:?set DATA_SECRET in .env.prod}
@@ -50,7 +51,7 @@ services:
       - target: 5432
         published: ${GUARD_PLUS_POSTGRES_PUBLISHED_PORT:-39699}
         protocol: tcp
-        host_ip: 127.0.0.1
+        host_ip: 0.0.0.0
     volumes:
       - /home/guard-plus-data/postgres:/var/lib/postgresql
     healthcheck:
@@ -69,30 +70,30 @@ services:
     container_name: redis
     restart: unless-stopped
     logging: *logging
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD in .env.prod}
     command:
-      - redis-server
-      - --appendonly
-      - 'yes'
-      - --appendfsync
-      - everysec
-      - --save
-      - '900 1'
-      - --save
-      - '300 10'
-      - --save
-      - '60 10000'
+      - sh
+      - -c
+      - >-
+        redis-server
+        --requirepass "$$REDIS_PASSWORD"
+        --appendonly yes
+        --appendfsync everysec
+        --save "900 1"
+        --save "300 10"
+        --save "60 10000"
     ports:
       - target: 6379
         published: ${GUARD_PLUS_REDIS_PUBLISHED_PORT:-39679}
         protocol: tcp
-        host_ip: 127.0.0.1
+        host_ip: 0.0.0.0
     volumes:
       - /home/guard-plus-data/redis:/data
     healthcheck:
       test:
-        - CMD
-        - redis-cli
-        - ping
+        - CMD-SHELL
+        - redis-cli -a "$$REDIS_PASSWORD" ping
       interval: 10s
       timeout: 3s
       retries: 5
