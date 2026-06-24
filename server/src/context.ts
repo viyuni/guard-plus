@@ -9,7 +9,7 @@ import { redis } from '#redis';
 import { logger } from '#utils/logger';
 
 import { createAuthGuard } from './modules/auth';
-import { createAuthContext, createBiliRegisterContext } from './modules/auth/context';
+import { createAuthContext } from './modules/auth/context';
 import { createDashboardContext } from './modules/dashboard/context';
 import { createOrderContext } from './modules/order/context';
 import { createPointContext } from './modules/point/context';
@@ -26,10 +26,6 @@ export interface CreateSharedContextOptions {
       DATA_SECRET: string;
       BILI_ROOM?: number;
     };
-}
-
-export interface CreateEventContainerOptions {
-  env: Pick<RedisEnv, 'BILI_REGISTER_CODE_TTL_SECONDS'>;
 }
 
 export function createContainer({ db, env }: CreateSharedContextOptions) {
@@ -101,19 +97,6 @@ export function createContainer({ db, env }: CreateSharedContextOptions) {
       rewardUseCase: reward.rewardUseCase,
       rewardRuleUseCase: reward.rewardRuleUseCase,
       dashboardUseCase: dashboard.dashboardUseCase,
-    },
-  };
-}
-
-export function createEventContainer({ env }: CreateEventContainerOptions) {
-  const biliRegister = createBiliRegisterContext({ env, redis });
-
-  return {
-    repositories: {
-      biliRegisterRepo: biliRegister.biliRegisterRepo,
-    },
-    useCases: {
-      biliRegisterUseCase: biliRegister.biliRegisterUseCase,
     },
   };
 }

@@ -1,17 +1,35 @@
 import { createListener } from '@viyuni/bevent-relay';
+import type { Guard } from '@viyuni/bevent-relay/events';
+import { Worker } from 'bunqueue/client';
 
-import { createEventContainer } from '#context';
+import { createAppContext } from '#context';
 import { sharedEnv } from '#env/shared';
 import { publishBilibiliGuardEvent } from '#queues';
+import { BILIBILI_EVENT_QUEUE_NAME } from '#queues';
 import { logger } from '#utils/logger';
+import { db } from '~/src/db';
 
 import { eventEnv } from './env';
 
 const {
-  useCases: { biliRegisterUseCase },
-} = createEventContainer({
+  container: {
+    useCases: { biliRegisterUseCase, rewardUseCase },
+  },
+} = createAppContext({
+  db,
   env: eventEnv,
 });
+
+const _worker = new Worker<Guard>(
+  BILIBILI_EVENT_QUEUE_NAME,
+  job => {
+    return rewardUseCase.rewardBiliGuard(job.data);
+  },
+  {
+    embedded: true,
+    concurrency: 5,
+  },
+);
 
 const listener = createListener({
   roomId: eventEnv.BILI_ROOM,
@@ -28,7 +46,7 @@ listener.on('event', event => {
   switch (event.type) {
     case 'guard': {
       publishBilibiliGuardEvent(event);
-
+      logger.info(event, 'Bilibili Guard Message');
       break;
     }
     case 'message': {
