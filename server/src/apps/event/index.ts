@@ -2,7 +2,7 @@ import { createListener } from '@viyuni/bevent-relay';
 import type { Guard } from '@viyuni/bevent-relay/events';
 import { Worker } from 'bunqueue/client';
 
-import { createAppContext } from '#context';
+import { createEventContainer } from '#context';
 import { sharedEnv } from '#env/shared';
 import { publishBilibiliGuardEvent } from '#queues';
 import { BILIBILI_EVENT_QUEUE_NAME } from '#queues';
@@ -12,10 +12,8 @@ import { db } from '~/src/db';
 import { eventEnv } from './env';
 
 const {
-  container: {
-    useCases: { biliRegisterUseCase, rewardUseCase },
-  },
-} = createAppContext({
+  useCases: { biliRegisterUseCase, rewardUseCase },
+} = createEventContainer({
   db,
   env: eventEnv,
 });

@@ -11,8 +11,6 @@ export const eventEnv = createEnv({
     DATA_SECRET: v.string(),
     VIYUNI_LOGIN_SYNC_URL: v.string(),
     VIYUNI_LOGIN_SYNC_PASSWORD: v.string(),
-    IMAGE_SAVE_PATH: v.string(),
-    JWT_SECRET: v.string(),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

@@ -9,7 +9,7 @@ import { redis } from '#redis';
 import { logger } from '#utils/logger';
 
 import { createAuthGuard } from './modules/auth';
-import { createAuthContext } from './modules/auth/context';
+import { createAuthContext, createBiliRegisterContext } from './modules/auth/context';
 import { createDashboardContext } from './modules/dashboard/context';
 import { createOrderContext } from './modules/order/context';
 import { createPointContext } from './modules/point/context';
@@ -23,6 +23,16 @@ export interface CreateSharedContextOptions {
     RedisEnv &
     ImageEnv & {
       JWT_SECRET: string;
+      DATA_SECRET: string;
+      BILI_ROOM?: number;
+    };
+}
+
+export interface CreateEventContextOptions {
+  db: DbClient;
+  env: SharedEnv &
+    RedisEnv &
+    ImageEnv & {
       DATA_SECRET: string;
       BILI_ROOM?: number;
     };
@@ -97,6 +107,53 @@ export function createContainer({ db, env }: CreateSharedContextOptions) {
       rewardUseCase: reward.rewardUseCase,
       rewardRuleUseCase: reward.rewardRuleUseCase,
       dashboardUseCase: dashboard.dashboardUseCase,
+    },
+  };
+}
+
+export function createEventContainer({ db, env }: CreateEventContextOptions) {
+  const user = createUserContext({
+    db,
+    dataSecret: env.DATA_SECRET,
+  });
+
+  const point = createPointContext({
+    db,
+    userUseCase: user.userUseCase,
+  });
+  const reward = createRewardContext({
+    biliRoom: env.BILI_ROOM,
+    db,
+    logger: logger.scope('RewardUseCase'),
+    pointAccountRepo: point.pointAccountRepo,
+    pointBalanceUseCase: point.pointBalanceUseCase,
+    pointTransactionRepo: point.pointTransactionRepo,
+    pointTypeUseCase: point.pointTypeUseCase,
+    userUseCase: user.userUseCase,
+  });
+
+  const biliRegister = createBiliRegisterContext({ env, redis });
+
+  return {
+    repositories: {
+      userRepo: user.userRepo,
+      pointAccountRepo: point.pointAccountRepo,
+      pointConversionRuleRepo: point.pointConversionRuleRepo,
+      pointTransactionRepo: point.pointTransactionRepo,
+      pointTypeRepo: point.pointTypeRepo,
+      biliEventRepo: reward.biliEventRepo,
+      rewardRuleRepo: reward.rewardRuleRepo,
+      biliRegisterRepo: biliRegister.biliRegisterRepo,
+    },
+    useCases: {
+      userUseCase: user.userUseCase,
+      pointTypeUseCase: point.pointTypeUseCase,
+      pointAccountUseCase: point.pointAccountUseCase,
+      pointBalanceUseCase: point.pointBalanceUseCase,
+      pointTransactionUseCase: point.pointTransactionUseCase,
+      pointConversionUseCase: point.pointConversionUseCase,
+      rewardUseCase: reward.rewardUseCase,
+      biliRegisterUseCase: biliRegister.biliRegisterUseCase,
     },
   };
 }
