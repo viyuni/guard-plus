@@ -1,3 +1,43 @@
+## v0.0.1-beta.5
+
+[compare changes](https://github.com/viyuni/guard-plus/compare/v0.0.1-beta.4...v0.0.1-beta.5)
+
+### 🚀 Enhancements
+
+- **docs:** Initialize documentation ([c3b31b8](https://github.com/viyuni/guard-plus/commit/c3b31b8))
+- **docs:** Add i18n support, mobile header, changelog, and UI refinements ([720fc43](https://github.com/viyuni/guard-plus/commit/720fc43))
+- **docker:** Add production builds for user web app ([a943198](https://github.com/viyuni/guard-plus/commit/a943198))
+- **web:** Migrate admin and user to static SPA ([#15](https://github.com/viyuni/guard-plus/pull/15))
+- **server:** Add redis password authentication ([68021f4](https://github.com/viyuni/guard-plus/commit/68021f4))
+
+### 🩹 Fixes
+
+- **server:** Remove extra prod compose services ([e618eae](https://github.com/viyuni/guard-plus/commit/e618eae))
+- **web:** Sync auth state after login ([97bd4c5](https://github.com/viyuni/guard-plus/commit/97bd4c5))
+- **web:** Clear auth state on logout ([afbd7c8](https://github.com/viyuni/guard-plus/commit/afbd7c8))
+- **web/user:** Sync session after user mutations ([3c54ac3](https://github.com/viyuni/guard-plus/commit/3c54ac3))
+- **web/user:** Sync session after user mutations" ([d386b61](https://github.com/viyuni/guard-plus/commit/d386b61))
+- **web:** Reload after auth changes ([b5fb382](https://github.com/viyuni/guard-plus/commit/b5fb382))
+- **event:** Handle guard event jobs in event app ([67e16b2](https://github.com/viyuni/guard-plus/commit/67e16b2))
+- **event:** Add missing startup environment variables ([b6022cd](https://github.com/viyuni/guard-plus/commit/b6022cd))
+- **event:** Remove stale ImageEnv type dependency ([c2cd3f1](https://github.com/viyuni/guard-plus/commit/c2cd3f1))
+- **server:** Include uid in guard reward event id ([bb51d27](https://github.com/viyuni/guard-plus/commit/bb51d27))
+
+### 💅 Refactors
+
+- **web:** Migrate Vue type checking to Golar ([fae7286](https://github.com/viyuni/guard-plus/commit/fae7286))
+
+### 🏡 Chore
+
+- **release:** V0.0.1-beta.4 ([e0b5a9d](https://github.com/viyuni/guard-plus/commit/e0b5a9d))
+- Update dependencies and centralize type checking with Golar ([8e3067f](https://github.com/viyuni/guard-plus/commit/8e3067f))
+- **web-user:** Rename production Compose file to example ([b778c2b](https://github.com/viyuni/guard-plus/commit/b778c2b))
+- **web-admin:** Add Docker and Nginx deployment config ([4da623c](https://github.com/viyuni/guard-plus/commit/4da623c))
+
+### ❤️ Contributors
+
+- Byc ([@YanChenBai](https://github.com/YanChenBai))
+
 ## v0.0.1-beta.4
 
 [compare changes](https://github.com/viyuni/guard-plus/compare/v0.0.1-beta.3...v0.0.1-beta.4)
