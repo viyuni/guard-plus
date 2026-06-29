@@ -42,7 +42,7 @@
     "@tanstack/vue-form": "^1.32.0",
     "@tanstack/vue-table": "^8.21.3",
     "@tsconfig/node24": "^24.0.4",
-    "@typescript/native-preview": "^7.0.0-dev.20260527.2",
+    "@typescript/native-preview": "^7.0.0-dev.20260628.1",
     "@unovis/ts": "^1.6.5",
     "@unovis/vue": "^1.6.5",
     "@vee-validate/valibot": "^4.15.1",
@@ -72,7 +72,7 @@
     "valibot": "^1.4.0",
     "vee-validate": "^4.15.1",
     "vite": "npm:@voidzero-dev/vite-plus-core@latest",
-    "vite-plus": "latest",
+    "vite-plus": "^0.2.1",
     "vitest": "npm:@voidzero-dev/vite-plus-test@latest",
     "vue": "^3.5.34",
     "vue-component-type-helpers": "^3.3.4",
@@ -80,7 +80,7 @@
     "vue-sonner": "^2.0.9",
     "rolldown": "^1.1.0",
     "markdown-exit": "^1.1.0-beta.2",
-    "@golar/vue": "^0.1.7",
-    "golar": "^0.1.7"
+    "@golar/vue": "^0.1.8",
+    "golar": "^0.1.8"
   }
 }
