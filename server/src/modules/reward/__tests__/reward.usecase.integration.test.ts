@@ -142,7 +142,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
     const sendTime = Math.floor(openedAt.getTime() / 1000);
     const guardStartTime = sendTime;
     const price = 1_998_000 * 2;
-    const biliEventId = `${sendTime}:${guardStartTime}:721:2:${price}`;
+    const biliEventId = `${sendTime}:${guardStartTime}:721:${biliUid}:2:${price}`;
     const event = await db.query.biliEvents.findFirst({
       where: {
         biliEventId,
