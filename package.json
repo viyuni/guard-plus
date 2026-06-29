@@ -1,6 +1,6 @@
 {
   "name": "guard-plus",
-  "version": "0.0.1-beta.5",
+  "version": "0.0.1-beta.6",
   "private": true,
   "description": "Bilibili Live Guard rewards management and fulfillment system",
   "workspaces": [

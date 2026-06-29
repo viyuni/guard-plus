@@ -1,3 +1,19 @@
+## v0.0.1-beta.6
+
+[compare changes](https://github.com/viyuni/guard-plus/compare/v0.0.1-beta.5...v0.0.1-beta.6)
+
+### 🩹 Fixes
+
+- **server:** Update manual guard event id test ([07815b3](https://github.com/viyuni/guard-plus/commit/07815b3))
+
+### 📦 Build
+
+- **deps:** Update project dependencies ([6a4be22](https://github.com/viyuni/guard-plus/commit/6a4be22))
+
+### ❤️ Contributors
+
+- Byc ([@YanChenBai](https://github.com/YanChenBai))
+
 ## v0.0.1-beta.5
 
 [compare changes](https://github.com/viyuni/guard-plus/compare/v0.0.1-beta.4...v0.0.1-beta.5)
