@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "vp run @web/base#prepare && nuxt build",
+    "build": "vp run @web/base#prepare && nuxt generate",
     "prepare": "nuxt prepare",
     "postinstall": "nuxt prepare"
   },
