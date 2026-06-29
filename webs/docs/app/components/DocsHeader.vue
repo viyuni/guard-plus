@@ -3,20 +3,19 @@ import { BookOpen, Rocket, FileText, Menu, X } from 'lucide-vue-next';
 
 const route = useRoute();
 const { locale, locales, setLocale, t } = useI18n();
+const localePath = useLocalePath();
 const config = useRuntimeConfig();
 
 const mobileOpen = ref(false);
 
 const navItems = computed(() => [
-  { label: t('nav.about'), to: '/about', icon: BookOpen },
-  { label: t('nav.changelog'), to: '/changelog', icon: FileText },
-  { label: t('nav.deploy'), to: '/deploy', icon: Rocket },
+  { label: t('nav.about'), to: localePath('/about'), icon: BookOpen },
+  { label: t('nav.changelog'), to: localePath('/changelog'), icon: FileText },
+  { label: t('nav.deploy'), to: localePath('/deploy'), icon: Rocket },
 ]);
 
 function isActive(to: string) {
-  const path =
-    locale.value !== 'en' ? route.path.replace('/' + locale.value, '') || '/' : route.path;
-  return path === to;
+  return route.path === to;
 }
 
 const availableLocales = computed(() => locales.value as { code: string; name: string }[]);
@@ -42,7 +41,7 @@ watch(
       class="mx-auto flex h-full max-w-(--breakpoint-2xl) items-center justify-between border-x px-5"
     >
       <div class="flex items-center gap-3">
-        <NuxtLink to="/" class="flex items-center gap-2.5">
+        <NuxtLink :to="localePath('/')" class="flex items-center gap-2.5">
           <AppLogo :width="120" />
         </NuxtLink>
       </div>

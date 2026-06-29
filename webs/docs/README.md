@@ -1,75 +1,34 @@
-# Nuxt Content Starter
+# Guard Plus Docs
 
-Look at the [Nuxt Content documentation](https://content.nuxt.com) to learn more.
+The bilingual documentation site for Guard Plus. It is built with Nuxt Content, extends
+`@web/base`, and shares components and styles from `@web/ui` with the admin and user apps.
 
-## Setup
+Documentation pages live under `content/en` and `content/zh`. Keep both locales aligned when
+changing product or deployment documentation.
 
-Make sure to install dependencies:
+## Development
 
-```bash
-# npm
-npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
-```
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
+Run commands from the repository root:
 
 ```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
+vp install
+vpr docs#dev
 ```
 
-## Production
+The development server is available at `http://localhost:3000` by default.
 
-Build the application for production:
+## Build and preview
 
 ```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
+vpr docs#build
+vpr docs#preview
 ```
 
-Locally preview production build:
+The generated site is written to `.output/public`.
+
+## Validation
 
 ```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
+vpr docs#typecheck
+vpr check
 ```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.

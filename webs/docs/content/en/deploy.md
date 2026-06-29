@@ -1,263 +1,152 @@
 ---
 title: Deployment Guide
-description: How to deploy Guard Plus to production using Docker Compose and Nginx.
+description: Deploy the Guard Plus APIs, event worker, and static web apps with Docker Compose and Nginx.
 ---
 
 # Deployment Guide
 
-This guide covers deploying Guard Plus to a production server using **Docker Compose** and **Nginx** as a reverse proxy.
+Guard Plus is deployed in two parts: the backend stack in `server/compose.prod.yml`, and the admin
+and user Nuxt SPAs. Nginx terminates TLS and routes each public domain to the matching service.
 
 ---
 
 ## Prerequisites
 
-- A Linux server with **Docker** and **Docker Compose** installed
-- **Bun** runtime for local build tasks
-- A domain name with DNS configured (e.g., `api.example.com`, `api-admin.example.com`)
-- SSL certificates for your domains
+- A Linux server with Docker and Docker Compose
+- Domains and TLS certificates for both web apps and APIs
+- Access to the configured Bilibili live room and Viyuni login-sync service
+
+The Docker builds install project dependencies, so Bun is only required for local development.
 
 ---
 
-## Project Setup
+## 1. Configure the backend
 
-### 1. Clone the Repository
+Clone the repository and create a production environment file from the maintained example:
 
 ```bash
 git clone https://github.com/viyuni/guard-plus.git
 cd guard-plus
+cp server/.env.example .env.prod
 ```
 
-### 2. Install Dependencies
+At minimum, replace every `change-me` value and configure these deployment-specific values:
 
 ```bash
-bun install
-```
-
-### 3. Configure Environment
-
-Create a `.env.prod` file in the project root with the following required variables:
-
-```bash
-# Required — will cause errors if not set
-DATA_SECRET=<your-secret-key>
-BILI_ROOM=<your-bilibili-room-id>
 ADMIN_ORIGINS=https://admin.example.com
-USER_ORIGINS=https://example.com
-ADMIN_JWT_SECRET=<your-admin-jwt-secret>
-USER_JWT_SECRET=<your-user-jwt-secret>
-SUPER_ADMIN_PASSWORD=<secure-admin-password>
+USER_ORIGINS=https://shop.example.com
+BILI_ROOM=<bilibili-room-id>
+
+DATA_SECRET=<long-random-secret>
+ADMIN_JWT_SECRET=<different-long-random-secret>
+USER_JWT_SECRET=<different-long-random-secret>
+REDIS_PASSWORD=<long-random-password>
+SUPER_ADMIN_PASSWORD=<secure-password>
+
 VIYUNI_LOGIN_SYNC_URL=<sync-service-url>
 VIYUNI_LOGIN_SYNC_PASSWORD=<sync-service-password>
-
-# Optional — defaults are shown
-NODE_ENV=production
-LOG_LEVEL=info
-POSTGRES_USER=admin
-POSTGRES_PASSWORD=guard_plus
-POSTGRES_DB=guard-plus
-PASSWORD_HASH_COST=12
-BILI_REGISTER_CODE_TTL_SECONDS=300
-REDIS_CONNECTION_TIMEOUT_MS=5000
-REDIS_IDLE_TIMEOUT_MS=0
-REDIS_MAX_RETRIES=100
-SUPER_ADMIN_UID=0721
-SUPER_ADMIN_USERNAME=Admin
-
-# Optional — SMTP for email notifications
-SMTP_HOST=
-SMTP_PORT=465
-SMTP_SECURE=true
-SMTP_USER=
-SMTP_PASS=
-SMTP_FROM=
-NOTIFY_EMAILS=
 ```
+
+`ADMIN_ORIGINS` and `USER_ORIGINS` accept comma-separated browser origins. Use exact HTTPS origins;
+the APIs use credentialed requests and authentication cookies.
 
 ---
 
-## Docker Deployment
-
-### 4. Start Services
-
-The production Docker Compose file defines the following services:
-
-| Service        | Description                       | Default Port |
-| -------------- | --------------------------------- | ------------ |
-| `db`           | PostgreSQL 18 (Alpine)            | `39699`      |
-| `redis`        | Redis 7.2 with AOF persistence    | `39679`      |
-| `db-push`      | One-shot Drizzle schema migration | —            |
-| `admin-server` | Admin API (Elysia)                | `39960`      |
-| `user-server`  | User API (Elysia)                 | `39980`      |
-| `event-server` | Event ingestion runtime           | —            |
+## 2. Start the backend stack
 
 ```bash
-# Start all services
-docker compose -f server/compose.prod.yml --env-file .env.prod up -d
+docker compose -f server/compose.prod.yml --env-file .env.prod up -d --build
+docker compose -f server/compose.prod.yml --env-file .env.prod ps
 ```
 
-### 5. Verify Services
+| Service        | Purpose                           | Published port |
+| -------------- | --------------------------------- | -------------- |
+| `db`           | PostgreSQL 18                     | `39699`        |
+| `redis`        | Password-protected Redis with AOF | `39679`        |
+| `db-push`      | One-shot Drizzle schema push      | —              |
+| `admin-server` | Admin Elysia API                  | `39960`        |
+| `user-server`  | User Elysia API                   | `39980`        |
+| `event-server` | Bilibili event ingestion and jobs | —              |
 
-```bash
-# Check service status
-docker compose -f server/compose.prod.yml ps
-
-# Check logs
-docker compose -f server/compose.prod.yml logs -f
-```
-
-### Data Persistence
-
-Persistent data is stored in:
-
-- `/home/guard-plus-data/postgres` — PostgreSQL data
-- `/home/guard-plus-data/redis` — Redis AOF data
-- `/home/guard-plus-data/public` — Uploaded images and assets
+PostgreSQL, Redis, uploaded assets, and images persist under `/home/guard-plus-data`.
 
 ---
 
-## Nginx Reverse Proxy
+## 3. Configure and build the web apps
 
-### 6. Configure Nginx
+The admin and user apps are static SPAs. Their API base URLs must be available **when the image or
+static output is built**:
 
-Use the provided Nginx config as a template (`server/nginx.prod.conf`). Update the `server_name` and SSL certificate paths:
+```bash
+cp webs/admin/.env.example webs/admin/.env.prod
+cp webs/user/.env.example webs/user/.env.prod
+```
+
+Set the public API endpoints:
+
+```bash
+# webs/admin/.env.prod
+NUXT_PUBLIC_API_BASE_URL=https://api-admin.example.com
+
+# webs/user/.env.prod
+NUXT_PUBLIC_API_BASE_URL=https://api.example.com
+```
+
+Use the supplied container examples:
+
+```bash
+docker compose -f webs/admin/compose.example.yml up -d --build
+docker compose -f webs/user/compose.example.yml up -d --build
+```
+
+Both examples publish port `3996` by default. Change one `published` value when both apps run on the
+same host. Alternatively, build with `vpr @web/admin#build` and `vpr @web/user#build`, then serve
+each app's `.output/public` directory from a static host with SPA fallback to `index.html`.
+
+---
+
+## 4. Configure Nginx
+
+Use `server/nginx.prod.conf` as the API reverse-proxy template. Replace domain names and certificate
+paths, then add equivalent virtual hosts for the admin and user web containers. A web-app location
+looks like this:
 
 ```nginx
-server {
-  listen 80;
-  listen [::]:80;
-  server_name api-admin.example.com api.example.com;
-  return 301 https://$host$request_uri;
-}
-
-server {
-  listen 443 ssl;
-  listen [::]:443 ssl;
-  server_name api-admin.example.com;
-
-  ssl_certificate     /etc/nginx/ssl/example.com.pem;
-  ssl_certificate_key /etc/nginx/ssl/example.com.key;
-
-  location / {
-    proxy_pass http://127.0.0.1:39960;
-    proxy_http_version 1.1;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto https;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection "upgrade";
-  }
-}
-
-server {
-  listen 443 ssl;
-  listen [::]:443 ssl;
-  server_name api.example.com;
-
-  ssl_certificate     /etc/nginx/ssl/example.com.pem;
-  ssl_certificate_key /etc/nginx/ssl/example.com.key;
-
-  location / {
-    proxy_pass http://127.0.0.1:39980;
-    proxy_http_version 1.1;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto https;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection "upgrade";
-  }
+location / {
+  proxy_pass http://127.0.0.1:3996;
+  proxy_http_version 1.1;
+  proxy_set_header Host $host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto https;
 }
 ```
 
-### 7. Apply Nginx Config
+Validate and reload Nginx:
 
 ```bash
-# Test configuration
 nginx -t
-
-# Reload Nginx
 nginx -s reload
 ```
 
 ---
 
-## Frontend Deployment
-
-### 8. Build the Frontend Apps
+## Operations
 
 ```bash
-# Build admin app
-vpr @web/admin#build
+# Follow backend logs
+docker compose -f server/compose.prod.yml --env-file .env.prod logs -f
 
-# Build user app
-vpr @web/user#build
+# Re-run the one-shot schema push
+docker compose -f server/compose.prod.yml --env-file .env.prod up db-push
+
+# Rebuild after an application update
+docker compose -f server/compose.prod.yml --env-file .env.prod up -d --build
 ```
 
-The built files will be in each app's `.output/public` directory. Serve them with Nginx or your preferred static file server.
-
-### 9. Example Static Site Nginx Config
-
-```nginx
-server {
-  listen 443 ssl;
-  server_name admin.example.com;
-
-  ssl_certificate     /etc/nginx/ssl/example.com.pem;
-  ssl_certificate_key /etc/nginx/ssl/example.com.key;
-
-  root /path/to/webs/admin/.output/public;
-
-  location / {
-    try_files $uri $uri/ /index.html;
-  }
-}
-```
-
----
-
-## Port Mapping Reference
-
-| Service      | Internal Port | Default Published Port | Env Override                         |
-| ------------ | ------------- | ---------------------- | ------------------------------------ |
-| PostgreSQL   | `5432`        | `39699`                | `GUARD_PLUS_POSTGRES_PUBLISHED_PORT` |
-| Redis        | `6379`        | `39679`                | `GUARD_PLUS_REDIS_PUBLISHED_PORT`    |
-| Admin Server | `3600`        | `39960`                | `GUARD_PLUS_ADMIN_PUBLISHED_PORT`    |
-| User Server  | `3800`        | `39980`                | `GUARD_PLUS_USER_PUBLISHED_PORT`     |
-
----
-
-## Health Checks
-
-All services include Docker health checks:
-
-- **PostgreSQL**: `pg_isready` every 10s
-- **Redis**: `redis-cli ping` every 10s
-- **API servers**: depend on healthy DB + Redis before starting
-
----
-
-## Troubleshooting
-
-### Database migration fails
-
-Ensure PostgreSQL is healthy before the migration runs. Check with:
-
-```bash
-docker compose -f server/compose.prod.yml logs db
-```
-
-### API server can't connect to database
-
-Verify `DATABASE_URL` in your `.env.prod` matches the service names in `compose.prod.yml`. The hostnames are `db` and `redis` (Docker Compose service names).
-
-### SSL certificate issues
-
-Ensure your certificate files exist at the paths specified in the Nginx config. For Let's Encrypt:
-
-```bash
-certbot certonly --nginx -d api.example.com -d api-admin.example.com
-```
+If Redis is unhealthy, verify that the same `REDIS_PASSWORD` reaches both the Redis container and
+the application services. If browser login fails, check the exact frontend origin, HTTPS, API base
+URL, CORS configuration, and authentication cookies together.
 
 ---
 

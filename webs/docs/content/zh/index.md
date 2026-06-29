@@ -43,11 +43,11 @@ Bilibili Live 大航海会员的奖励管理与发放系统。帮助主播、运
 
 ::DocsCard{title="前端" icon="Monitor"}
 
-- **Nuxt 4** SSR 框架
+- **Nuxt 4** 静态 SPA 应用
 - **Vue 3** Composition API
+- 共享 **@web/ui** 组件与样式
 - **Tailwind CSS** / shadcn-vue
-- **Pinia** 状态管理
-- **TanStack** 表格 & 表单
+- **Pinia Colada**、TanStack Table 与 vee-validate
 
 ::
 
@@ -65,6 +65,7 @@ Bilibili Live 大航海会员的奖励管理与发放系统。帮助主播、运
 
 - **TypeScript 6.x** 全栈类型
 - **Vite+** monorepo 工具
+- **Golar** Vue 类型检查
 - **Valibot** Schema 校验
 - **Docker** 容器化
 - **GitHub Actions** CI/CD
@@ -85,6 +86,7 @@ vpr check
 # 启动开发服务器
 vpr @web/admin#dev
 vpr @web/user#dev
+vpr docs#dev
 ```
 
 [在 GitHub 上查看 →](https://github.com/viyuni/guard-plus)

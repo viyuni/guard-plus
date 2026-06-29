@@ -11,8 +11,8 @@ Guard Plus is a **rewards management and fulfillment system** for [Bilibili Live
 
 The project is a **Vite+ TypeScript monorepo** containing:
 
-- **Nuxt admin and user apps** for frontend interfaces
-- A **shared Vue UI package** with reusable components
+- **Nuxt admin, user, and documentation apps** for frontend interfaces
+- A **shared Vue UI package** consumed by all three web apps
 - An **Elysia backend** for API services
 - **Background queues** for async processing
 - **Shared cross-package TypeScript contracts** for type safety
@@ -25,13 +25,13 @@ The project is a **Vite+ TypeScript monorepo** containing:
 ┌─────────────────────────────────────────────────────┐
 │                    Client Layer                      │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐          │
-│  │ Admin App│  │ User App │  │  Docs    │          │
+│  │ Admin App│  │ User App │  │ Docs App │          │
 │  │ (Nuxt 4) │  │ (Nuxt 4) │  │ (Nuxt 4) │          │
 │  └────┬─────┘  └────┬─────┘  └──────────┘          │
-│       │             │                                │
-│  ┌────┴─────────────┴────┐                          │
-│  │     Shared UI (Vue)   │                          │
-│  └───────────────────────┘                          │
+│       └─────────────┼─────────────┘                  │
+│             ┌───────┴────────┐                       │
+│             │ Shared UI (Vue)│                       │
+│             └────────────────┘                       │
 ├─────────────────────────────────────────────────────┤
 │                    API Layer                         │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐          │
@@ -82,6 +82,12 @@ Shared Vue components, styles, Nuxt module integration, and component metadata u
 
 Shared Nuxt base app and static brand assets used by web apps and documentation.
 
+### `webs/docs` — Documentation
+
+Bilingual Nuxt Content site for project, architecture, release, and deployment documentation. It
+extends `@web/base` and consumes `@web/ui`, so its components, theme, fonts, and frontend tooling
+stay aligned with the admin and user apps.
+
 ---
 
 ## Technology Stack
@@ -90,12 +96,13 @@ Shared Nuxt base app and static brand assets used by web apps and documentation.
 | ---------- | ------------------------------------------------------ |
 | Runtime    | [Bun](https://bun.sh)                                  |
 | Frontend   | [Nuxt 4](https://nuxt.com), [Vue 3](https://vuejs.org) |
+| Docs       | [Nuxt Content](https://content.nuxt.com)               |
 | Backend    | [Elysia](https://elysiajs.com)                         |
 | Database   | PostgreSQL + [Drizzle ORM](https://orm.drizzle.team)   |
 | Cache      | Redis                                                  |
 | Styling    | [Tailwind CSS](https://tailwindcss.com), shadcn-vue    |
 | Validation | [Valibot](https://valibot.dev)                         |
-| Monorepo   | [Vite+](https://github.com/antfu/vite-plus)            |
+| Monorepo   | [Vite+](https://viteplus.dev)                          |
 | CI/CD      | GitHub Actions                                         |
 
 ---
@@ -119,6 +126,7 @@ vpr @server/app#dev:user
 vpr @server/app#dev:event
 vpr @web/admin#dev
 vpr @web/user#dev
+vpr docs#dev
 ```
 
 ---

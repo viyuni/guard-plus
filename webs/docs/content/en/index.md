@@ -43,11 +43,11 @@ Asynchronous reward workflows powered by event ingestion and background job proc
 
 ::DocsCard{title="Frontend" icon="Monitor"}
 
-- **Nuxt 4** with SSR
+- **Nuxt 4** static SPA apps
 - **Vue 3** Composition API
+- Shared **@web/ui** components and styles
 - **Tailwind CSS** / shadcn-vue
-- **Pinia** state management
-- **TanStack** tables & forms
+- **Pinia Colada**, TanStack Table, and vee-validate
 
 ::
 
@@ -65,6 +65,7 @@ Asynchronous reward workflows powered by event ingestion and background job proc
 
 - **TypeScript 6.x** throughout
 - **Vite+** monorepo tooling
+- **Golar** Vue type checking
 - **Valibot** schema validation
 - **Docker** containerization
 - **GitHub Actions** CI/CD
@@ -85,6 +86,7 @@ vpr check
 # Start development servers
 vpr @web/admin#dev
 vpr @web/user#dev
+vpr docs#dev
 ```
 
 [View on GitHub →](https://github.com/viyuni/guard-plus)
