@@ -82,14 +82,12 @@ export default defineConfig({
         input: [...inputs.dbPush, '.env'],
       },
       'db:push': {
-        cache: true,
+        cache: false,
         command: bunEnv('drizzle-kit push'),
-        input: [...inputs.dbPush, '.env'],
       },
       'db:push:test': {
-        cache: true,
+        cache: false,
         command: bunTest('drizzle-kit push'),
-        input: [...inputs.dbPush, '.env.test'],
       },
       'db:seed': {
         cache: false,
