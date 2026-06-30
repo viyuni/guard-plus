@@ -1,8 +1,8 @@
-export const AUTH_STATE_COOKIE_NAME = 'authState';
-export const AUTH_STATE_COOKIE_VALUE = 'authenticated';
+export const AUTH_STATE_COOKIE_NAME = 'auth';
+export const AUTH_STATE_COOKIE_VALUE = 1;
 
 export function useAuthState() {
-  const authState = useCookie(AUTH_STATE_COOKIE_NAME);
+  const authState = useCookie<number | null>(AUTH_STATE_COOKIE_NAME);
 
   const isAuthenticated = computed(() => authState.value === AUTH_STATE_COOKIE_VALUE);
 

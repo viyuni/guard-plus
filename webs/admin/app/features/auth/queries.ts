@@ -13,7 +13,6 @@ export const adminSessionQuery = defineQueryOptions(() => {
 
   return {
     key: AUTH_QUERY_KEYS.session(),
-    staleTime: Infinity,
     query: async () => {
       if (!isAuthenticated.value) {
         return ADMIN_UNAUTHENTICATED_SESSION;

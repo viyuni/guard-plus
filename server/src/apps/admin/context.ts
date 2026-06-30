@@ -12,7 +12,9 @@ export const { context, container: adminContainer } = createAppContext({
   db,
   env: {
     ...adminEnv,
+    API_ORIGIN: adminEnv.ADMIN_API_ORIGIN,
     JWT_SECRET: adminEnv.ADMIN_JWT_SECRET,
+    WEB_ORIGINS: adminEnv.ADMIN_WEB_ORIGINS,
   },
 });
 

@@ -8,7 +8,7 @@ import { ImageUseCase } from '#modules/image';
 import { redis } from '#redis';
 import { logger } from '#utils/logger';
 
-import { createAuthGuard } from './modules/auth';
+import { createAuthGuard, getAuthStateCookieOptions } from './modules/auth';
 import { createAuthContext, createBiliRegisterContext } from './modules/auth/context';
 import { createDashboardContext } from './modules/dashboard/context';
 import { createOrderContext } from './modules/order/context';
@@ -22,7 +22,9 @@ export interface CreateSharedContextOptions {
   env: SharedEnv &
     RedisEnv &
     ImageEnv & {
+      API_ORIGIN: string;
       JWT_SECRET: string;
+      WEB_ORIGINS: string[];
       DATA_SECRET: string;
       BILI_ROOM?: number;
     };
@@ -159,10 +161,14 @@ export function createEventContainer({ db, env }: CreateEventContextOptions) {
 
 export function createAppContext(options: CreateSharedContextOptions) {
   const container = createContainer(options);
+  const authStateCookieOptions = getAuthStateCookieOptions(
+    options.env.API_ORIGIN,
+    options.env.WEB_ORIGINS,
+  );
   const context = new Elysia({
     name: 'SharedContext',
   })
-    .use(createAuthGuard(container.useCases.authUseCase))
+    .use(createAuthGuard(container.useCases.authUseCase, authStateCookieOptions))
     .decorate(container.useCases);
 
   return {

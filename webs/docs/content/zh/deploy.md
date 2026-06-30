@@ -33,8 +33,10 @@ cp server/.env.example .env.prod
 至少需要替换所有 `change-me`，并配置以下部署相关变量：
 
 ```bash
-ADMIN_ORIGINS=https://admin.example.com
-USER_ORIGINS=https://shop.example.com
+ADMIN_API_ORIGIN=https://api.admin.example.com
+ADMIN_WEB_ORIGINS=https://admin.example.com
+USER_API_ORIGIN=https://api.shop.example.com
+USER_WEB_ORIGINS=https://shop.example.com
 BILI_ROOM=<bilibili-room-id>
 
 DATA_SECRET=<long-random-secret>
@@ -47,8 +49,8 @@ VIYUNI_LOGIN_SYNC_URL=<sync-service-url>
 VIYUNI_LOGIN_SYNC_PASSWORD=<sync-service-password>
 ```
 
-`ADMIN_ORIGINS` 和 `USER_ORIGINS` 支持以逗号分隔多个浏览器 Origin。请填写准确的 HTTPS
-Origin；API 使用携带凭据的请求和认证 Cookie。
+请为每个应用填写唯一且准确的 HTTPS API Origin。Web Origins 支持以逗号分隔多个值；API
+hostname 必须等于或隶属于其中一个 Web hostname。API 使用携带凭据的请求和认证 Cookie。
 
 ---
 
@@ -85,10 +87,10 @@ cp webs/user/.env.example webs/user/.env.prod
 
 ```bash
 # webs/admin/.env.prod
-NUXT_PUBLIC_API_BASE_URL=https://api-admin.example.com
+NUXT_PUBLIC_API_BASE_URL=https://api.admin.example.com
 
 # webs/user/.env.prod
-NUXT_PUBLIC_API_BASE_URL=https://api.example.com
+NUXT_PUBLIC_API_BASE_URL=https://api.shop.example.com
 ```
 
 使用仓库提供的容器示例：

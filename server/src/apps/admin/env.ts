@@ -16,12 +16,14 @@ export const adminEnv = createEnv({
     ADMIN_PORT: v.optional(port(), 3600),
 
     /**
-     * 管理后台前端地址，多个地址用英文逗号分隔
+     * 管理端 API 公开 Origin
      */
-    ADMIN_ORIGINS: v.optional(
-      envOrigins,
-      'http://localhost:3001,http://admin.guard-plus.localhost:3001',
-    ),
+    ADMIN_API_ORIGIN: v.pipe(v.string(), v.url()),
+
+    /**
+     * 管理端 Web 公开 Origin
+     */
+    ADMIN_WEB_ORIGINS: envOrigins,
 
     /**
      * 数据密钥

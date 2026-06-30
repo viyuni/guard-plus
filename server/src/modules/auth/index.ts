@@ -1,4 +1,4 @@
-import Elysia from 'elysia';
+import Elysia, { type CookieOptions } from 'elysia';
 
 import type { AdminRole } from '#db/schema';
 import { UnauthorizedError } from '#utils';
@@ -26,7 +26,10 @@ function getAuth(ctx: unknown) {
   return (ctx as { auth: AuthPayload }).auth;
 }
 
-export const createAuthGuard = (authUseCase: AuthUseCase) => {
+export const createAuthGuard = (
+  authUseCase: AuthUseCase,
+  authStateCookieOptions: CookieOptions = AUTH_STATE_COOKIE_OPTIONS,
+) => {
   const authGuard = new Elysia({ name: 'AuthGuard' })
     .macro('requiredAuth', {
       // OpenAPI
@@ -75,7 +78,7 @@ export const createAuthGuard = (authUseCase: AuthUseCase) => {
           value: accessToken,
         });
         ctx.cookie[AUTH_STATE_COOKIE_NAME]!.set({
-          ...AUTH_STATE_COOKIE_OPTIONS,
+          ...authStateCookieOptions,
           value: AUTH_STATE_COOKIE_VALUE,
         });
 

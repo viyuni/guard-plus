@@ -33,8 +33,10 @@ cp server/.env.example .env.prod
 At minimum, replace every `change-me` value and configure these deployment-specific values:
 
 ```bash
-ADMIN_ORIGINS=https://admin.example.com
-USER_ORIGINS=https://shop.example.com
+ADMIN_API_ORIGIN=https://api.admin.example.com
+ADMIN_WEB_ORIGINS=https://admin.example.com
+USER_API_ORIGIN=https://api.shop.example.com
+USER_WEB_ORIGINS=https://shop.example.com
 BILI_ROOM=<bilibili-room-id>
 
 DATA_SECRET=<long-random-secret>
@@ -47,8 +49,9 @@ VIYUNI_LOGIN_SYNC_URL=<sync-service-url>
 VIYUNI_LOGIN_SYNC_PASSWORD=<sync-service-password>
 ```
 
-`ADMIN_ORIGINS` and `USER_ORIGINS` accept comma-separated browser origins. Use exact HTTPS origins;
-the APIs use credentialed requests and authentication cookies.
+Set one exact HTTPS API origin for each application. Web origins accept comma-separated values; each
+API hostname must equal or be a subdomain of one corresponding Web hostname. The APIs use
+credentialed requests and authentication cookies.
 
 ---
 
@@ -86,10 +89,10 @@ Set the public API endpoints:
 
 ```bash
 # webs/admin/.env.prod
-NUXT_PUBLIC_API_BASE_URL=https://api-admin.example.com
+NUXT_PUBLIC_API_BASE_URL=https://api.admin.example.com
 
 # webs/user/.env.prod
-NUXT_PUBLIC_API_BASE_URL=https://api.example.com
+NUXT_PUBLIC_API_BASE_URL=https://api.shop.example.com
 ```
 
 Use the supplied container examples:

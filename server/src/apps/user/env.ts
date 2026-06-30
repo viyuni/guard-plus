@@ -1,5 +1,6 @@
-import * as v from '@shared/schema';
+import { port, envOrigins } from '@shared/schema';
 import { createEnv } from '@t3-oss/env-core';
+import * as v from 'valibot';
 
 import { imageEnv } from '#env/image';
 import { redisEnv } from '#env/redis';
@@ -12,15 +13,17 @@ export const userEnv = createEnv({
     /**
      * 用户服务端口
      */
-    USER_PORT: v.optional(v.port(), 3800),
+    USER_PORT: v.optional(port(), 3800),
 
     /**
-     * 用户前端地址，多个地址用英文逗号分隔
+     * 用户端 API 公开 Origin
      */
-    USER_ORIGINS: v.optional(
-      v.envOrigins,
-      'http://localhost:3000,http://guard-plus.localhost:3000',
-    ),
+    USER_API_ORIGIN: v.pipe(v.string(), v.url()),
+
+    /**
+     * 用户端 Web 公开 Origin
+     */
+    USER_WEB_ORIGINS: envOrigins,
 
     /**
      * B站直播间 ID

@@ -19,7 +19,6 @@ export const userSessionQuery = defineQueryOptions(() => {
 
   return {
     key: USER_SESSION_QUERY_KEYS.session(),
-    staleTime: Infinity,
     query: async () => {
       if (!isAuthenticated.value) {
         return USER_UNAUTHENTICATED_SESSION;

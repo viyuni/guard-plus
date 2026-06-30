@@ -2,17 +2,23 @@ import { AdminLoginSchema } from '@shared/schema/admin';
 import Elysia from 'elysia';
 
 import { appContext } from '#apps/admin/context';
+import { adminEnv } from '#apps/admin/env';
 import {
   AUTH_STATE_COOKIE_NAME,
-  AUTH_STATE_COOKIE_OPTIONS,
   AUTH_STATE_COOKIE_VALUE,
   ACCESS_TOKEN_COOKIE_NAME,
   ACCESS_TOKEN_COOKIE_OPTIONS,
   REFRESH_TOKEN_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_OPTIONS,
+  getAuthStateCookieOptions,
 } from '#modules/auth';
 
 export * from './usecase';
+
+const authStateCookieOptions = getAuthStateCookieOptions(
+  adminEnv.ADMIN_API_ORIGIN,
+  adminEnv.ADMIN_WEB_ORIGINS,
+);
 
 export const auth = new Elysia({
   name: 'AuthRoute',
@@ -37,7 +43,7 @@ export const auth = new Elysia({
         value: refreshToken,
       });
       cookie[AUTH_STATE_COOKIE_NAME]!.set({
-        ...AUTH_STATE_COOKIE_OPTIONS,
+        ...authStateCookieOptions,
         value: AUTH_STATE_COOKIE_VALUE,
       });
 
@@ -61,7 +67,11 @@ export const auth = new Elysia({
 
       cookie[ACCESS_TOKEN_COOKIE_NAME]!.remove();
       cookie[REFRESH_TOKEN_COOKIE_NAME]!.remove();
-      cookie[AUTH_STATE_COOKIE_NAME]!.remove();
+      cookie[AUTH_STATE_COOKIE_NAME]!.set({
+        ...authStateCookieOptions,
+        maxAge: 0,
+        value: '',
+      });
 
       return {
         success: true,

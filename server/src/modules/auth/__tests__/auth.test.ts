@@ -2,7 +2,7 @@ import { describe, expect, it, mock } from 'bun:test';
 
 import Elysia from 'elysia';
 
-import { createAuthGuard } from '../index';
+import { createAuthGuard, getAuthStateCookieOptions } from '../index';
 import { AuthUseCase } from '../usecase';
 
 function createAuthUseCase() {
@@ -139,6 +139,23 @@ describe('AuthUseCase', () => {
 
     expect(first.accessToken).toBe(second.accessToken);
     expect(authSessionRepo.saveRefreshResult).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('getAuthStateCookieOptions', () => {
+  it('选择与 API 匹配的最具体 Web 父域', () => {
+    const options = getAuthStateCookieOptions('https://api.admin.example.com', [
+      'https://example.com',
+      'https://admin.example.com',
+    ]);
+
+    expect(options.domain).toBe('admin.example.com');
+  });
+
+  it('拒绝不属于任一 Web Origin 的 API Origin', () => {
+    expect(() =>
+      getAuthStateCookieOptions('https://api.example.net', ['https://example.com']),
+    ).toThrow();
   });
 });
 

@@ -86,7 +86,9 @@ export function createDeps() {
       REDIS_MAX_RETRIES: 100,
       BILI_REGISTER_CODE_TTL_SECONDS: 300,
       BILI_ROOM: 721,
+      API_ORIGIN: 'http://api.test.localhost',
       JWT_SECRET: 'test',
+      WEB_ORIGINS: ['http://test.localhost'],
       DATA_SECRET: 'test',
     },
   });

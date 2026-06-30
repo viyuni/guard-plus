@@ -13,7 +13,9 @@ const { context } = createAppContext({
   db,
   env: {
     ...userEnv,
+    API_ORIGIN: userEnv.USER_API_ORIGIN,
     JWT_SECRET: userEnv.USER_JWT_SECRET,
+    WEB_ORIGINS: userEnv.USER_WEB_ORIGINS,
   },
 });
 

@@ -6,18 +6,23 @@ import {
   ACCESS_TOKEN_COOKIE_NAME,
   ACCESS_TOKEN_COOKIE_OPTIONS,
   AUTH_STATE_COOKIE_NAME,
-  AUTH_STATE_COOKIE_OPTIONS,
   AUTH_STATE_COOKIE_VALUE,
   BILI_REGISTER_CODE_COOKIE_NAME,
   BILI_REGISTER_COOKIE_OPTIONS,
   BILI_REGISTER_VERIFIER_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_OPTIONS,
+  getAuthStateCookieOptions,
 } from '#modules/auth';
 
 import { userEnv } from '../../env';
 import { AuthUseCase } from './usecase';
 export * from './usecase';
+
+const authStateCookieOptions = getAuthStateCookieOptions(
+  userEnv.USER_API_ORIGIN,
+  userEnv.USER_WEB_ORIGINS,
+);
 
 function getCookieString(value: unknown) {
   return typeof value === 'string' ? value : undefined;
@@ -66,7 +71,7 @@ export const auth = new Elysia({
         value: refreshToken,
       });
       cookie[AUTH_STATE_COOKIE_NAME]!.set({
-        ...AUTH_STATE_COOKIE_OPTIONS,
+        ...authStateCookieOptions,
         value: AUTH_STATE_COOKIE_VALUE,
       });
 
@@ -90,7 +95,11 @@ export const auth = new Elysia({
 
       cookie[ACCESS_TOKEN_COOKIE_NAME]!.remove();
       cookie[REFRESH_TOKEN_COOKIE_NAME]!.remove();
-      cookie[AUTH_STATE_COOKIE_NAME]!.remove();
+      cookie[AUTH_STATE_COOKIE_NAME]!.set({
+        ...authStateCookieOptions,
+        maxAge: 0,
+        value: '',
+      });
 
       return {
         success: true,
