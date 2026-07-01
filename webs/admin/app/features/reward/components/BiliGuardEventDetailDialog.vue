@@ -25,7 +25,7 @@ const snapshot = computed(() => props.event.eventSnapshot as BiliGuardEventSnaps
     <DialogContent class="sm:max-w-2xl">
       <DialogHeader>
         <DialogTitle>事件详情</DialogTitle>
-        <DialogDescription>{{ event.biliEventId }}</DialogDescription>
+        <DialogDescription class="pr-6 break-all">{{ event.biliEventId }}</DialogDescription>
       </DialogHeader>
 
       <div class="space-y-4">
