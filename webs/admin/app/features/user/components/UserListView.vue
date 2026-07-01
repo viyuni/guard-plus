@@ -37,7 +37,11 @@ const {
 });
 
 const [handleCreateUser] = useOverlay(CreateUserDialog);
-const { items: users, meta: userMeta } = usePageQuery(() => userPageQuery(query.value));
+const {
+  items: users,
+  meta: userMeta,
+  isLoading: isTableLoading,
+} = usePageQuery(() => userPageQuery(query.value));
 
 const pointBalanceFormat = new Intl.NumberFormat('zh-CN');
 
@@ -57,6 +61,7 @@ function getPointAccountName(pointAccount: User['pointAccounts'][number]) {
     :columns="columns"
     :total="userMeta?.total"
     :page-size="pageSize"
+    :loading="isTableLoading"
   >
     <template #toolbar>
       <DataTableToolbar>

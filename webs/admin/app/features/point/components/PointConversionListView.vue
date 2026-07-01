@@ -40,7 +40,7 @@ const columns = [
   { id: 'actions', enableHiding: false },
 ] as const satisfies PointConversionColumns;
 
-const { data: conversions } = useQuery(pointConversionListQuery);
+const { data: conversions, isLoading: isTableLoading } = useQuery(pointConversionListQuery);
 const { mutate: enableConversionRule, isLoading: isEnabling } = useEnablePointConversionRule();
 const { mutate: disableConversionRule, isLoading: isDisabling } = useDisablePointConversionRule();
 const { mutate: deleteConversionRule, isLoading: isDeleting } = useDeletePointConversionRule();
@@ -59,7 +59,7 @@ function toggleConversionRuleEnabled(conversion: PointConversion, enabled: boole
 </script>
 
 <template>
-  <DataTable :data="conversions ?? []" :columns="columns" hide-footer>
+  <DataTable :data="conversions ?? []" :columns="columns" :loading="isTableLoading" hide-footer>
     <template #toolbar>
       <DataTableToolbar>
         <template #actions>

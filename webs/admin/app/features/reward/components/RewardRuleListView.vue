@@ -29,7 +29,7 @@ const columns = [
   { id: 'actions', enableHiding: false },
 ] satisfies ColumnDef<RewardRule>[];
 
-const { data: rules } = useQuery(rewardRuleListQuery);
+const { data: rules, isLoading: isTableLoading } = useQuery(rewardRuleListQuery);
 const { mutate: enableRewardRule, isLoading: isEnabling } = useEnableRewardRule();
 const { mutate: disableRewardRule, isLoading: isDisabling } = useDisableRewardRule();
 const { mutate: deleteRewardRule, isLoading: isDeleting } = useDeleteRewardRule();
@@ -47,7 +47,7 @@ function toggleRewardRuleEnabled(rule: RewardRule, enabled: boolean) {
 </script>
 
 <template>
-  <DataTable :data="rules ?? []" :columns="columns" hide-footer>
+  <DataTable :data="rules ?? []" :columns="columns" :loading="isTableLoading" hide-footer>
     <template #toolbar>
       <DataTableToolbar>
         <template #actions>

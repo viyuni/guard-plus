@@ -51,7 +51,11 @@ const {
   userId: undefined,
 });
 
-const { items: orders, meta: orderMeta } = usePageQuery(() => orderPageQuery(query.value));
+const {
+  items: orders,
+  meta: orderMeta,
+  isLoading: isTableLoading,
+} = usePageQuery(() => orderPageQuery(query.value));
 const [openOrderDetailDialog] = useOverlay(OrderDetailDialog);
 const [openOrderExpressDialog] = useOverlay(OrderExpressDialog);
 const [openOrderReceiverDialog] = useOverlay(OrderReceiverDialog);
@@ -148,6 +152,7 @@ function downloadCsv(filename: string, content: string) {
     :columns="columns"
     :total="orderMeta?.total"
     :page-size="pageSize"
+    :loading="isTableLoading"
   >
     <template #toolbar>
       <DataTableToolbar>

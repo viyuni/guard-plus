@@ -44,7 +44,11 @@ const {
   pointTypeId: undefined,
 });
 
-const { items: products, meta: productMeta } = usePageQuery(() => productPageQuery(query.value));
+const {
+  items: products,
+  meta: productMeta,
+  isLoading: isTableLoading,
+} = usePageQuery(() => productPageQuery(query.value));
 const [openAdjustProductStockDialog] = useOverlay(AdjustProductStockDialog);
 const [openProductCoverDialog] = useOverlay(ProductCoverDialog);
 const [openProductDialog] = useOverlay(ProductDialog);
@@ -69,6 +73,7 @@ function updateProductStatus(product: Product, status?: ProductStatus | '') {
     :columns="columns"
     :total="productMeta?.total"
     :page-size="pageSize"
+    :loading="isTableLoading"
   >
     <template #toolbar>
       <DataTableToolbar>

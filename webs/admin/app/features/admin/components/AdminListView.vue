@@ -34,7 +34,11 @@ const {
   query,
 } = useDebouncedPageQuery<AdminPageQuery>();
 
-const { items: admins, meta: adminMeta } = usePageQuery(() => adminPageQuery(query.value));
+const {
+  items: admins,
+  meta: adminMeta,
+  isLoading: isTableLoading,
+} = usePageQuery(() => adminPageQuery(query.value));
 const [openAdminDialog] = useOverlay(AdminDialog);
 const [openResetAdminPasswordDialog] = useOverlay(ResetAdminPasswordDialog);
 const { mutate: banAdmin, isLoading: isBanning } = useBanAdmin();
@@ -50,6 +54,7 @@ const isUpdatingStatus = computed(() => isBanning.value || isRestoring.value);
     :columns="columns"
     :total="adminMeta?.total"
     :page-size="pageSize"
+    :loading="isTableLoading"
   >
     <template #toolbar>
       <DataTableToolbar>

@@ -55,7 +55,11 @@ const {
   endAt: undefined,
 });
 
-const { items: events, meta } = usePageQuery(() => biliGuardEventPageQuery(query.value));
+const {
+  items: events,
+  meta,
+  isLoading: isTableLoading,
+} = usePageQuery(() => biliGuardEventPageQuery(query.value));
 const { mutate: replayBiliGuardReward, isLoading: isReplaying } = useReplayBiliGuardReward();
 const { mutate: checkEventService, isLoading: isCheckingEventService } = useCheckEventService();
 const { user } = useAdminSession();
@@ -100,6 +104,7 @@ function formatDateTime(value: Date | string | number | null | undefined) {
     :columns="columns"
     :total="meta?.total"
     :page-size="pageSize"
+    :loading="isTableLoading"
   >
     <template #toolbar>
       <DataTableToolbar>

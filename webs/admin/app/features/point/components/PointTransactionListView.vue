@@ -39,7 +39,11 @@ const {
   endAt: undefined,
 });
 
-const { items: transactions, meta } = usePageQuery(() => pointTransactionPageQuery(query.value));
+const {
+  items: transactions,
+  meta,
+  isLoading: isTableLoading,
+} = usePageQuery(() => pointTransactionPageQuery(query.value));
 </script>
 
 <template>
@@ -49,6 +53,7 @@ const { items: transactions, meta } = usePageQuery(() => pointTransactionPageQue
     :columns="columns"
     :total="meta?.total"
     :page-size="pageSize"
+    :loading="isTableLoading"
   >
     <template #toolbar>
       <DataTableToolbar>

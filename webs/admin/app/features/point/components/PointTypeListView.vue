@@ -28,7 +28,7 @@ const columns = [
   { id: 'actions', enableHiding: false },
 ] satisfies ColumnDef<PointType>[];
 
-const { data: pointTypes } = useQuery(pointTypeListQuery);
+const { data: pointTypes, isLoading: isTableLoading } = useQuery(pointTypeListQuery);
 const { mutate: enablePointType, isLoading: isEnabling } = useEnablePointType();
 const { mutate: disablePointType, isLoading: isDisabling } = useDisablePointType();
 const [openPointTypeDialog] = useOverlay(PointTypeDialog);
@@ -47,7 +47,7 @@ function togglePointTypeStatus(pointType: PointType, enabled: boolean) {
 </script>
 
 <template>
-  <DataTable :data="pointTypes ?? []" :columns="columns" hide-footer>
+  <DataTable :data="pointTypes ?? []" :columns="columns" :loading="isTableLoading" hide-footer>
     <template #toolbar>
       <DataTableToolbar>
         <template #actions>

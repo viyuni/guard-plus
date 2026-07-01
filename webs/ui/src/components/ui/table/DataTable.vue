@@ -342,13 +342,21 @@ watch(totalPages, maxPage => {
     <div
       :class="
         cn(
-          'overflow-hidden rounded-md border',
+          'relative overflow-hidden rounded-md border',
           props.scrollY && 'overflow-y-auto',
           props.scrollAreaClass,
           props.class,
         )
       "
+      :aria-busy="loading"
     >
+      <div
+        v-if="loading"
+        class="bg-background/70 absolute inset-0 z-10 flex items-center justify-center backdrop-blur-[1px]"
+      >
+        <Spinner class="text-primary size-8" />
+      </div>
+
       <Table>
         <TableHeader class="bg-muted/80">
           <TableRow v-for="headerGroup in resolvedTable.getHeaderGroups()" :key="headerGroup.id">

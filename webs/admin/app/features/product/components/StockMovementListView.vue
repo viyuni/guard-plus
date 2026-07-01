@@ -33,7 +33,11 @@ const {
   endAt: undefined,
 });
 
-const { items: movements, meta } = usePageQuery(() => stockMovementPageQuery(query.value));
+const {
+  items: movements,
+  meta,
+  isLoading: isTableLoading,
+} = usePageQuery(() => stockMovementPageQuery(query.value));
 </script>
 
 <template>
@@ -43,6 +47,7 @@ const { items: movements, meta } = usePageQuery(() => stockMovementPageQuery(que
     :columns="columns"
     :total="meta?.total"
     :page-size="pageSize"
+    :loading="isTableLoading"
   >
     <template #toolbar>
       <DataTableToolbar>
