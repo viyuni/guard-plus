@@ -5,6 +5,7 @@ const bun = createCommand('bun');
 const bunEnv = bun.with('--bun --env-file=.env');
 const bunTest = bun.with('--bun --env-file=.env.test');
 const dev = bunEnv.with('--bun --no-clear-screen --watch');
+const docker = process.platform === 'linux' ? 'sudo docker' : 'docker';
 
 const inputs = {
   admin: './src/apps/admin/index.ts',
@@ -116,8 +117,7 @@ export default defineConfig({
       },
       deploy: {
         cache: false,
-        command:
-          'docker compose --env-file .env.prod -f compose.prod.yml up -d --build --force-recreate',
+        command: `${docker} compose --env-file .env.prod -f compose.prod.yml up -d --build --force-recreate`,
       },
     },
   },
