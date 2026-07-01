@@ -5,7 +5,7 @@ import { menus } from '~/configs/menus';
 import { useAdminSession } from '~/features/auth';
 import type { MenuItem } from '~/types';
 
-import { version } from '../../package.json';
+import { version } from '../../../../package.json';
 
 const props = defineProps<SidebarProps>();
 
