@@ -410,13 +410,20 @@ watch(totalPages, maxPage => {
       :total="resolvedTotal"
       :sibling-count="1"
       :show-edges="true"
-      class="flex justify-between px-2"
+      class="flex-col gap-4 px-2 sm:flex-row sm:items-start sm:justify-between"
     >
-      <slot name="footer-start" :table="resolvedTable">
-        <div class="text-muted-foreground text-sm">共 {{ total }} 条数据</div>
-      </slot>
+      <div class="order-2 w-full sm:order-1 sm:w-auto">
+        <slot name="footer-start" :table="resolvedTable">
+          <div class="text-muted-foreground text-center text-sm sm:text-left">
+            共 {{ total }} 条数据
+          </div>
+        </slot>
+      </div>
 
-      <PaginationContent v-slot="{ items }">
+      <PaginationContent
+        v-slot="{ items }"
+        class="order-1 w-full justify-center sm:order-2 sm:w-auto"
+      >
         <PaginationFirst>
           <ChevronsLeft />
         </PaginationFirst>

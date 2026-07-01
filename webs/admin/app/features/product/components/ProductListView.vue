@@ -72,11 +72,7 @@ function updateProductStatus(product: Product, status?: ProductStatus | '') {
   >
     <template #toolbar>
       <DataTableToolbar>
-        <Input
-          class="max-w-xs"
-          placeholder="搜索商品名称 / 描述"
-          v-model:model-value.trim="keyword"
-        />
+        <Input placeholder="搜索商品名称 / 描述" v-model:model-value.trim="keyword" />
         <ProductStatusSelect v-model="status" />
         <NativeSelect v-model:model-value="deliveryType">
           <NativeSelectOption value="">发货方式</NativeSelectOption>

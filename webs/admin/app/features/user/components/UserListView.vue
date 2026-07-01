@@ -60,7 +60,7 @@ function getPointAccountName(pointAccount: User['pointAccounts'][number]) {
   >
     <template #toolbar>
       <DataTableToolbar>
-        <Input class="max-w-xs" placeholder="搜索用户名 / UID" v-model:model-value.trim="keyword" />
+        <Input placeholder="搜索用户名 / UID" v-model:model-value.trim="keyword" />
 
         <NativeSelect v-model:model-value="status">
           <NativeSelectOption value="">选择用户状态</NativeSelectOption>

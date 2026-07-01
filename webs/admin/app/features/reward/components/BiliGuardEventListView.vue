@@ -103,11 +103,7 @@ function formatDateTime(value: Date | string | number | null | undefined) {
   >
     <template #toolbar>
       <DataTableToolbar>
-        <Input
-          class="max-w-xs"
-          placeholder="搜索事件 ID / UID"
-          v-model:model-value.trim="keyword"
-        />
+        <Input placeholder="搜索事件 ID / UID" v-model:model-value.trim="keyword" />
         <NativeSelect v-model:model-value="status">
           <NativeSelectOption value="">事件状态</NativeSelectOption>
           <NativeSelectOption value="processing">处理中</NativeSelectOption>

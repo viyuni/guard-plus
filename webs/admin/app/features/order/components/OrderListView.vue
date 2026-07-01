@@ -151,11 +151,7 @@ function downloadCsv(filename: string, content: string) {
   >
     <template #toolbar>
       <DataTableToolbar>
-        <Input
-          class="max-w-xs"
-          placeholder="搜索商品 / 积分类型"
-          v-model:model-value.trim="keyword"
-        />
+        <Input placeholder="搜索商品 / 积分类型" v-model:model-value.trim="keyword" />
         <NativeSelect v-model:model-value="status">
           <NativeSelectOption value="">订单状态</NativeSelectOption>
           <NativeSelectOption value="pending">待处理</NativeSelectOption>
