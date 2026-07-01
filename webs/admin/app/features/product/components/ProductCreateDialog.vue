@@ -37,7 +37,7 @@ const { canSubmit, handleSubmit, isLoading } = usePopoverForm({
 
 <template>
   <Dialog v-model:open="open">
-    <DialogContent class="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-2xl">
+    <DialogContent class="sm:max-w-2xl">
       <DialogHeader>
         <DialogTitle>添加商品</DialogTitle>
         <DialogDescription>创建一个可兑换商品。</DialogDescription>

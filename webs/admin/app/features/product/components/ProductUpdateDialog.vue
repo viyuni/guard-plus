@@ -48,7 +48,7 @@ const { canSubmit, handleSubmit, isLoading } = usePopoverForm({
 
 <template>
   <Dialog v-model:open="open">
-    <DialogContent class="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-2xl">
+    <DialogContent class="sm:max-w-2xl">
       <DialogHeader>
         <DialogTitle>编辑商品</DialogTitle>
         <DialogDescription>更新商品信息和展示内容。</DialogDescription>

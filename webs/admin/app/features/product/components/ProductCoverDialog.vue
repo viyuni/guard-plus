@@ -59,7 +59,7 @@ watch(open, isOpen => {
 
 <template>
   <Dialog v-model:open="open">
-    <DialogContent class="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-120">
+    <DialogContent class="sm:max-w-120">
       <DialogHeader>
         <DialogTitle>更新封面</DialogTitle>
         <DialogDescription>{{ product.name }}</DialogDescription>
