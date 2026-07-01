@@ -17,7 +17,7 @@
     "@shared/schema": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
     "@valibot/to-json-schema": "^1.7.1",
-    "@viyuni/bevent-relay": "^0.0.3",
+    "@viyuni/bevent-relay": "^0.0.4",
     "bunqueue": "^2.8.24",
     "drizzle-orm": "^1.0.0-rc.4-5d5b77c",
     "ejs": "^6.0.1",

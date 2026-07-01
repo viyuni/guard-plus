@@ -41,6 +41,16 @@ export const adminEnv = createEnv({
     BILI_ROOM: v.pipe(v.string(), v.toNumber()),
 
     /**
+     * Viyuni 登录 Cookie 同步服务地址
+     */
+    VIYUNI_LOGIN_SYNC_URL: v.string(),
+
+    /**
+     * Viyuni 登录 Cookie 同步加密密码
+     */
+    VIYUNI_LOGIN_SYNC_PASSWORD: v.string(),
+
+    /**
      * 超级管理员默认 UID
      */
     SUPER_ADMIN_UID: v.optional(bilibiliUid, '0721'),

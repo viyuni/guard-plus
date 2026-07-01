@@ -13,6 +13,7 @@ import { adminEnv } from './env';
 import { admin } from './modules/admin';
 import { auth } from './modules/auth';
 import { dashboard } from './modules/dashboard';
+import { event } from './modules/event';
 import { order } from './modules/order';
 import { point } from './modules/point';
 import { product } from './modules/product';
@@ -37,6 +38,7 @@ export const app = new Elysia({
   .use(errorHandler)
   .use(auth)
   .use(dashboard)
+  .use(event)
   .use(admin)
   .use(point)
   .use(reward)

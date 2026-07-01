@@ -10,6 +10,7 @@
     "./admin": "./src/admin.ts",
     "./user": "./src/user.ts",
     "./dashboard": "./src/dashboard.ts",
+    "./event": "./src/event.ts",
     "./reward": "./src/reward.ts",
     "./product": "./src/product.ts",
     "./stock": "./src/stock.ts",

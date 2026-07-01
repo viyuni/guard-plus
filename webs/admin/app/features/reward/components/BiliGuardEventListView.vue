@@ -4,10 +4,12 @@ import type { BiliEventPageQuery } from '@shared/schema/reward';
 import type { ColumnDef } from '@tanstack/vue-table';
 import { Button } from '@web/ui/components/ui/button';
 import { DataTable } from '@web/ui/components/ui/table';
-import { Eye, MoreHorizontal, Plus, RotateCcw } from 'lucide-vue-next';
+import { Activity, Eye, Loader2, MoreHorizontal, Plus, RotateCcw } from 'lucide-vue-next';
 
 import type { AdminApi } from '~/plugins/api';
 
+import { useAdminSession } from '../../auth';
+import { useCheckEventService } from '../../event';
 import { useReplayBiliGuardReward } from '../mutations';
 import { biliGuardEventPageQuery } from '../queries';
 import BiliGuardManualCreateDialog from './BiliGuardManualCreateDialog.vue';
@@ -54,6 +56,8 @@ const {
 
 const { items: events, meta } = usePageQuery(() => biliGuardEventPageQuery(query.value));
 const { mutate: replayBiliGuardReward, isLoading: isReplaying } = useReplayBiliGuardReward();
+const { mutate: checkEventService, isLoading: isCheckingEventService } = useCheckEventService();
+const { user } = useAdminSession();
 const manualCreateDialogOpen = ref(false);
 
 const statusLabel: Record<string, string> = {
@@ -113,10 +117,24 @@ function formatDateTime(value: Date | string | number | null | undefined) {
           </NativeSelect>
         </div>
 
-        <Button type="button" @click="manualCreateDialogOpen = true">
-          <Plus />
-          手动创建
-        </Button>
+        <div class="flex shrink-0 items-center gap-2">
+          <Button
+            v-if="user?.role === 'superAdmin'"
+            type="button"
+            variant="outline"
+            :disabled="isCheckingEventService"
+            @click="checkEventService()"
+          >
+            <Loader2 v-if="isCheckingEventService" class="animate-spin" />
+            <Activity v-else />
+            {{ isCheckingEventService ? '检测中' : '检测服务' }}
+          </Button>
+
+          <Button type="button" @click="manualCreateDialogOpen = true">
+            <Plus />
+            手动创建
+          </Button>
+        </div>
       </div>
 
       <BiliGuardManualCreateDialog v-model:open="manualCreateDialogOpen" />

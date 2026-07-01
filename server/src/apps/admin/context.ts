@@ -3,6 +3,8 @@ import Elysia from 'elysia';
 import { adminEnv } from '#apps/admin/env';
 import { createAppContext } from '#context';
 import { db } from '#db';
+import { EventServiceMonitor } from '#modules/event';
+import { redis } from '#redis';
 
 import { AdminRepository } from './modules/admin/repository';
 import { AdminUseCase } from './modules/admin/usecase';
@@ -39,6 +41,15 @@ const adminAuthUseCase = new AdminAuthUseCase({
   authUseCase,
 });
 
+const eventServiceMonitor = new EventServiceMonitor({
+  redis,
+  roomId: adminEnv.BILI_ROOM,
+  cookieSync: {
+    url: adminEnv.VIYUNI_LOGIN_SYNC_URL,
+    password: adminEnv.VIYUNI_LOGIN_SYNC_PASSWORD,
+  },
+});
+
 /**
  * 真实运行时上下文。
  *
@@ -47,6 +58,7 @@ const adminAuthUseCase = new AdminAuthUseCase({
 export const appRuntimeContext = context.decorate({
   adminAuthUseCase,
   adminUseCase,
+  eventServiceMonitor,
 });
 
 /**

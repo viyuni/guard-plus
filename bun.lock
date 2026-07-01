@@ -39,7 +39,7 @@
         "@shared/schema": "workspace:*",
         "@t3-oss/env-core": "^0.13.11",
         "@valibot/to-json-schema": "^1.7.1",
-        "@viyuni/bevent-relay": "^0.0.3",
+        "@viyuni/bevent-relay": "^0.0.4",
         "bunqueue": "^2.8.24",
         "drizzle-orm": "^1.0.0-rc.4-5d5b77c",
         "ejs": "^6.0.1",
@@ -1463,7 +1463,7 @@
 
     "@vitest/utils": ["@vitest/utils@4.1.9", "", { "dependencies": { "@vitest/pretty-format": "4.1.9", "convert-source-map": "^2.0.0", "tinyrainbow": "^3.1.0" } }, "sha512-A51o8ymO5PpqlWNnBP9ZHPXDIpuMtTLlGSjN7la4US+LJzoUMyhwjA5QXlm39JexgwHKW4Xjs8Z2d3dLCXOeuA=="],
 
-    "@viyuni/bevent-relay": ["@viyuni/bevent-relay@0.0.3", "", { "dependencies": { "@viyuni/cookie-sync-client": "^0.0.3", "bilibili-live-ws": "^6.3.1", "cookie": "^1.1.1", "ky": "^2.0.2", "volta-json-ptr": "^0.0.1-beta.3" } }, "sha512-MuysmKUW30UAyNLO385lI1Vv2HyJDJ7Fe1Y1MFMZCEiUKaaJklQPUZjK4hGiY1F+dBDa93IqcEjkdIrOETgOqw=="],
+    "@viyuni/bevent-relay": ["@viyuni/bevent-relay@0.0.4", "", { "dependencies": { "@viyuni/cookie-sync-client": "^0.0.3", "bilibili-live-ws": "^6.3.1", "cookie": "^1.1.1", "ky": "^2.0.2", "volta-json-ptr": "^0.0.1-beta.3" } }, "sha512-GCts/EMJYp0ZtWA/RomDsLGP4FJd7SLCqpZmA5tGeILE98hhGzBfhyz0C5QkZlDq7SUamGMhU5t1NcCgmBY1BA=="],
 
     "@viyuni/cookie-crypto": ["@viyuni/cookie-crypto@0.0.1", "", {}, "sha512-w6saxq+ftm9Gpae9oP3PgsabmKkrryBc+ETg7iRaCfy32BnC/BoCNhjusc5jrHftFe5kst5p0Bpfx658i/w9LQ=="],
 

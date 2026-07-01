@@ -4,8 +4,14 @@ import { Worker } from 'bunqueue/client';
 
 import { createEventContainer } from '#context';
 import { sharedEnv } from '#env/shared';
+import {
+  EventServiceMonitor,
+  isEventMonitorMessage,
+  receiveEventMonitorMessage,
+} from '#modules/event';
 import { publishBilibiliGuardEvent } from '#queues';
 import { BILIBILI_EVENT_QUEUE_NAME } from '#queues';
+import { redis } from '#redis';
 import { logger } from '#utils/logger';
 import { db } from '~/src/db';
 
@@ -37,6 +43,32 @@ const listener = createListener({
   },
 });
 
+const eventServiceMonitor = new EventServiceMonitor({
+  redis,
+  roomId: eventEnv.BILI_ROOM,
+  cookieSync: {
+    url: eventEnv.VIYUNI_LOGIN_SYNC_URL,
+    password: eventEnv.VIYUNI_LOGIN_SYNC_PASSWORD,
+  },
+});
+const eventServiceMonitorLogger = logger.scope('EventServiceMonitor');
+
+async function checkEventService() {
+  try {
+    const probeId = await eventServiceMonitor.send();
+    const healthy = await eventServiceMonitor.check(probeId);
+
+    if (healthy) {
+      eventServiceMonitorLogger.info({ probeId }, 'Event service check succeeded');
+      return;
+    }
+
+    eventServiceMonitorLogger.error({ probeId }, 'Event service check timed out');
+  } catch (error) {
+    eventServiceMonitorLogger.error(error, 'Event service check failed');
+  }
+}
+
 listener.on('event', event => {
   if (event.type === 'guard') {
   }
@@ -49,6 +81,13 @@ listener.on('event', event => {
     }
     case 'message': {
       // logger.info(event, 'Bilibili Message');
+
+      if (isEventMonitorMessage(event.content)) {
+        receiveEventMonitorMessage(redis, event.content).catch(error =>
+          logger.error(error, 'Event monitor message receive failed'),
+        );
+        break;
+      }
 
       biliRegisterUseCase
         .matchMessage({
@@ -79,4 +118,9 @@ listener.start().then(() => {
   logger.info('Bilibili Event Listener started...');
 });
 
-Bun.cron('0 4 * * *', () => listener.refreshCookieAndRestart());
+Bun.cron('0 4 * * *', async () => {
+  await listener.refreshCookie(true);
+  await listener.restart();
+});
+
+Bun.cron('0 * * * *', checkEventService);
