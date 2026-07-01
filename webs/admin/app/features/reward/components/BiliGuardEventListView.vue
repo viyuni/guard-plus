@@ -38,6 +38,7 @@ const columns = [
   { accessorKey: 'biliEventId', header: '事件 ID' },
   { accessorKey: 'biliUid', header: 'UID' },
   { accessorKey: 'user.username', header: '用户' },
+  { accessorKey: 'eventSnapshot.uname', header: 'B站用户昵称' },
   { accessorKey: 'status', header: '状态' },
   { accessorKey: 'retryCount', header: '重试次数' },
   { accessorKey: 'occurredAt', header: '发生时间' },
