@@ -109,6 +109,12 @@ const BiliGuardTypeInputSchema = v.pipe(
  */
 export const CreateManualBiliGuardEventSchema = v.object({
   uid: bilibiliUid,
+  uname: v.pipe(
+    v.string('请输入用户昵称'),
+    v.nonEmpty('用户昵称不能为空'),
+    v.maxLength(32, '用户昵称不能超过 32 个字符'),
+    v.description('用户昵称'),
+  ),
   total: v.pipe(
     numeric('请输入数量'),
     v.integer('数量必须是整数'),

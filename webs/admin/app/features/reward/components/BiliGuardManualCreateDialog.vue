@@ -19,6 +19,7 @@ const { canSubmit, handleSubmit, isLoading } = usePopoverForm({
   open,
   initialValues: () => ({
     uid: '',
+    uname: '',
     total: undefined,
     openedAt: undefined,
     guardType: undefined,
@@ -43,6 +44,10 @@ const { canSubmit, handleSubmit, isLoading } = usePopoverForm({
       <form class="space-y-4" @submit="handleSubmit">
         <FormFieldItem v-slot="{ componentField }" name="uid" label="UID" required>
           <Input v-bind="componentField" inputmode="numeric" placeholder="B站 UID" />
+        </FormFieldItem>
+
+        <FormFieldItem v-slot="{ componentField }" name="uname" label="用户昵称" required>
+          <Input v-bind="componentField" placeholder="B站用户昵称" />
         </FormFieldItem>
 
         <FormFieldItem v-slot="{ componentField }" name="total" label="数量" required>

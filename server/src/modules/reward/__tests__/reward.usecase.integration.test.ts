@@ -130,6 +130,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
 
     const result = await rewardUseCase.createManualBiliGuardEvent({
       uid: biliUid,
+      uname: `${prefix}_bili_user`,
       total: 2,
       openedAt,
       guardType: 2,
@@ -159,6 +160,8 @@ describeWithDatabase('奖励发放真实数据库', () => {
     expect(snapshot?.isManual).toBe(true);
     expect(snapshot?.timestamp).toBe(guardStartTime);
     expect(snapshot?.timestampNormalized).toBe(openedAt.getTime());
+    expect(snapshot?.uname).toBe(`${prefix}_bili_user`);
+    expect(snapshot?.message).toBe(`${prefix}_bili_user 开通了提督2月`);
     expect(snapshot?.guardName).toBe('提督');
     expect(snapshot?.price).toBe(price);
     expect(snapshot?.priceNormalized).toBe(1_998 * 2);

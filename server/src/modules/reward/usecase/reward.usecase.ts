@@ -346,7 +346,7 @@ export class RewardUseCase {
     const timestampNormalized = openedAt.getTime();
     const uid = Number(input.uid);
     const guard = this.getManualBiliGuardMeta(input.guardType);
-    const uname = `UID ${input.uid}`;
+    const uname = input.uname;
     const unit = input.total >= 12 && input.total % 12 === 0 ? '年' : '月';
     const displayTotal = unit === '年' ? input.total / 12 : input.total;
     const priceNormalized = guard.priceNormalized * input.total;
