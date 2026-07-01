@@ -15,4 +15,9 @@ export default defineNuxtConfig({
       link: [{ rel: 'icon', href: 'https://assets.viyuni.top/viyuni.svg' }],
     },
   },
+  runtimeConfig: {
+    public: {
+      agentApiKey: process.env.NUXT_PUBLIC_AGENT_API_KEY,
+    },
+  },
 });
