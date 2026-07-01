@@ -49,12 +49,14 @@ function toggleRewardRuleEnabled(rule: RewardRule, enabled: boolean) {
 <template>
   <DataTable :data="rules ?? []" :columns="columns" hide-footer>
     <template #toolbar>
-      <div class="flex w-full items-center justify-end">
-        <Button @click="openRewardRuleDialog()">
-          <Plus />
-          添加积分规则
-        </Button>
-      </div>
+      <DataTableToolbar>
+        <template #actions>
+          <Button @click="openRewardRuleDialog()">
+            <Plus />
+            添加积分规则
+          </Button>
+        </template>
+      </DataTableToolbar>
     </template>
 
     <template #group="{ value }">

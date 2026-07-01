@@ -49,12 +49,14 @@ function togglePointTypeStatus(pointType: PointType, enabled: boolean) {
 <template>
   <DataTable :data="pointTypes ?? []" :columns="columns" hide-footer>
     <template #toolbar>
-      <div class="flex w-full items-center justify-end">
-        <Button @click="openPointTypeDialog()">
-          <Plus />
-          添加积分类型
-        </Button>
-      </div>
+      <DataTableToolbar>
+        <template #actions>
+          <Button @click="openPointTypeDialog()">
+            <Plus />
+            添加积分类型
+          </Button>
+        </template>
+      </DataTableToolbar>
     </template>
 
     <template #description="{ value }">

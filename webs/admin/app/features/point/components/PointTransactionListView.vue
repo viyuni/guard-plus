@@ -51,14 +51,16 @@ const { items: transactions, meta } = usePageQuery(() => pointTransactionPageQue
     :page-size="pageSize"
   >
     <template #toolbar>
-      <NativeSelect v-model:model-value="type">
-        <NativeSelectOption value="">流水类型</NativeSelectOption>
-        <NativeSelectOption value="grant">发放</NativeSelectOption>
-        <NativeSelectOption value="consume">消费</NativeSelectOption>
-        <NativeSelectOption value="refund">退款</NativeSelectOption>
-        <NativeSelectOption value="adjust">调整</NativeSelectOption>
-        <NativeSelectOption value="reversal">冲正</NativeSelectOption>
-      </NativeSelect>
+      <DataTableToolbar>
+        <NativeSelect v-model:model-value="type">
+          <NativeSelectOption value="">流水类型</NativeSelectOption>
+          <NativeSelectOption value="grant">发放</NativeSelectOption>
+          <NativeSelectOption value="consume">消费</NativeSelectOption>
+          <NativeSelectOption value="refund">退款</NativeSelectOption>
+          <NativeSelectOption value="adjust">调整</NativeSelectOption>
+          <NativeSelectOption value="reversal">冲正</NativeSelectOption>
+        </NativeSelect>
+      </DataTableToolbar>
     </template>
 
     <template #user="{ value }">

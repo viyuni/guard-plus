@@ -52,12 +52,14 @@ const isUpdatingStatus = computed(() => isBanning.value || isRestoring.value);
     :page-size="pageSize"
   >
     <template #toolbar>
-      <div class="flex w-full items-center justify-end">
-        <Button @click="openAdminDialog()">
-          <Plus />
-          添加管理员
-        </Button>
-      </div>
+      <DataTableToolbar>
+        <template #actions>
+          <Button @click="openAdminDialog()">
+            <Plus />
+            添加管理员
+          </Button>
+        </template>
+      </DataTableToolbar>
     </template>
 
     <template #role="{ value }">

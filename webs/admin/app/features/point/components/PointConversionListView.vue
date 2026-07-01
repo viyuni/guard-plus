@@ -61,12 +61,14 @@ function toggleConversionRuleEnabled(conversion: PointConversion, enabled: boole
 <template>
   <DataTable :data="conversions ?? []" :columns="columns" hide-footer>
     <template #toolbar>
-      <div class="flex w-full items-center justify-end">
-        <Button @click="openConversionRuleDialog()">
-          <Plus />
-          添加积分转换
-        </Button>
-      </div>
+      <DataTableToolbar>
+        <template #actions>
+          <Button @click="openConversionRuleDialog()">
+            <Plus />
+            添加积分转换
+          </Button>
+        </template>
+      </DataTableToolbar>
     </template>
 
     <template #fromPointType="{ value }">

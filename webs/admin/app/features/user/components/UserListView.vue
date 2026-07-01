@@ -59,7 +59,7 @@ function getPointAccountName(pointAccount: User['pointAccounts'][number]) {
     :page-size="pageSize"
   >
     <template #toolbar>
-      <div class="flex w-full flex-wrap items-center gap-2">
+      <DataTableToolbar>
         <Input class="max-w-xs" placeholder="搜索用户名 / UID" v-model:model-value.trim="keyword" />
 
         <NativeSelect v-model:model-value="status">
@@ -73,11 +73,13 @@ function getPointAccountName(pointAccount: User['pointAccounts'][number]) {
           </NativeSelectOption>
         </NativeSelect>
 
-        <Button class="ml-auto" @click="handleCreateUser">
-          <UserPlus />
-          添加用户
-        </Button>
-      </div>
+        <template #actions>
+          <Button @click="handleCreateUser">
+            <UserPlus />
+            添加用户
+          </Button>
+        </template>
+      </DataTableToolbar>
     </template>
 
     <template #username="{ value }">

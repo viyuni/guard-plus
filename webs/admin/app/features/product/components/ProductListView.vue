@@ -71,7 +71,7 @@ function updateProductStatus(product: Product, status?: ProductStatus | '') {
     :page-size="pageSize"
   >
     <template #toolbar>
-      <div class="flex w-full flex-wrap items-center gap-2">
+      <DataTableToolbar>
         <Input
           class="max-w-xs"
           placeholder="搜索商品名称 / 描述"
@@ -84,11 +84,13 @@ function updateProductStatus(product: Product, status?: ProductStatus | '') {
           <NativeSelectOption value="automatic">自动发货</NativeSelectOption>
         </NativeSelect>
 
-        <Button class="ml-auto" @click="openProductDialog()">
-          <Plus />
-          添加商品
-        </Button>
-      </div>
+        <template #actions>
+          <Button @click="openProductDialog()">
+            <Plus />
+            添加商品
+          </Button>
+        </template>
+      </DataTableToolbar>
     </template>
 
     <template #cover="{ value }">

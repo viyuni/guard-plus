@@ -101,23 +101,21 @@ function formatDateTime(value: Date | string | number | null | undefined) {
     :page-size="pageSize"
   >
     <template #toolbar>
-      <div class="flex w-full items-center justify-between gap-2">
-        <div class="flex w-full flex-wrap items-center gap-2">
-          <Input
-            class="max-w-xs"
-            placeholder="搜索事件 ID / UID"
-            v-model:model-value.trim="keyword"
-          />
-          <NativeSelect v-model:model-value="status">
-            <NativeSelectOption value="">事件状态</NativeSelectOption>
-            <NativeSelectOption value="processing">处理中</NativeSelectOption>
-            <NativeSelectOption value="succeeded">成功</NativeSelectOption>
-            <NativeSelectOption value="failed">失败</NativeSelectOption>
-            <NativeSelectOption value="ignored">已忽略</NativeSelectOption>
-          </NativeSelect>
-        </div>
+      <DataTableToolbar>
+        <Input
+          class="max-w-xs"
+          placeholder="搜索事件 ID / UID"
+          v-model:model-value.trim="keyword"
+        />
+        <NativeSelect v-model:model-value="status">
+          <NativeSelectOption value="">事件状态</NativeSelectOption>
+          <NativeSelectOption value="processing">处理中</NativeSelectOption>
+          <NativeSelectOption value="succeeded">成功</NativeSelectOption>
+          <NativeSelectOption value="failed">失败</NativeSelectOption>
+          <NativeSelectOption value="ignored">已忽略</NativeSelectOption>
+        </NativeSelect>
 
-        <div class="flex shrink-0 items-center gap-2">
+        <template #actions>
           <Button
             v-if="user?.role === 'superAdmin'"
             type="button"
@@ -134,8 +132,8 @@ function formatDateTime(value: Date | string | number | null | undefined) {
             <Plus />
             手动创建
           </Button>
-        </div>
-      </div>
+        </template>
+      </DataTableToolbar>
 
       <BiliGuardManualCreateDialog v-model:open="manualCreateDialogOpen" />
     </template>

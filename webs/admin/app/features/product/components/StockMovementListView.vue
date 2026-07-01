@@ -45,12 +45,14 @@ const { items: movements, meta } = usePageQuery(() => stockMovementPageQuery(que
     :page-size="pageSize"
   >
     <template #toolbar>
-      <NativeSelect v-model:model-value="type">
-        <NativeSelectOption value="">库存变动类型</NativeSelectOption>
-        <NativeSelectOption value="consume">兑换扣减</NativeSelectOption>
-        <NativeSelectOption value="restore">恢复库存</NativeSelectOption>
-        <NativeSelectOption value="adjust">手动调整</NativeSelectOption>
-      </NativeSelect>
+      <DataTableToolbar>
+        <NativeSelect v-model:model-value="type">
+          <NativeSelectOption value="">库存变动类型</NativeSelectOption>
+          <NativeSelectOption value="consume">兑换扣减</NativeSelectOption>
+          <NativeSelectOption value="restore">恢复库存</NativeSelectOption>
+          <NativeSelectOption value="adjust">手动调整</NativeSelectOption>
+        </NativeSelect>
+      </DataTableToolbar>
     </template>
     <template #product="{ value }">
       {{ value?.name }}

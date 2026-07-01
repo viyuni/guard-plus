@@ -150,7 +150,7 @@ function downloadCsv(filename: string, content: string) {
     :page-size="pageSize"
   >
     <template #toolbar>
-      <div class="flex w-full flex-wrap items-center gap-2">
+      <DataTableToolbar>
         <Input
           class="max-w-xs"
           placeholder="搜索商品 / 积分类型"
@@ -162,16 +162,17 @@ function downloadCsv(filename: string, content: string) {
           <NativeSelectOption value="completed">已完成</NativeSelectOption>
           <NativeSelectOption value="refunded">已退款</NativeSelectOption>
         </NativeSelect>
-        <Button
-          class="ml-auto"
-          variant="outline"
-          :disabled="!selectedOrderCount || isExporting"
-          @click="handleExportOrders"
-        >
-          <Download />
-          导出{{ selectedOrderCount ? ` (${selectedOrderCount})` : '' }}
-        </Button>
-      </div>
+        <template #actions>
+          <Button
+            variant="outline"
+            :disabled="!selectedOrderCount || isExporting"
+            @click="handleExportOrders"
+          >
+            <Download />
+            导出{{ selectedOrderCount ? ` (${selectedOrderCount})` : '' }}
+          </Button>
+        </template>
+      </DataTableToolbar>
     </template>
 
     <template #select-header>
