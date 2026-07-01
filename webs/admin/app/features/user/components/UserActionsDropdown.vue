@@ -16,13 +16,10 @@ import type { User } from '../types';
 import AdjustUserPointsDialog from './AdjustUserPointsDialog.vue';
 import EditUserDialog from './EditUserDialog.vue';
 import ResetUserPasswordDialog from './ResetUserPasswordDialog.vue';
+import UserPointAccountsDialog from './UserPointAccountsDialog.vue';
 
 const props = defineProps<{
   user: User;
-}>();
-
-const emit = defineEmits<{
-  viewPointAccounts: [];
 }>();
 
 const { mutate: banUser, isLoading: isBanningUser } = useBanUser();
@@ -32,6 +29,7 @@ const isBanned = computed(() => props.user.status === 'banned');
 const [openAdjustUserPointsDialog] = useOverlay(AdjustUserPointsDialog);
 const [openEditUserDialog] = useOverlay(EditUserDialog);
 const [openResetUserPasswordDialog] = useOverlay(ResetUserPasswordDialog);
+const [openUserPointAccountsDialog] = useOverlay(UserPointAccountsDialog);
 </script>
 
 <template>
@@ -58,7 +56,7 @@ const [openResetUserPasswordDialog] = useOverlay(ResetUserPasswordDialog);
         操作积分
       </DropdownMenuItem>
 
-      <DropdownMenuItem @click="emit('viewPointAccounts')">
+      <DropdownMenuItem @click="openUserPointAccountsDialog({ user })">
         <WalletCards />
         查看积分账户
       </DropdownMenuItem>

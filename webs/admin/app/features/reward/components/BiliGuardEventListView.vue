@@ -3,6 +3,7 @@ import type { Treaty } from '@elysia/eden';
 import type { BiliEventPageQuery } from '@shared/schema/reward';
 import type { ColumnDef } from '@tanstack/vue-table';
 import { Button } from '@web/ui/components/ui/button';
+import { useOverlay } from '@web/ui/components/ui/overlay';
 import { DataTable } from '@web/ui/components/ui/table';
 import { Activity, Eye, Loader2, MoreHorizontal, Plus, RotateCcw } from 'lucide-vue-next';
 
@@ -12,25 +13,11 @@ import { useAdminSession } from '../../auth';
 import { useCheckEventService } from '../../event';
 import { useReplayBiliGuardReward } from '../mutations';
 import { biliGuardEventPageQuery } from '../queries';
+import BiliGuardEventDetailDialog from './BiliGuardEventDetailDialog.vue';
 import BiliGuardManualCreateDialog from './BiliGuardManualCreateDialog.vue';
 
 export type BiliGuardEventListPage = Treaty.Data<AdminApi['rewards']['biliGuard']['get']>;
 export type BiliGuardEvent = NonNullable<BiliGuardEventListPage>['items'][number];
-
-interface BiliGuardEventSnapshot {
-  id: string;
-  uid: number;
-  uname: string;
-  guardType: number;
-  guardName: string;
-  total: number;
-  totalNormalized: number;
-  isYearGuard: boolean;
-  isManual?: boolean;
-  roomId: number;
-  timestamp: number;
-  priceNormalized: number;
-}
 </script>
 
 <script setup lang="ts">
@@ -63,6 +50,7 @@ const {
 const { mutate: replayBiliGuardReward, isLoading: isReplaying } = useReplayBiliGuardReward();
 const { mutate: checkEventService, isLoading: isCheckingEventService } = useCheckEventService();
 const { user } = useAdminSession();
+const [openEventDetailDialog] = useOverlay(BiliGuardEventDetailDialog);
 const manualCreateDialogOpen = ref(false);
 
 const statusLabel: Record<string, string> = {
@@ -82,10 +70,6 @@ function canReplay(event: BiliGuardEvent) {
   }
 
   return false;
-}
-
-function getEventSnapshot(event: BiliGuardEvent) {
-  return event.eventSnapshot as BiliGuardEventSnapshot;
 }
 
 function formatDateTime(value: Date | string | number | null | undefined) {
@@ -159,7 +143,7 @@ function formatDateTime(value: Date | string | number | null | undefined) {
       {{ formatDateTime(value) }}
     </template>
 
-    <template #actions="{ row, rowData }">
+    <template #actions="{ rowData }">
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <Button variant="ghost" class="h-8 w-8 p-0">
@@ -173,9 +157,9 @@ function formatDateTime(value: Date | string | number | null | undefined) {
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem @click="row.toggleExpanded()">
+          <DropdownMenuItem @click="openEventDetailDialog({ event: rowData })">
             <Eye />
-            {{ row.getIsExpanded() ? '收起详情' : '查看详情' }}
+            查看详情
           </DropdownMenuItem>
 
           <DropdownMenuItem
@@ -187,81 +171,6 @@ function formatDateTime(value: Date | string | number | null | undefined) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </template>
-
-    <template #expanded="{ rowData }">
-      <div class="space-y-4 py-2">
-        <div class="grid gap-3 text-sm md:grid-cols-3">
-          <div>
-            <div class="text-muted-foreground">舰长类型</div>
-            <div>{{ getEventSnapshot(rowData).guardName }}</div>
-          </div>
-          <div>
-            <div class="text-muted-foreground">直播间</div>
-            <div>{{ getEventSnapshot(rowData).roomId }}</div>
-          </div>
-          <div>
-            <div class="text-muted-foreground">用户昵称</div>
-            <div>{{ getEventSnapshot(rowData).uname }}</div>
-          </div>
-          <div>
-            <div class="text-muted-foreground">来源</div>
-            <div>{{ getEventSnapshot(rowData).isManual ? '手动创建' : '实时事件' }}</div>
-          </div>
-          <div>
-            <div class="text-muted-foreground">订单金额</div>
-            <div>{{ getEventSnapshot(rowData).priceNormalized }}</div>
-          </div>
-          <div>
-            <div class="text-muted-foreground">折算月数</div>
-            <div>{{ getEventSnapshot(rowData).totalNormalized }}</div>
-          </div>
-          <div>
-            <div class="text-muted-foreground">年度大航海</div>
-            <div>{{ getEventSnapshot(rowData).isYearGuard ? '是' : '否' }}</div>
-          </div>
-        </div>
-
-        <div v-if="rowData.lastErrorMessage" class="text-destructive text-sm">
-          {{ rowData.lastErrorCode ? `${rowData.lastErrorCode}: ` : ''
-          }}{{ rowData.lastErrorMessage }}
-        </div>
-
-        <div class="space-y-2">
-          <div class="text-sm font-medium">预览奖励</div>
-          <div v-if="rowData.rewardItemSnapshots.length" class="grid gap-2 md:grid-cols-2">
-            <div
-              v-for="rewardItem in rowData.rewardItemSnapshots"
-              :key="`${rowData.biliEventId}-${rewardItem.ruleSnapshot.id}-${rewardItem.pointTypeId}`"
-              class="rounded-md border p-3 text-sm"
-            >
-              <div class="font-medium">{{ rewardItem.pointTypeSnapshot.name }}</div>
-              <div class="text-muted-foreground">
-                {{ rewardItem.ruleSnapshot.name }} · {{ rewardItem.points }} 点
-              </div>
-            </div>
-          </div>
-          <div v-else class="text-muted-foreground text-sm">暂无匹配奖励</div>
-        </div>
-
-        <div class="space-y-2">
-          <div class="text-sm font-medium">发放结果</div>
-          <div v-if="rowData.rewardResultSnapshots.length" class="grid gap-2 md:grid-cols-2">
-            <div
-              v-for="rewardResult in rowData.rewardResultSnapshots"
-              :key="rewardResult.transactionId"
-              class="rounded-md border p-3 text-sm"
-            >
-              <div class="font-medium">{{ rewardResult.points }} 点</div>
-              <div class="text-muted-foreground">交易 {{ rewardResult.transactionId }}</div>
-              <Badge v-if="rewardResult.duplicated" class="mt-2" size="sm" variant="secondary">
-                已幂等跳过
-              </Badge>
-            </div>
-          </div>
-          <div v-else class="text-muted-foreground text-sm">暂无发放记录</div>
-        </div>
-      </div>
     </template>
   </DataTable>
 </template>

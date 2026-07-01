@@ -42,16 +42,6 @@ const {
   meta: userMeta,
   isLoading: isTableLoading,
 } = usePageQuery(() => userPageQuery(query.value));
-
-const pointBalanceFormat = new Intl.NumberFormat('zh-CN');
-
-function formatPointBalance(balance: number | string) {
-  return pointBalanceFormat.format(Number(balance));
-}
-
-function getPointAccountName(pointAccount: User['pointAccounts'][number]) {
-  return pointAccount.pointType?.name ?? '未知积分';
-}
 </script>
 
 <template>
@@ -101,30 +91,8 @@ function getPointAccountName(pointAccount: User['pointAccounts'][number]) {
       </Badge>
     </template>
 
-    <template #actions="{ row }">
-      <UserActionsDropdown :user="row.original" @view-point-accounts="row.toggleExpanded()" />
-    </template>
-
-    <template #expanded="{ rowData }">
-      <div class="bg-muted/30 px-4 py-3">
-        <div v-if="rowData.pointAccounts.length" class="space-y-3">
-          <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <div
-              v-for="pointAccount in rowData.pointAccounts"
-              :key="pointAccount.id"
-              class="border-border bg-background flex items-center justify-between gap-3 rounded-md border px-3 py-2"
-            >
-              <div class="min-w-0">
-                {{ getPointAccountName(pointAccount) }}
-              </div>
-              <div class="font-mono text-sm font-semibold tabular-nums">
-                {{ formatPointBalance(pointAccount.balance) }}
-              </div>
-            </div>
-          </div>
-        </div>
-        <div v-else class="text-muted-foreground py-4 text-center text-sm">暂无积分账户</div>
-      </div>
+    <template #actions="{ rowData }">
+      <UserActionsDropdown :user="rowData" />
     </template>
   </DataTable>
 </template>
