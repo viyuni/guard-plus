@@ -17,7 +17,7 @@ import {
 } from '#test-helpers/concurrency-fixtures';
 
 import { StockIdempotencyKey } from '..';
-import { ProductNameExistsError, StockAmountInvalidError } from '../domain';
+import { ProductCodeExistsError, StockAmountInvalidError } from '../domain';
 
 installConcurrencyTestHooks();
 
@@ -71,7 +71,7 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
     expect(current?.stock).toBe(2_147_483_647);
   });
 
-  it('商品创建会拒绝重复名称', async () => {
+  it('商品创建允许重复名称', async () => {
     const prefix = newBatch('product_name');
     const pointType = await seedPointType(`${prefix}_point`);
     const { productUseCase } = createDeps();
@@ -83,40 +83,47 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
       stock: 1,
     });
 
-    await expectRejectsInstanceOf(
-      productUseCase.create({
-        name: `${prefix}_product`,
+    const second = await productUseCase.create({
+      name: `${prefix}_product`,
+      pointTypeId: pointType.id,
+      price: 1,
+      stock: 1,
+    });
+
+    expect(second?.name).toBe(`${prefix}_product`);
+    expect(second?.code).toHaveLength(12);
+  });
+
+  it('商品更新会拒绝重复编码', async () => {
+    const prefix = newBatch('product_update_code');
+    const pointType = await seedPointType(`${prefix}_point`);
+    const { productUseCase } = createDeps();
+    const first = expectSeeded(
+      await productUseCase.create({
+        code: `FIRST_${crypto.randomUUID().slice(0, 8)}`,
+        name: `${prefix}_first_product`,
         pointTypeId: pointType.id,
         price: 1,
         stock: 1,
       }),
-      ProductNameExistsError,
+      'seed first product failed',
     );
-  });
-
-  it('商品更新会拒绝重复名称', async () => {
-    const prefix = newBatch('product_update_name');
-    const pointType = await seedPointType(`${prefix}_point`);
-    const first = await seedProduct({
-      name: `${prefix}_first_product`,
-      pointTypeId: pointType.id,
-      price: 1,
-      stock: 1,
-    });
-    const second = await seedProduct({
-      name: `${prefix}_second_product`,
-      pointTypeId: pointType.id,
-      price: 1,
-      stock: 1,
-    });
-
-    const { productUseCase } = createDeps();
+    const second = expectSeeded(
+      await productUseCase.create({
+        code: `SECOND_${crypto.randomUUID().slice(0, 8)}`,
+        name: `${prefix}_second_product`,
+        pointTypeId: pointType.id,
+        price: 1,
+        stock: 1,
+      }),
+      'seed second product failed',
+    );
 
     await expectRejectsInstanceOf(
       productUseCase.update(second.id, {
-        name: first.name,
+        code: first.code!,
       }),
-      ProductNameExistsError,
+      ProductCodeExistsError,
     );
   });
 

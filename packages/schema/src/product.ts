@@ -58,6 +58,24 @@ export const ProductDeliveryTypeSchema = v.pipe(
 export type ProductDeliveryType = v.InferOutput<typeof ProductDeliveryTypeSchema>;
 
 /**
+ * 商品编码 Schema。
+ */
+const ProductCodeSchema = v.pipe(
+  v.string('请输入商品编码'),
+  v.trim(),
+  v.minLength(2, '商品编码不能少于 2 个字符'),
+  v.maxLength(50, '商品编码不能超过 50 个字符'),
+  v.regex(/^[A-Za-z0-9_-]+$/, '商品编码仅支持字母、数字、短横线和下划线'),
+  v.transform(value => value.toUpperCase()),
+  v.description('商品编码'),
+);
+
+const OptionalProductCodeSchema = v.pipe(
+  v.union([ProductCodeSchema, v.literal('')]),
+  v.transform(value => (value === '' ? undefined : value)),
+);
+
+/**
  * 商品名称 Schema。
  */
 const ProductNameSchema = v.pipe(
@@ -192,6 +210,7 @@ export type ProductPageQuery = v.InferOutput<typeof ProductPageQuerySchema>;
  * 创建商品 Body Schema。
  */
 export const CreateProductSchema = v.object({
+  code: v.optional(OptionalProductCodeSchema),
   name: ProductNameSchema,
 
   description: v.optional(emptyable(ProductDescriptionSchema)),
@@ -216,6 +235,7 @@ export type CreateProductBody = v.InferOutput<typeof CreateProductSchema>;
  * 更新商品 Body Schema。
  */
 export const UpdateProductSchema = v.object({
+  code: v.optional(ProductCodeSchema),
   name: v.optional(ProductNameSchema),
 
   description: v.nullish(emptyable(ProductDescriptionSchema)),

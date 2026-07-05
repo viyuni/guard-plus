@@ -13,8 +13,9 @@ import { ImageUseCase } from '#modules/image';
 import { PointTypeUseCase } from '#modules/point';
 
 import {
+  createProductCode,
+  ProductCodeExistsError,
   ProductInputPolicy,
-  ProductNameExistsError,
   ProductNotFoundError,
   ProductPolicy,
   StockIdempotencyKey,
@@ -71,16 +72,18 @@ export class ProductUseCase {
     const { startAt, endAt } = productData;
     ProductInputPolicy.assertTimeRange(startAt, endAt);
 
-    const exists = await this.deps.productRepo.findByName(productData.name);
+    const code = productData.code ?? createProductCode();
+    const exists = await this.deps.productRepo.findByCode(code);
 
     if (exists) {
-      throw new ProductNameExistsError();
+      throw new ProductCodeExistsError();
     }
 
     const { endAt: _endAt, startAt: _startAt, ...data } = productData;
 
     const updateData: InsertProduct = {
       ...data,
+      code,
       endAt,
       startAt,
     };
@@ -98,11 +101,11 @@ export class ProductUseCase {
       await this.deps.pointTypeUseCase.getAvailableById(productData.pointTypeId);
     }
 
-    if (productData.name && productData.name !== current.name) {
-      const exists = await this.deps.productRepo.findByName(productData.name);
+    if (productData.code && productData.code !== current.code) {
+      const exists = await this.deps.productRepo.findByCode(productData.code);
 
       if (exists) {
-        throw new ProductNameExistsError();
+        throw new ProductCodeExistsError();
       }
     }
 

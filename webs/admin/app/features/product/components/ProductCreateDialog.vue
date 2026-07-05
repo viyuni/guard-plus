@@ -16,6 +16,7 @@ const { canSubmit, handleSubmit, isLoading } = usePopoverForm({
   schema: CreateProductSchema,
   open,
   initialValues: () => ({
+    code: '',
     name: '',
     description: undefined,
     detail: undefined,
@@ -44,6 +45,10 @@ const { canSubmit, handleSubmit, isLoading } = usePopoverForm({
       </DialogHeader>
 
       <form class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" @submit="handleSubmit">
+        <FormFieldItem v-slot="{ componentField }" name="code" label="商品编码">
+          <Input v-bind="componentField" placeholder="留空自动生成" />
+        </FormFieldItem>
+
         <FormFieldItem v-slot="{ componentField }" name="name" label="商品名称" required>
           <Input v-bind="componentField" placeholder="例如：限定周边" />
         </FormFieldItem>

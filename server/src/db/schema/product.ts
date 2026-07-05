@@ -61,6 +61,13 @@ export const products = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
 
     /**
+     * 商品编码
+     *
+     * 新商品由应用层生成 Nano ID。
+     */
+    code: text('code').notNull(),
+
+    /**
      * 商品名称
      */
     name: text('name').notNull(),
@@ -143,7 +150,7 @@ export const products = pgTable(
     ...timestamps,
   },
   t => [
-    uniqueIndex('products_name_active_unique').on(t.name).where(isNull(t.deletedAt)),
+    uniqueIndex('products_code_unique').on(t.code),
     index('products_point_type_id_idx').on(t.pointTypeId),
     index('products_status_idx').on(t.status),
     index('products_time_range_idx').on(t.startAt, t.endAt),

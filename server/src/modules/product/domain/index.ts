@@ -1,4 +1,5 @@
 export * from './errors';
+export * from './product-code';
 export * from './product.policy';
 export * from './product-input.policy';
 export * from './stock-idempotency-key';
