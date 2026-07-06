@@ -105,7 +105,6 @@ export class ProductUseCase {
     }
 
     ProductInputPolicy.assertPrice(productData.price);
-    ProductInputPolicy.assertStock(productData.stock);
     const { startAt, endAt } = productData;
     ProductInputPolicy.assertTimeRange(startAt, endAt);
 

@@ -29,7 +29,6 @@ const { canSubmit, handleSubmit, isLoading } = usePopoverForm({
     pointTypeId: props.product?.pointTypeId ?? '',
     price: props.product?.price ?? 1,
     status: props.product?.status ?? ProductStatus.Disabled,
-    stock: props.product?.stock ?? 0,
     deliveryType: props.product?.deliveryType ?? ProductDeliveryType.Manual,
     startAt: props.product?.startAt,
     endAt: props.product?.endAt,
@@ -70,10 +69,6 @@ const { canSubmit, handleSubmit, isLoading } = usePopoverForm({
 
         <FormFieldItem v-slot="{ componentField }" name="price" label="兑换价格" required>
           <Input v-bind="componentField" type="number" min="1" step="1" />
-        </FormFieldItem>
-
-        <FormFieldItem v-slot="{ componentField }" name="stock" label="初始库存" required>
-          <Input v-bind="componentField" type="number" min="0" step="1" />
         </FormFieldItem>
 
         <FormFieldItem v-slot="{ componentField }" name="deliveryType" label="发货方式" required>

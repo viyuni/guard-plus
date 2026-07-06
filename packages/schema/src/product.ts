@@ -241,7 +241,6 @@ export const UpdateProductSchema = v.object({
   price: v.optional(ProductPriceSchema),
 
   status: v.optional(ProductStatusSchema),
-  stock: v.optional(ProductStockSchema),
   deliveryType: v.optional(ProductDeliveryTypeSchema),
   allowCancel: v.optional(ProductAllowCancelSchema),
   sort: v.optional(NullableProductSortSchema),
