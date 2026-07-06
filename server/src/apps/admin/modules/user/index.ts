@@ -6,7 +6,7 @@ import {
 } from '@shared/schema/user';
 import Elysia from 'elysia';
 
-import { appContext } from '#apps/admin/context';
+import { appContext } from '../../context';
 
 export const user = new Elysia({
   name: 'UserRoute',
@@ -31,8 +31,8 @@ export const user = new Elysia({
   )
   .post(
     '/',
-    async ({ body, userUseCase }) => {
-      return await userUseCase.create(body);
+    async ({ body, adminUserUseCase }) => {
+      return await adminUserUseCase.create(body);
     },
     {
       body: UserRegisterSchema,
