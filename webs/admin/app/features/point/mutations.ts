@@ -67,6 +67,21 @@ export const useDeleteLegacyPointMigration = defineMutation(() => {
   });
 });
 
+export const useReplayLegacyPointMigration = defineMutation(() => {
+  const invalidatePoints = useInvalidatePoints();
+
+  return useMutation({
+    meta: {
+      showToast: true,
+      successMessage: '迁移积分已手动回放',
+    },
+    mutation(migrationId: string) {
+      return api.points.accounts['legacy-migrations']({ migrationId }).replay.patch();
+    },
+    onSettled: invalidatePoints,
+  });
+});
+
 export const useCreatePointType = defineMutation(() => {
   const invalidatePoints = useInvalidatePoints();
 

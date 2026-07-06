@@ -5,11 +5,11 @@ import type { ColumnDef } from '@tanstack/vue-table';
 import { Button } from '@web/ui/components/ui/button';
 import { useOverlay } from '@web/ui/components/ui/overlay';
 import { DataTable } from '@web/ui/components/ui/table';
-import { Plus, Trash2 } from 'lucide-vue-next';
+import { MoreHorizontal, Play, Plus, Trash2 } from 'lucide-vue-next';
 
 import type { AdminApi } from '~/plugins/api';
 
-import { useDeleteLegacyPointMigration } from '../mutations';
+import { useDeleteLegacyPointMigration, useReplayLegacyPointMigration } from '../mutations';
 import { legacyPointMigrationPageQuery } from '../queries';
 import LegacyPointMigrationCreateDialog from './LegacyPointMigrationCreateDialog.vue';
 
@@ -45,6 +45,7 @@ const {
 } = usePageQuery(() => legacyPointMigrationPageQuery(query.value));
 const [openCreateDialog] = useOverlay(LegacyPointMigrationCreateDialog);
 const { mutate: deleteMigration, isLoading: isDeleting } = useDeleteLegacyPointMigration();
+const { mutate: replayMigration, isLoading: isReplaying } = useReplayLegacyPointMigration();
 </script>
 
 <template>
@@ -89,17 +90,30 @@ const { mutate: deleteMigration, isLoading: isDeleting } = useDeleteLegacyPointM
     </template>
 
     <template #actions="{ rowData }">
-      <Button
-        v-if="!rowData.replayedAt"
-        variant="ghost"
-        size="icon-sm"
-        :disabled="isDeleting"
-        title="删除迁移记录"
-        @click="deleteMigration(rowData.id)"
-      >
-        <Trash2 class="text-destructive" />
-        <span class="sr-only">删除迁移记录</span>
-      </Button>
+      <DropdownMenu v-if="!rowData.replayedAt">
+        <DropdownMenuTrigger as-child>
+          <Button variant="ghost" size="icon-sm">
+            <MoreHorizontal />
+            <span class="sr-only">打开操作菜单</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" class="w-50">
+          <DropdownMenuLabel>操作</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem :disabled="isReplaying" @click="replayMigration(rowData.id)">
+            <Play />
+            手动迁移
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            variant="destructive"
+            :disabled="isDeleting"
+            @click="deleteMigration(rowData.id)"
+          >
+            <Trash2 />
+            删除
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </template>
   </DataTable>
 </template>

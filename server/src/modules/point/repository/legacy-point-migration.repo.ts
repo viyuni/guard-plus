@@ -50,6 +50,17 @@ export class LegacyPointMigrationRepository {
       .for('update');
   }
 
+  async findPendingByIdForUpdate(tx: DbTransaction, migrationId: string) {
+    const [row] = await tx
+      .select()
+      .from(legacyPointMigrations)
+      .where(
+        and(eq(legacyPointMigrations.id, migrationId), isNull(legacyPointMigrations.replayedAt)),
+      )
+      .for('update');
+    return row ?? null;
+  }
+
   async markReplayed(tx: DbTransaction, migrationId: string, userId: string) {
     const [row] = await tx
       .update(legacyPointMigrations)

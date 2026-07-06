@@ -5,6 +5,7 @@ import type {
 } from '@shared/schema/point-account';
 
 import type { DbClient, DbTransaction } from '#db';
+import type { UserUseCase } from '#modules/user';
 import { BadRequestError } from '#utils';
 
 import { POINT_CHANGE_SOURCE_TYPE, PointIdempotencyKey } from '../domain';
@@ -19,6 +20,7 @@ export interface PointAccountUseCaseDeps {
   pointAccountRepo: PointAccountRepository;
   pointBalanceUseCase: PointBalanceUseCase;
   pointTypeUseCase: PointTypeUseCase;
+  userUseCase: UserUseCase;
 }
 
 export class PointAccountUseCase {
@@ -53,6 +55,22 @@ export class PointAccountUseCase {
     return migration;
   }
 
+  async replayLegacyMigration(migrationId: string) {
+    return this.deps.db.transaction(async tx => {
+      const migration = await this.deps.legacyPointMigrationRepo.findPendingByIdForUpdate(
+        tx,
+        migrationId,
+      );
+
+      if (!migration) {
+        throw new BadRequestError('迁移记录不存在或已完成回放');
+      }
+
+      const user = await this.deps.userUseCase.getAvailableByBiliUid(migration.biliUid, tx);
+      return this.replayLegacyMigrationRecord(tx, user, migration);
+    });
+  }
+
   async replayLegacyMigrations(tx: DbTransaction, user: { id: string; biliUid: string }) {
     const migrations = await this.deps.legacyPointMigrationRepo.listPendingForUpdate(
       tx,
@@ -61,34 +79,43 @@ export class PointAccountUseCase {
     const results = [];
 
     for (const migration of migrations) {
-      const account = await this.deps.pointAccountRepo.ensureAccountAndLock(tx, {
-        userId: user.id,
-        pointTypeId: migration.pointTypeId,
-      });
-      const result = await this.deps.pointBalanceUseCase.changeBalance(tx, account, {
-        type: 'grant',
-        userId: user.id,
-        pointTypeId: migration.pointTypeId,
-        delta: migration.points,
-        sourceType: POINT_CHANGE_SOURCE_TYPE.LegacyMigration,
-        sourceId: migration.id,
-        idempotencyKey: PointIdempotencyKey.legacyMigration({ migrationId: migration.id }),
-        remark: '旧平台积分迁移',
-        metadata: { biliUid: user.biliUid, migrationId: migration.id },
-      });
-
-      const replayed = await this.deps.legacyPointMigrationRepo.markReplayed(
-        tx,
-        migration.id,
-        user.id,
-      );
-      if (!replayed) {
-        throw new BadRequestError('旧平台积分迁移状态更新失败');
-      }
-      results.push(result);
+      results.push(await this.replayLegacyMigrationRecord(tx, user, migration));
     }
 
     return results;
+  }
+
+  private async replayLegacyMigrationRecord(
+    tx: DbTransaction,
+    user: { id: string; biliUid: string },
+    migration: { id: string; pointTypeId: string; points: number },
+  ) {
+    const account = await this.deps.pointAccountRepo.ensureAccountAndLock(tx, {
+      userId: user.id,
+      pointTypeId: migration.pointTypeId,
+    });
+    const result = await this.deps.pointBalanceUseCase.changeBalance(tx, account, {
+      type: 'grant',
+      userId: user.id,
+      pointTypeId: migration.pointTypeId,
+      delta: migration.points,
+      sourceType: POINT_CHANGE_SOURCE_TYPE.LegacyMigration,
+      sourceId: migration.id,
+      idempotencyKey: PointIdempotencyKey.legacyMigration({ migrationId: migration.id }),
+      remark: '旧平台积分迁移',
+      metadata: { biliUid: user.biliUid, migrationId: migration.id },
+    });
+
+    const replayed = await this.deps.legacyPointMigrationRepo.markReplayed(
+      tx,
+      migration.id,
+      user.id,
+    );
+    if (!replayed) {
+      throw new BadRequestError('旧平台积分迁移状态更新失败');
+    }
+
+    return result;
   }
 
   async adjustBalance(adminId: string, data: AdjustBalanceBody) {

@@ -34,6 +34,16 @@ export const pointAccountRoute = new Elysia({
       detail: { description: '录入旧平台待迁移积分' },
     },
   )
+  .patch(
+    '/legacy-migrations/:migrationId/replay',
+    ({ pointAccountUseCase, params }) =>
+      pointAccountUseCase.replayLegacyMigration(params.migrationId),
+    {
+      requiredAdminAuth: true,
+      params: LegacyPointMigrationIdParamsSchema,
+      detail: { description: '手动回放旧平台积分迁移记录' },
+    },
+  )
   .delete(
     '/legacy-migrations/:migrationId',
     ({ pointAccountUseCase, params }) =>

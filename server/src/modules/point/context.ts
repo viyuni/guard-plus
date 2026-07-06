@@ -48,6 +48,7 @@ export function createPointContext({
     pointAccountRepo,
     pointBalanceUseCase,
     pointTypeUseCase,
+    userUseCase,
   });
   const pointTransactionUseCase = new PointTransactionUseCase({
     db,
