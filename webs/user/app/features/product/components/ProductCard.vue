@@ -71,6 +71,8 @@ const isBuyDisabled = computed(
             {{ product.pointType?.name ?? '积分' }}
           </span>
         </div>
+
+        <div class="text-muted-foreground mt-0.5 text-xs">库存：{{ product.stock }}</div>
       </div>
 
       <Button

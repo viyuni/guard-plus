@@ -14,6 +14,7 @@ import { Skeleton } from '@web/ui/components/ui/skeleton';
       <div class="min-w-0 flex-1">
         <Skeleton class="h-5 w-3/4" />
         <Skeleton class="mt-1 h-7 w-1/2" />
+        <Skeleton class="mt-1 h-4 w-1/3" />
       </div>
 
       <Skeleton class="size-9 shrink-0 rounded-full" />
