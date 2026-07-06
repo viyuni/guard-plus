@@ -23,6 +23,7 @@ export type Product = NonNullable<ProductListPage>['items'][number];
 <script setup lang="ts">
 const columns = [
   { accessorKey: 'cover', header: '封面' },
+  { accessorKey: 'code', header: '商品编码' },
   { accessorKey: 'name', header: '商品名称' },
   { accessorKey: 'pointType.name', header: '积分类型' },
   { accessorKey: 'price', header: '价格' },
@@ -77,7 +78,7 @@ function updateProductStatus(product: Product, status?: ProductStatus | '') {
   >
     <template #toolbar>
       <DataTableToolbar>
-        <Input placeholder="搜索商品名称 / 描述" v-model:model-value.trim="keyword" />
+        <Input placeholder="搜索商品编码 / 名称 / 描述" v-model:model-value.trim="keyword" />
         <ProductStatusSelect v-model="status" />
         <NativeSelect v-model:model-value="deliveryType">
           <NativeSelectOption value="">发货方式</NativeSelectOption>

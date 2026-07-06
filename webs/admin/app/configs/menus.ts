@@ -23,6 +23,7 @@ export const menus = [
       { title: '积分类型', to: '/app/points/types' },
       { title: '积分流水', to: '/app/points/transactions' },
       { title: '积分转换', to: '/app/points/conversions' },
+      { title: '旧平台迁移', to: '/app/points/legacyMigrations' },
     ],
   },
   {

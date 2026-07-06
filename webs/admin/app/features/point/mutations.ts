@@ -1,5 +1,8 @@
 import { defineMutation, useMutation, useQueryCache } from '@pinia/colada';
-import type { ReversalPointTransactionBody } from '@shared/schema/point-account';
+import type {
+  CreateLegacyPointMigrationBody,
+  ReversalPointTransactionBody,
+} from '@shared/schema/point-account';
 import type {
   ConvertPointBody,
   CreatePointConversionRuleBody,
@@ -29,6 +32,36 @@ export const useReversePointTransaction = defineMutation(() => {
     },
     mutation(body: ReversalPointTransactionBody) {
       return api.points.transactions.reversal.patch(body);
+    },
+    onSettled: invalidatePoints,
+  });
+});
+
+export const useCreateLegacyPointMigration = defineMutation(() => {
+  const invalidatePoints = useInvalidatePoints();
+
+  return useMutation({
+    meta: {
+      showToast: true,
+      successMessage: '迁移积分已录入',
+    },
+    mutation(body: CreateLegacyPointMigrationBody) {
+      return api.points.accounts['legacy-migrations'].post(body);
+    },
+    onSettled: invalidatePoints,
+  });
+});
+
+export const useDeleteLegacyPointMigration = defineMutation(() => {
+  const invalidatePoints = useInvalidatePoints();
+
+  return useMutation({
+    meta: {
+      showToast: true,
+      successMessage: '迁移记录已删除',
+    },
+    mutation(migrationId: string) {
+      return api.points.accounts['legacy-migrations']({ migrationId }).delete();
     },
     onSettled: invalidatePoints,
   });
