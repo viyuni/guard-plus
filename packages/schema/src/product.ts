@@ -67,6 +67,13 @@ const ProductNameSchema = v.pipe(
   v.description('商品名称'),
 );
 
+const ProductCodeSchema = v.pipe(
+  v.string('请输入商品编码'),
+  v.minLength(1, '商品编码不能为空'),
+  v.maxLength(100, '商品编码不能超过 100 个字符'),
+  v.description('旧平台商品编码'),
+);
+
 /**
  * 商品描述 Schema。
  */
@@ -192,6 +199,7 @@ export type ProductPageQuery = v.InferOutput<typeof ProductPageQuerySchema>;
  * 创建商品 Body Schema。
  */
 export const CreateProductSchema = v.object({
+  code: v.optional(emptyable(ProductCodeSchema)),
   name: ProductNameSchema,
 
   description: v.optional(emptyable(ProductDescriptionSchema)),
@@ -216,6 +224,7 @@ export type CreateProductBody = v.InferOutput<typeof CreateProductSchema>;
  * 更新商品 Body Schema。
  */
 export const UpdateProductSchema = v.object({
+  code: v.optional(emptyable(ProductCodeSchema)),
   name: v.optional(ProductNameSchema),
 
   description: v.nullish(emptyable(ProductDescriptionSchema)),

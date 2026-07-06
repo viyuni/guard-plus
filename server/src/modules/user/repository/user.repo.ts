@@ -111,8 +111,8 @@ export class UserRepository {
     return user ?? null;
   }
 
-  async create(data: InsertUser) {
-    const [user] = await this.db.insert(users).values(data).returning(userSelectCols);
+  async create(data: InsertUser, db: DbExecutor = this.db) {
+    const [user] = await db.insert(users).values(data).returning(userSelectCols);
 
     if (!user) {
       throw new BadRequestError('用户创建失败');

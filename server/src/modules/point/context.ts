@@ -8,6 +8,7 @@ import {
   PointTransactionRepository,
   PointTypeRepository,
 } from './repository';
+import { LegacyPointMigrationRepository } from './repository';
 import {
   PointAccountUseCase,
   PointBalanceUseCase,
@@ -26,6 +27,7 @@ export function createPointContext({
   userUseCase: UserUseCase;
 }) {
   const pointAccountRepo = new PointAccountRepository(db);
+  const legacyPointMigrationRepo = new LegacyPointMigrationRepository(db);
   const pointConversionRuleRepo = new PointConversionRuleRepository(db);
   const pointTransactionRepo = new PointTransactionRepository(db);
   const pointTypeRepo = new PointTypeRepository(db);
@@ -42,8 +44,10 @@ export function createPointContext({
   });
   const pointAccountUseCase = new PointAccountUseCase({
     db,
+    legacyPointMigrationRepo,
     pointAccountRepo,
     pointBalanceUseCase,
+    pointTypeUseCase,
   });
   const pointTransactionUseCase = new PointTransactionUseCase({
     db,
@@ -60,6 +64,7 @@ export function createPointContext({
   });
 
   return {
+    legacyPointMigrationRepo,
     pointAccountRepo,
     pointConversionRuleRepo,
     pointTransactionRepo,

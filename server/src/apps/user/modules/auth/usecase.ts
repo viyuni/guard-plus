@@ -1,7 +1,9 @@
 import type { UserLoginBody, UserRegisterBody } from '@shared/schema/user';
 
+import type { DbClient } from '#db';
 import type { AuthUseCase as SharedAuthUseCase } from '#modules/auth';
 import type { BiliRegisterUseCase } from '#modules/auth';
+import type { PointAccountUseCase } from '#modules/point';
 import type { RewardUseCase } from '#modules/reward';
 import type { UserUseCase } from '#modules/user';
 import { BadRequestError } from '#utils';
@@ -12,8 +14,10 @@ export class AuthUseCase {
   constructor(
     private readonly deps: {
       authUseCase: SharedAuthUseCase;
+      db: DbClient;
       biliRegisterUseCase?: BiliRegisterUseCase;
       biliRoom: number;
+      pointAccountUseCase: PointAccountUseCase;
       rewardUseCase: RewardUseCase;
       userUseCase: UserUseCase;
     },
@@ -60,8 +64,14 @@ export class AuthUseCase {
       throw new BadRequestError('注册 UID 与已验证 UID 不一致');
     }
 
-    const user = await this.deps.userUseCase.create(input);
+    // 旧平台积分必须与用户创建原子提交，避免用户已注册却无法再次触发迁移。
+    const user = await this.deps.db.transaction(async tx => {
+      const created = await this.deps.userUseCase.create(input, tx);
+      await this.deps.pointAccountUseCase.replayLegacyMigrations(tx, created);
+      return created;
+    });
 
+    // 大航海奖励按事件独立事务回放并支持重试，故在注册事务提交后执行。
     await this.deps.rewardUseCase.replayRewardBiliGuardByUserId(user.id);
 
     return user;

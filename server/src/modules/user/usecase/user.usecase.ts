@@ -112,8 +112,8 @@ export class UserUseCase {
   /**
    * 创建用户
    */
-  async create(data: UserRegisterBody) {
-    const existing = await this.deps.userRepo.findByBiliUid(data.biliUid);
+  async create(data: UserRegisterBody, db?: DbExecutor) {
+    const existing = await this.deps.userRepo.findByBiliUid(data.biliUid, db);
 
     if (existing) {
       throw new UserAlreadyRegisteredError();
@@ -121,11 +121,14 @@ export class UserUseCase {
 
     const passwordHash = await PasswordUtil.hash(data.password);
 
-    const user = await this.deps.userRepo.create({
-      ...data,
-      ...this.deps.userBasicInfoCrypto.encryptBasicInfo(data),
-      passwordHash,
-    });
+    const user = await this.deps.userRepo.create(
+      {
+        ...data,
+        ...this.deps.userBasicInfoCrypto.encryptBasicInfo(data),
+        passwordHash,
+      },
+      db,
+    );
 
     return {
       id: user.id,

@@ -7,6 +7,7 @@ import { ProductPolicy, ProductUnavailableError } from '../domain';
 function product(input: Partial<Product> = {}): Product {
   return {
     id: crypto.randomUUID(),
+    code: crypto.randomUUID(),
     name: `product_${crypto.randomUUID()}`,
     description: null,
     cover: null,

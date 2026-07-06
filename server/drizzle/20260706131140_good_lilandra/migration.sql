@@ -1,0 +1,1 @@
+DROP INDEX "products_name_active_unique";
