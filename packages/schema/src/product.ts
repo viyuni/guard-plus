@@ -67,13 +67,18 @@ const ProductNameSchema = v.pipe(
   v.description('商品名称'),
 );
 
+/**
+ * 商品编码schema
+ */
 const ProductCodeSchema = v.pipe(
   v.string('请输入商品编码'),
+  v.trim(),
   v.minLength(1, '商品编码不能为空'),
   v.maxLength(100, '商品编码不能超过 100 个字符'),
-  v.description('旧平台商品编码'),
+  v.transform(value => value.toUpperCase()),
+  v.regex(/^[A-Z][A-Z0-9]*$/, '商品编码必须以英文开头，且只能包含英文和数字'),
+  v.description('商品编码'),
 );
-
 /**
  * 商品描述 Schema。
  */
