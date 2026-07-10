@@ -83,6 +83,7 @@ export function createContainer({ db, env }: CreateSharedContextOptions) {
       biliRegisterRepo: auth.biliRegisterRepo,
       userRepo: user.userRepo,
       pointAccountRepo: point.pointAccountRepo,
+      legacyPointMigrationRepo: point.legacyPointMigrationRepo,
       pointConversionRuleRepo: point.pointConversionRuleRepo,
       pointTransactionRepo: point.pointTransactionRepo,
       pointTypeRepo: point.pointTypeRepo,

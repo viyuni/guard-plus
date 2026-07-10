@@ -1,0 +1,1 @@
+ALTER TABLE "products" ALTER COLUMN "code" SET DEFAULT upper(substring(md5(gen_random_uuid()::text), 1, 8));

@@ -1,0 +1,1 @@
+ALTER TABLE "legacy_point_migrations" DROP CONSTRAINT "legacy_point_migrations_point_type_id_point_types_id_fkey", ADD CONSTRAINT "legacy_point_migrations_point_type_id_point_types_id_fkey" FOREIGN KEY ("point_type_id") REFERENCES "point_types"("id") ON DELETE CASCADE;

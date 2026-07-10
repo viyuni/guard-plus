@@ -26,4 +26,8 @@ export const PointIdempotencyKey = {
   biliGuard(input: { sourceId: string; ruleId: string }) {
     return `bili-guard:${input.sourceId}:rule:${input.ruleId}`;
   },
+
+  legacyMigration(input: { migrationId: string }) {
+    return `legacy:points:migration:${input.migrationId}`;
+  },
 };

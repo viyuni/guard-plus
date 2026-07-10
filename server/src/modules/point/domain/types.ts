@@ -33,6 +33,9 @@ export const POINT_CHANGE_SOURCE_TYPE = {
    * 积分转换
    */
   Conversion: 'pointConversion',
+
+  /** 旧平台积分迁移 */
+  LegacyMigration: 'legacyMigration',
 } as const;
 
 /**

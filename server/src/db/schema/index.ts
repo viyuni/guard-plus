@@ -1,5 +1,6 @@
 export * from './admin';
 export * from './bili-event';
+export * from './legacy-point-migration';
 export * from './order';
 export * from './point-account';
 export * from './point-conversion-rule';

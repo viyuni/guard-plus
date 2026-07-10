@@ -14,7 +14,7 @@ import { PointTypeUseCase } from '#modules/point';
 
 import {
   ProductInputPolicy,
-  ProductNameExistsError,
+  ProductCodeExistsError,
   ProductNotFoundError,
   ProductPolicy,
   StockIdempotencyKey,
@@ -71,10 +71,8 @@ export class ProductUseCase {
     const { startAt, endAt } = productData;
     ProductInputPolicy.assertTimeRange(startAt, endAt);
 
-    const exists = await this.deps.productRepo.findByName(productData.name);
-
-    if (exists) {
-      throw new ProductNameExistsError();
+    if (productData.code && (await this.deps.productRepo.findByCode(productData.code))) {
+      throw new ProductCodeExistsError();
     }
 
     const { endAt: _endAt, startAt: _startAt, ...data } = productData;
@@ -98,16 +96,15 @@ export class ProductUseCase {
       await this.deps.pointTypeUseCase.getAvailableById(productData.pointTypeId);
     }
 
-    if (productData.name && productData.name !== current.name) {
-      const exists = await this.deps.productRepo.findByName(productData.name);
-
-      if (exists) {
-        throw new ProductNameExistsError();
-      }
+    if (
+      productData.code &&
+      productData.code !== current.code &&
+      (await this.deps.productRepo.findByCode(productData.code))
+    ) {
+      throw new ProductCodeExistsError();
     }
 
     ProductInputPolicy.assertPrice(productData.price);
-    ProductInputPolicy.assertStock(productData.stock);
     const { startAt, endAt } = productData;
     ProductInputPolicy.assertTimeRange(startAt, endAt);
 

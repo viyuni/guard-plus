@@ -9,6 +9,16 @@ export const relations = defineRelations(schema, r => ({
       to: r.pointAccounts.userId,
     }),
   },
+  legacyPointMigrations: {
+    pointType: r.one.pointTypes({
+      from: r.legacyPointMigrations.pointTypeId,
+      to: r.pointTypes.id,
+    }),
+    replayedUser: r.one.users({
+      from: r.legacyPointMigrations.replayedUserId,
+      to: r.users.id,
+    }),
+  },
   pointAccounts: {
     pointType: r.one.pointTypes({
       from: r.pointAccounts.pointTypeId,

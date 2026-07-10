@@ -2,6 +2,7 @@ import { expect, it } from 'bun:test';
 
 import { count, eq } from 'drizzle-orm';
 
+import { AdminUserUseCase } from '#apps/admin/modules/user/usecase';
 import { AuthUseCase as UserAuthUseCase } from '#apps/user/modules/auth/usecase';
 import { pointTransactions } from '#db/schema';
 import type { BiliRegisterUseCase } from '#modules/auth';
@@ -247,7 +248,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
     const user = await seedUser(`${prefix}_user`, biliUid);
     const { rewardUseCase } = createDeps();
 
-    await createRewardRule(prefix, pointType.id, {
+    const rule = await createRewardRule(prefix, pointType.id, {
       conditions: {
         type: 'biliGuard',
         guardTypes: [],
@@ -265,7 +266,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
       where: { userId: user.id, pointTypeId: pointType.id },
     });
 
-    expect(result?.items).toEqual([]);
+    expect(result?.items.map(item => item.ruleSnapshot.id)).not.toContain(rule.id);
     expect(account).toBeUndefined();
   });
 
@@ -486,11 +487,11 @@ describeWithDatabase('奖励发放真实数据库', () => {
     expect(account?.balance).toBe(35);
   });
 
-  it('普通用户注册成功后会自动回放未注册时的大航海奖励', async () => {
+  it('普通用户注册成功后会自动回放旧平台积分及未注册时的大航海奖励', async () => {
     const prefix = newBatch('reward_register');
     const pointType = await seedPointType(`${prefix}_point`);
     const biliUid = createBiliUid();
-    const { authUseCase, rewardUseCase, userUseCase } = createDeps();
+    const { authUseCase, pointAccountUseCase, rewardUseCase, userUseCase } = createDeps();
     const biliRegisterCode = 'U-234567';
     const verifier = 'test-verifier';
     const userAuthUseCase = new UserAuthUseCase({
@@ -509,6 +510,8 @@ describeWithDatabase('奖励发放真实数据库', () => {
             : null,
       } as unknown as BiliRegisterUseCase,
       biliRoom: 8315781,
+      db,
+      pointAccountUseCase,
       rewardUseCase,
       userUseCase,
     });
@@ -519,6 +522,11 @@ describeWithDatabase('奖励发放真实数据库', () => {
       totalNormalized: 4,
     });
 
+    const migration = await pointAccountUseCase.createLegacyMigration({
+      biliUid,
+      pointTypeId: pointType.id,
+      points: 12,
+    });
     await rewardUseCase.rewardBiliGuard(event);
     const registered = await userAuthUseCase.register(
       {
@@ -546,10 +554,72 @@ describeWithDatabase('奖励发放真实数据库', () => {
     const rewardResultSnapshot = biliEvent?.rewardResultSnapshots.find(
       item => item.ruleId === rule.id,
     );
+    const replayedMigration = await db.query.legacyPointMigrations.findFirst({
+      where: { id: migration.id },
+    });
+    const migrationTransaction = await db.query.pointTransactions.findFirst({
+      where: {
+        sourceType: 'legacyMigration',
+        sourceId: migration.id,
+      },
+    });
 
-    expect(account?.balance).toBe(32);
+    expect(account?.balance).toBe(44);
+    expect(replayedMigration?.replayedUserId).toBe(registered.id);
+    expect(replayedMigration?.replayedAt).toBeInstanceOf(Date);
+    expect(migrationTransaction?.delta).toBe(12);
     expect(biliEvent?.status).toBe('succeeded');
     expect(biliEvent?.userId).toBe(registered.id);
     expect(rewardResultSnapshot?.duplicated).toBe(false);
+  });
+
+  it('管理员创建用户后会正确发放旧平台迁移积分及大航海积分', async () => {
+    const prefix = newBatch('admin_create_user');
+    const pointType = await seedPointType(`${prefix}_point`);
+    const biliUid = createBiliUid();
+    const { pointAccountUseCase, rewardUseCase, userUseCase } = createDeps();
+    const adminUserUseCase = new AdminUserUseCase({
+      db,
+      pointAccountUseCase,
+      rewardUseCase,
+      userUseCase,
+    });
+    const rule = await createRewardRule(prefix, pointType.id, { points: 9 });
+    const event = createBiliGuardEvent(prefix, Number(biliUid), { totalNormalized: 3 });
+    const migration = await pointAccountUseCase.createLegacyMigration({
+      biliUid,
+      pointTypeId: pointType.id,
+      points: 13,
+    });
+
+    await rewardUseCase.rewardBiliGuard(event);
+    const created = await adminUserUseCase.create({
+      biliUid,
+      username: `${prefix}_user`,
+      password: 'test_password',
+    });
+
+    const account = await db.query.pointAccounts.findFirst({
+      where: { userId: created.id, pointTypeId: pointType.id },
+    });
+    const migrationTransaction = await db.query.pointTransactions.findFirst({
+      where: { sourceType: 'legacyMigration', sourceId: migration.id },
+    });
+    const guardTransaction = await db.query.pointTransactions.findFirst({
+      where: { sourceType: 'guardEvent', sourceId: event.id },
+    });
+    const replayedEvent = await db.query.biliEvents.findFirst({
+      where: { biliEventId: event.id },
+    });
+
+    expect(account?.balance).toBe(40);
+    expect(migrationTransaction?.userId).toBe(created.id);
+    expect(migrationTransaction?.delta).toBe(13);
+    expect(guardTransaction?.userId).toBe(created.id);
+    expect(guardTransaction?.delta).toBe(27);
+    expect(replayedEvent?.userId).toBe(created.id);
+    expect(replayedEvent?.rewardResultSnapshots).toContainEqual(
+      expect.objectContaining({ ruleId: rule.id, points: 27, duplicated: false }),
+    );
   });
 });

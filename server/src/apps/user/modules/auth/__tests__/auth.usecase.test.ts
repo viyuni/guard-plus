@@ -1,7 +1,9 @@
 import { expect, it, mock } from 'bun:test';
 
+import type { DbClient } from '#db';
 import type { AuthUseCase as SharedAuthUseCase, BiliRegisterUseCase } from '#modules/auth';
 import type { BiliRegisterChallenge } from '#modules/auth/domain';
+import type { PointAccountUseCase } from '#modules/point';
 import type { RewardUseCase } from '#modules/reward';
 import type { UserUseCase } from '#modules/user';
 import { BadRequestError } from '#utils';
@@ -19,6 +21,7 @@ const credential = {
 };
 
 function createUseCase(challenge: BiliRegisterChallenge | null) {
+  const tx = {};
   const create = mock(async () => ({
     id: 'user-id',
     biliUid: input.biliUid,
@@ -30,10 +33,15 @@ function createUseCase(challenge: BiliRegisterChallenge | null) {
     failed: 0,
   }));
   const consumeChallenge = mock(async () => challenge);
+  const replayLegacyMigrations = mock(async () => []);
   const useCase = new AuthUseCase({
     authUseCase: {} as SharedAuthUseCase,
     biliRegisterUseCase: { consumeChallenge } as unknown as BiliRegisterUseCase,
     biliRoom: 8315781,
+    db: {
+      transaction: async (callback: (actualTx: unknown) => unknown) => callback(tx),
+    } as unknown as DbClient,
+    pointAccountUseCase: { replayLegacyMigrations } as unknown as PointAccountUseCase,
     rewardUseCase: { replayRewardBiliGuardByUserId } as unknown as RewardUseCase,
     userUseCase: { create } as unknown as UserUseCase,
   });
@@ -42,6 +50,8 @@ function createUseCase(challenge: BiliRegisterChallenge | null) {
     consumeChallenge,
     create,
     replayRewardBiliGuardByUserId,
+    replayLegacyMigrations,
+    tx,
     useCase,
   };
 }
@@ -79,19 +89,33 @@ it('用户注册会拒绝与验证结果不一致的 UID', async () => {
   expect(create).not.toHaveBeenCalled();
 });
 
-it('用户注册验证 UID 后会创建用户并回放奖励', async () => {
-  const { consumeChallenge, create, replayRewardBiliGuardByUserId, useCase } =
-    createUseCase(matchedChallenge());
+it('用户注册验证 UID 后会创建用户并回放迁移积分及奖励', async () => {
+  const {
+    consumeChallenge,
+    create,
+    replayLegacyMigrations,
+    replayRewardBiliGuardByUserId,
+    tx,
+    useCase,
+  } = createUseCase(matchedChallenge());
 
   await expect(useCase.register(input, credential)).resolves.toMatchObject({
     id: 'user-id',
     biliUid: input.biliUid,
   });
   expect(consumeChallenge).toHaveBeenCalledWith(credential.code, credential.verifier);
-  expect(create).toHaveBeenCalledWith({
+  expect(create).toHaveBeenCalledWith(
+    {
+      biliUid: input.biliUid,
+      username: input.username,
+      password: input.password,
+    },
+    tx,
+  );
+  expect(replayLegacyMigrations).toHaveBeenCalledWith(tx, {
+    id: 'user-id',
     biliUid: input.biliUid,
     username: input.username,
-    password: input.password,
   });
   expect(replayRewardBiliGuardByUserId).toHaveBeenCalledWith('user-id');
 });

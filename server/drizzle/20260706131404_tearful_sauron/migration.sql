@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "products_code_active_unique" ON "products" ("code") WHERE ("deleted_at" is null);

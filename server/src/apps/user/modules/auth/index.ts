@@ -2,6 +2,7 @@ import { UserLoginSchema, UserRegisterSchema } from '@shared/schema/user';
 import Elysia from 'elysia';
 
 import { appContext } from '#apps/user/context';
+import { db } from '#db';
 import {
   ACCESS_TOKEN_COOKIE_NAME,
   ACCESS_TOKEN_COOKIE_OPTIONS,
@@ -48,15 +49,19 @@ export const auth = new Elysia({
   },
 })
   .use(appContext)
-  .derive(({ authUseCase, biliRegisterUseCase, rewardUseCase, userUseCase }) => ({
-    userAuthUseCase: new AuthUseCase({
-      authUseCase,
-      biliRegisterUseCase,
-      biliRoom: userEnv.BILI_ROOM,
-      rewardUseCase,
-      userUseCase,
+  .derive(
+    ({ authUseCase, biliRegisterUseCase, pointAccountUseCase, rewardUseCase, userUseCase }) => ({
+      userAuthUseCase: new AuthUseCase({
+        authUseCase,
+        biliRegisterUseCase,
+        biliRoom: userEnv.BILI_ROOM,
+        db,
+        pointAccountUseCase,
+        rewardUseCase,
+        userUseCase,
+      }),
     }),
-  }))
+  )
   .post(
     '/login',
     async ({ body, cookie, userAuthUseCase }) => {

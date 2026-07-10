@@ -27,14 +27,12 @@ export class ProductRepository {
     });
   }
 
-  async findByName(name: string, db: DbExecutor = this.db) {
+  async findByCode(code: string, db: DbExecutor = this.db) {
     return (
       (await db.query.products.findFirst({
         where: {
-          name,
-          deletedAt: {
-            isNull: true,
-          },
+          code,
+          deletedAt: { isNull: true },
         },
       })) ?? null
     );
@@ -168,6 +166,11 @@ export class ProductRepository {
         pointTypeId: query.pointTypeId,
         OR: query.keyword
           ? [
+              {
+                code: {
+                  ilike: `%${query.keyword}%`,
+                },
+              },
               {
                 name: {
                   ilike: `%${query.keyword}%`,

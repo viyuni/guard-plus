@@ -9,6 +9,7 @@ import { redis } from '#redis';
 import { AdminRepository } from './modules/admin/repository';
 import { AdminUseCase } from './modules/admin/usecase';
 import { AdminAuthUseCase } from './modules/auth/usecase';
+import { AdminUserUseCase } from './modules/user/usecase';
 
 export const { context, container: adminContainer } = createAppContext({
   db,
@@ -21,7 +22,7 @@ export const { context, container: adminContainer } = createAppContext({
 });
 
 const {
-  useCases: { authUseCase },
+  useCases: { authUseCase, pointAccountUseCase, userUseCase, rewardUseCase },
 } = adminContainer;
 
 const adminRepo = new AdminRepository(db);
@@ -41,6 +42,13 @@ const adminAuthUseCase = new AdminAuthUseCase({
   authUseCase,
 });
 
+const adminUserUseCase = new AdminUserUseCase({
+  db,
+  pointAccountUseCase,
+  userUseCase,
+  rewardUseCase,
+});
+
 const eventServiceMonitor = new EventServiceMonitor({
   redis,
   roomId: adminEnv.BILI_ROOM,
@@ -58,6 +66,7 @@ const eventServiceMonitor = new EventServiceMonitor({
 export const appRuntimeContext = context.decorate({
   adminAuthUseCase,
   adminUseCase,
+  adminUserUseCase,
   eventServiceMonitor,
 });
 

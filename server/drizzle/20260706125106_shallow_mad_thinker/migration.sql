@@ -1,0 +1,1 @@
+ALTER TABLE "legacy_point_migrations" DROP CONSTRAINT "legacy_point_migrations_replayed_user_id_users_id_fkey", ADD CONSTRAINT "legacy_point_migrations_replayed_user_id_users_id_fkey" FOREIGN KEY ("replayed_user_id") REFERENCES "users"("id") ON DELETE SET NULL;

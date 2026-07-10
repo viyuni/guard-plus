@@ -1,6 +1,50 @@
 import * as v from 'valibot';
 
-import { nonce, POSTGRES_INTEGER_MAX, POSTGRES_INTEGER_MIN, remark } from './common';
+import {
+  bilibiliUid,
+  nonce,
+  pageQuery,
+  POSTGRES_INTEGER_MAX,
+  POSTGRES_INTEGER_MIN,
+  remark,
+} from './common';
+
+/** 录入旧平台待迁移积分。 */
+export const CreateLegacyPointMigrationSchema = v.object({
+  biliUid: bilibiliUid,
+  pointTypeId: v.pipe(v.string('请输入积分类型 ID'), v.uuid('请输入有效的积分类型 ID')),
+  points: v.pipe(
+    v.number('请输入积分'),
+    v.integer('积分必须是整数'),
+    v.minValue(1, '积分必须大于 0'),
+    v.maxValue(POSTGRES_INTEGER_MAX, '积分数量过大'),
+  ),
+});
+
+export type CreateLegacyPointMigrationBody = v.InferOutput<typeof CreateLegacyPointMigrationSchema>;
+
+/** 旧平台积分迁移记录 ID。 */
+export const LegacyPointMigrationIdParamsSchema = v.object({
+  migrationId: v.pipe(v.string('请输入迁移记录 ID'), v.uuid('请输入有效的迁移记录 ID')),
+});
+
+export type LegacyPointMigrationIdParams = v.InferOutput<typeof LegacyPointMigrationIdParamsSchema>;
+
+export const LegacyPointMigrationStatus = {
+  Pending: 'pending',
+  Replayed: 'replayed',
+} as const;
+
+export const LegacyPointMigrationPageQuerySchema = v.object({
+  biliUid: v.optional(bilibiliUid),
+  pointTypeId: v.optional(v.pipe(v.string('请输入积分类型 ID'), v.uuid('请输入有效的积分类型 ID'))),
+  status: v.optional(v.enum(LegacyPointMigrationStatus, '请选择有效的迁移状态')),
+  ...pageQuery.entries,
+});
+
+export type LegacyPointMigrationPageQuery = v.InferOutput<
+  typeof LegacyPointMigrationPageQuerySchema
+>;
 
 /**
  * 调整积分 Body Schema。

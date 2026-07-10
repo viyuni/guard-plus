@@ -1,4 +1,10 @@
-import { isNull, type InferEnum, type InferInsertModel, type InferSelectModel } from 'drizzle-orm';
+import {
+  isNull,
+  sql,
+  type InferEnum,
+  type InferInsertModel,
+  type InferSelectModel,
+} from 'drizzle-orm';
 import {
   index,
   integer,
@@ -10,9 +16,12 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
+import { customAlphabet } from 'nanoid';
 
 import { deletedAt, timestamps } from './column-helpers';
 import { pointTypes } from './point-type';
+
+const generateProductCode = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 8);
 
 /**
  * 商品状态
@@ -59,6 +68,12 @@ export const products = pgTable(
   'products',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+
+    /** 商品编码；未指定时由应用生成，未删除商品中唯一。 */
+    code: text('code')
+      .notNull()
+      .default(sql`upper(substring(md5(gen_random_uuid()::text), 1, 8))`)
+      .$defaultFn(() => generateProductCode()),
 
     /**
      * 商品名称
@@ -143,7 +158,7 @@ export const products = pgTable(
     ...timestamps,
   },
   t => [
-    uniqueIndex('products_name_active_unique').on(t.name).where(isNull(t.deletedAt)),
+    uniqueIndex('products_code_active_unique').on(t.code).where(isNull(t.deletedAt)),
     index('products_point_type_id_idx').on(t.pointTypeId),
     index('products_status_idx').on(t.status),
     index('products_time_range_idx').on(t.startAt, t.endAt),

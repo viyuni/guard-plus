@@ -20,6 +20,7 @@ export const image = ({ assets }: { assets: string }) => {
         'Cache-Control': 'public, max-age=31536000, immutable',
       },
       indexHTML: false,
+      staticLimit: -1,
       detail: {
         tags: ['Image'],
         description: '访问已上传的公开图片资源',

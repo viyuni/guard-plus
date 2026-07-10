@@ -68,6 +68,19 @@ const ProductNameSchema = v.pipe(
 );
 
 /**
+ * 商品编码schema
+ */
+const ProductCodeSchema = v.pipe(
+  v.string('请输入商品编码'),
+  v.trim(),
+  v.minLength(1, '商品编码不能为空'),
+  v.maxLength(100, '商品编码不能超过 100 个字符'),
+  v.transform(value => value.toUpperCase()),
+  v.regex(/^[A-Z0-9_]+$/, '商品编码只能包含英文、数字和下划线'),
+  v.description('商品编码'),
+);
+
+/**
  * 商品描述 Schema。
  */
 const ProductDescriptionSchema = v.pipe(
@@ -192,6 +205,7 @@ export type ProductPageQuery = v.InferOutput<typeof ProductPageQuerySchema>;
  * 创建商品 Body Schema。
  */
 export const CreateProductSchema = v.object({
+  code: v.optional(emptyable(ProductCodeSchema)),
   name: ProductNameSchema,
 
   description: v.optional(emptyable(ProductDescriptionSchema)),
@@ -216,6 +230,7 @@ export type CreateProductBody = v.InferOutput<typeof CreateProductSchema>;
  * 更新商品 Body Schema。
  */
 export const UpdateProductSchema = v.object({
+  code: v.optional(emptyable(ProductCodeSchema)),
   name: v.optional(ProductNameSchema),
 
   description: v.nullish(emptyable(ProductDescriptionSchema)),
@@ -226,7 +241,6 @@ export const UpdateProductSchema = v.object({
   price: v.optional(ProductPriceSchema),
 
   status: v.optional(ProductStatusSchema),
-  stock: v.optional(ProductStockSchema),
   deliveryType: v.optional(ProductDeliveryTypeSchema),
   allowCancel: v.optional(ProductAllowCancelSchema),
   sort: v.optional(NullableProductSortSchema),
