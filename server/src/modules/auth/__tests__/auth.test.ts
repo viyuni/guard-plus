@@ -1,10 +1,26 @@
-import { describe, expect, it, mock } from 'bun:test';
+import { afterEach, describe, expect, it, mock, setSystemTime } from 'bun:test';
 
 import Elysia from 'elysia';
+import { decodeJwt } from 'jose';
 
 import type { AuthTokenPair } from '../domain';
 import { createAuthGuard, getAuthStateCookieOptions } from '../index';
 import { AuthUseCase } from '../usecase';
+
+afterEach(() => {
+  setSystemTime();
+});
+
+function getSetCookieValue(response: Response, name: string) {
+  const prefix = `${name}=`;
+  const cookie = response.headers.getSetCookie().find(value => value.startsWith(prefix));
+
+  if (!cookie) {
+    throw new Error(`缺少 ${name} Set-Cookie`);
+  }
+
+  return cookie.slice(prefix.length).split(';', 1)[0]!;
+}
 
 function createAuthUseCase() {
   const sessions = new Map<string, { accountId: string; role: 'user' | 'admin' | 'superAdmin' }>();
@@ -263,23 +279,18 @@ describe('requiredSuperAdminAuth', () => {
 });
 
 describe('requiredAuth token refresh', () => {
-  it('同时刷新 accessToken 和 refreshToken Cookie', async () => {
-    const authUseCase = {
-      verifyAccessToken: mock(async () => {
-        throw new Error('expired');
-      }),
-      refreshTokenPairWithLock: mock(async () => ({
-        payload: {
-          id: 'user-id',
-          role: 'user',
-          sid: 'session-id',
-        },
-        accessToken: 'next-access-token',
-        accessTokenExpiresAt: Date.now() + 60_000,
-        refreshToken: 'next-refresh-token',
-        refreshTokenExpiresAt: Date.now() + 60_000,
-      })),
-    } as any;
+  it('AccessToken 过期后真实刷新双 Token 和前端登录状态 Cookie', async () => {
+    const loginAt = new Date('2026-01-01T00:00:00.000Z');
+    setSystemTime(loginAt);
+
+    const { authUseCase, authSessionRepo } = createAuthUseCase();
+    const originalTokens = await authUseCase.createSessionTokenPair({
+      id: 'user-id',
+      role: 'user',
+    });
+
+    setSystemTime(loginAt.getTime() + 16 * 60 * 1000);
+
     const app = new Elysia()
       .use(createAuthGuard(authUseCase))
       .get('/me', ({ auth }) => auth, { requiredAuth: true });
@@ -287,19 +298,26 @@ describe('requiredAuth token refresh', () => {
     const response = await app.handle(
       new Request('http://localhost/me', {
         headers: {
-          cookie: 'accessToken=expired; refreshToken=current-refresh-token',
+          cookie: `accessToken=${originalTokens.accessToken}; refreshToken=${originalTokens.refreshToken}`,
         },
       }),
     );
-    const setCookies = response.headers.getSetCookie();
+    const nextAccessToken = getSetCookieValue(response, 'accessToken');
+    const nextRefreshToken = getSetCookieValue(response, 'refreshToken');
+    const authState = getSetCookieValue(response, 'auth');
 
     expect(response.status).toBe(200);
-    expect(
-      setCookies.some(cookie => cookie.startsWith('accessToken=next-access-token;')),
-    ).toBeTrue();
-    expect(
-      setCookies.some(cookie => cookie.startsWith('refreshToken=next-refresh-token;')),
-    ).toBeTrue();
-    expect(authUseCase.refreshTokenPairWithLock).toHaveBeenCalledWith('current-refresh-token');
+    expect(nextAccessToken).not.toBe(originalTokens.accessToken);
+    expect(nextRefreshToken).not.toBe(originalTokens.refreshToken);
+    expect(authState).toBe('1');
+    expect(decodeJwt(nextAccessToken).exp).toBeGreaterThan(
+      decodeJwt(originalTokens.accessToken).exp!,
+    );
+    expect(decodeJwt(nextRefreshToken).exp).toBeGreaterThan(
+      decodeJwt(originalTokens.refreshToken).exp!,
+    );
+    expect(await authUseCase.verifyAccessToken(nextAccessToken)).toMatchObject({ id: 'user-id' });
+    expect(await authUseCase.verifyRefreshToken(nextRefreshToken)).toMatchObject({ id: 'user-id' });
+    expect(authSessionRepo.extend).toHaveBeenCalledWith('user', 'user-user-id-session');
   });
 });
