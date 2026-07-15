@@ -1,3 +1,59 @@
+## v0.0.1-beta.7
+
+[compare changes](https://github.com/viyuni/guard-plus/compare/v0.0.1-beta.6...v0.0.1-beta.7)
+
+### 🚀 Enhancements
+
+- **server:** Support uname in manual guard events ([2e044e1](https://github.com/viyuni/guard-plus/commit/2e044e1))
+- **server:** Add event service health monitoring ([35d3977](https://github.com/viyuni/guard-plus/commit/35d3977))
+- **admin:** Display Bilibili username in guard event list ([bd4f646](https://github.com/viyuni/guard-plus/commit/bd4f646))
+- **web/ui:** Add data table loading state ([7491eae](https://github.com/viyuni/guard-plus/commit/7491eae))
+- **server:** Add legacy migration and product codes ([d7d72d7](https://github.com/viyuni/guard-plus/commit/d7d72d7))
+- **web/admin:** Connect legacy migration and product codes ([66495e8](https://github.com/viyuni/guard-plus/commit/66495e8))
+- **product:** Normalize product code to uppercase ([9b67d8d](https://github.com/viyuni/guard-plus/commit/9b67d8d))
+- **product:** Support uppercase alphanumeric product codes with underscores ([4ea95dc](https://github.com/viyuni/guard-plus/commit/4ea95dc))
+- **server:** Add manual legacy point migration ([becb8b2](https://github.com/viyuni/guard-plus/commit/becb8b2))
+- **web/user:** Show product stock on cards ([1c162b5](https://github.com/viyuni/guard-plus/commit/1c162b5))
+- **server/auth:** Add sliding token refresh ([#16](https://github.com/viyuni/guard-plus/pull/16))
+
+### 🩹 Fixes
+
+- **auth:** Align cookie domains with app origins ([0b300d2](https://github.com/viyuni/guard-plus/commit/0b300d2))
+- **web/admin:** Make table toolbars responsive ([c70760e](https://github.com/viyuni/guard-plus/commit/c70760e))
+- **server:** Use sudo for linux deployment ([fb498b1](https://github.com/viyuni/guard-plus/commit/fb498b1))
+- **web/admin:** Show root version in sidebar ([f38d00b](https://github.com/viyuni/guard-plus/commit/f38d00b))
+- **web/ui:** Constrain dialogs to mobile viewport ([d0d58b0](https://github.com/viyuni/guard-plus/commit/d0d58b0))
+- **web/admin:** Wrap guard event id on mobile ([f77a923](https://github.com/viyuni/guard-plus/commit/f77a923))
+- **server:** Serve uploaded images dynamically ([15102ce](https://github.com/viyuni/guard-plus/commit/15102ce))
+- **admin:** Replay points after manual registration ([05e0755](https://github.com/viyuni/guard-plus/commit/05e0755))
+- **web/user:** Require point conversion rule ([47239ce](https://github.com/viyuni/guard-plus/commit/47239ce))
+
+### 💅 Refactors
+
+- **web/admin:** Move detail views into dialogs ([5803c2f](https://github.com/viyuni/guard-plus/commit/5803c2f))
+- **web/admin:** Remove stock from product editing ([6e8b1c9](https://github.com/viyuni/guard-plus/commit/6e8b1c9))
+
+### 📖 Documentation
+
+- **web/docs:** Update site content and deployment guide ([c1594e8](https://github.com/viyuni/guard-plus/commit/c1594e8))
+
+### 📦 Build
+
+- **web/docs:** Generate static site ([60e178c](https://github.com/viyuni/guard-plus/commit/60e178c))
+- **server:** Disable database push task caching ([95d85b1](https://github.com/viyuni/guard-plus/commit/95d85b1))
+
+### 🏡 Chore
+
+- **user:** Update under-review placeholder image ([532ae1a](https://github.com/viyuni/guard-plus/commit/532ae1a))
+
+### 🎨 Styles
+
+- **web/ui:** Improve responsive table controls ([bbcc9f4](https://github.com/viyuni/guard-plus/commit/bbcc9f4))
+
+### ❤️ Contributors
+
+- Byc ([@YanChenBai](https://github.com/YanChenBai))
+
 ## v0.0.1-beta.6
 
 [compare changes](https://github.com/viyuni/guard-plus/compare/v0.0.1-beta.5...v0.0.1-beta.6)
