@@ -26,6 +26,13 @@ export interface AuthSession {
   createdAt: string;
 }
 
+export interface AuthTokenPair {
+  accessToken: string;
+  accessTokenExpiresAt: number;
+  refreshToken: string;
+  refreshTokenExpiresAt: number;
+}
+
 export interface BiliRegisterChallenge {
   status: 'pending' | 'matched' | 'consumed';
   code: string;

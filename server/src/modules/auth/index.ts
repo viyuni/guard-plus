@@ -11,6 +11,7 @@ import {
   AUTH_STATE_COOKIE_OPTIONS,
   AUTH_STATE_COOKIE_VALUE,
   REFRESH_TOKEN_COOKIE_NAME,
+  REFRESH_TOKEN_COOKIE_OPTIONS,
 } from './constants';
 import type { AuthPayload } from './domain';
 import type { AuthUseCase } from './usecase';
@@ -71,11 +72,19 @@ export const createAuthGuard = (
           throw new UnauthorizedError('未登录');
         }
 
-        const { payload, accessToken } = await authUseCase.refreshAccessTokenWithLock(refreshToken);
+        const {
+          payload,
+          accessToken,
+          refreshToken: nextRefreshToken,
+        } = await authUseCase.refreshTokenPairWithLock(refreshToken);
 
         ctx.cookie[ACCESS_TOKEN_COOKIE_NAME]!.set({
           ...ACCESS_TOKEN_COOKIE_OPTIONS,
           value: accessToken,
+        });
+        ctx.cookie[REFRESH_TOKEN_COOKIE_NAME]!.set({
+          ...REFRESH_TOKEN_COOKIE_OPTIONS,
+          value: nextRefreshToken,
         });
         ctx.cookie[AUTH_STATE_COOKIE_NAME]!.set({
           ...authStateCookieOptions,
