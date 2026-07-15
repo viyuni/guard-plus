@@ -21,7 +21,7 @@ const { canSubmit, handleSubmit, isLoading, onSubmitSuccess, values } = usePopov
   schema: UserConvertPointSchema,
   open,
   initialValues: () => ({
-    ruleId: '',
+    ruleId: undefined,
     fromAmount: 1,
     nonce: createNonce(),
   }),
@@ -90,7 +90,7 @@ onSubmitSuccess(async () => {
         </FormFieldItem>
 
         <DialogFooter>
-          <Button type="submit" class="w-full" :disabled="!canSubmit">
+          <Button type="submit" class="w-full" :disabled="!canSubmit || !selectedRule">
             <Loader2 v-if="isLoading" class="animate-spin" />
             确认转换
           </Button>

@@ -165,7 +165,11 @@ export type ConvertPointBody = v.InferOutput<typeof ConvertPointSchema>;
  */
 export const UserConvertPointSchema = v.object({
   nonce: nonce,
-  ruleId: v.pipe(v.string('请输入积分转换规则 ID'), v.description('积分转换规则 ID')),
+  ruleId: v.pipe(
+    v.string('请选择积分转换规则'),
+    v.uuid('请选择积分转换规则'),
+    v.description('积分转换规则 ID'),
+  ),
   fromAmount: v.pipe(
     v.number('请输入来源积分数量'),
     v.integer('来源积分数量必须是整数'),
