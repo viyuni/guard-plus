@@ -23,6 +23,7 @@ export interface AuthSession {
   accountId: string;
   role: AuthRole;
   sessionId: string;
+  refreshTokenId: string;
   createdAt: string;
 }
 

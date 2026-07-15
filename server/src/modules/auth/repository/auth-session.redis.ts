@@ -5,6 +5,7 @@ import type { RedisClient } from '#redis';
 import { REFRESH_TOKEN_EXPIRES_IN_SECONDS } from '../constants';
 import type { AuthRole, AuthSession, AuthTokenPair } from '../domain';
 import releaseRefreshLockScript from './release-refresh-lock.lua' with { type: 'text' };
+import rotateRefreshTokenScript from './rotate-refresh-token.lua' with { type: 'text' };
 
 export class AuthSessionRedisRepository {
   constructor(
@@ -20,8 +21,8 @@ export class AuthSessionRedisRepository {
     return `auth:refresh:lock:${role}:${sessionId}`;
   }
 
-  private refreshResultKey(role: AuthRole, sessionId: string) {
-    return `auth:refresh:result:${role}:${sessionId}`;
+  private refreshResultKey(role: AuthRole, sessionId: string, refreshTokenId: string) {
+    return `auth:refresh:result:${role}:${sessionId}:${refreshTokenId}`;
   }
 
   async create(accountId: string, role: AuthRole) {
@@ -30,6 +31,7 @@ export class AuthSessionRedisRepository {
       accountId,
       role,
       sessionId,
+      refreshTokenId: nanoid(),
       createdAt: new Date().toISOString(),
     };
 
@@ -59,8 +61,18 @@ export class AuthSessionRedisRepository {
     await this.redis.del(this.key(role, sessionId));
   }
 
-  async extend(role: AuthRole, sessionId: string) {
-    return this.redis.expire(this.key(role, sessionId), this.ttlSeconds);
+  async rotateRefreshToken(
+    role: AuthRole,
+    sessionId: string,
+    currentRefreshTokenId: string,
+    nextRefreshTokenId: string,
+  ) {
+    const result = await this.redis.eval(rotateRefreshTokenScript, {
+      keys: [this.key(role, sessionId)],
+      arguments: [currentRefreshTokenId, nextRefreshTokenId, String(this.ttlSeconds)],
+    });
+
+    return result === 1;
   }
 
   async acquireRefreshLock(role: AuthRole, sessionId: string, lockValue: string, ttlMs: number) {
@@ -86,8 +98,8 @@ export class AuthSessionRedisRepository {
     });
   }
 
-  async getRefreshResult(role: AuthRole, sessionId: string) {
-    const raw = await this.redis.get(this.refreshResultKey(role, sessionId));
+  async getRefreshResult(role: AuthRole, sessionId: string, refreshTokenId: string) {
+    const raw = await this.redis.get(this.refreshResultKey(role, sessionId, refreshTokenId));
 
     if (!raw) return null;
 
@@ -101,14 +113,19 @@ export class AuthSessionRedisRepository {
   async saveRefreshResult(
     role: AuthRole,
     sessionId: string,
+    refreshTokenId: string,
     tokens: AuthTokenPair,
     ttlSeconds = 5,
   ) {
-    await this.redis.set(this.refreshResultKey(role, sessionId), JSON.stringify(tokens), {
-      expiration: {
-        type: 'EX',
-        value: ttlSeconds,
+    await this.redis.set(
+      this.refreshResultKey(role, sessionId, refreshTokenId),
+      JSON.stringify(tokens),
+      {
+        expiration: {
+          type: 'EX',
+          value: ttlSeconds,
+        },
       },
-    });
+    );
   }
 }

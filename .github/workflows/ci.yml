@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dev
+      - fix
   pull_request:
 
 permissions:

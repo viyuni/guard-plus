@@ -29,10 +29,10 @@ export class AuthUseCase {
     this.encodedSecret = new TextEncoder().encode(this.secret);
   }
 
-  private async signToken(payload: AuthPayload, type: AuthTokenType) {
+  private async signToken(payload: AuthPayload, type: AuthTokenType, tokenId?: string) {
     const expiresInSeconds = getTokenExpiresInSeconds(type);
 
-    return new SignJWT({
+    const jwt = new SignJWT({
       id: payload.id,
       role: payload.role,
       sid: payload.sid,
@@ -40,23 +40,28 @@ export class AuthUseCase {
     })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
-      .setExpirationTime(`${expiresInSeconds}s`)
-      .sign(this.encodedSecret);
+      .setExpirationTime(`${expiresInSeconds}s`);
+
+    if (tokenId) {
+      jwt.setJti(tokenId);
+    }
+
+    return jwt.sign(this.encodedSecret);
   }
 
   async signAccessToken(payload: AuthPayload) {
     return this.signToken(payload, 'access');
   }
 
-  async signRefreshToken(payload: AuthPayload) {
-    return this.signToken(payload, 'refresh');
+  async signRefreshToken(payload: AuthPayload, refreshTokenId: string) {
+    return this.signToken(payload, 'refresh', refreshTokenId);
   }
 
-  async signTokenPair(payload: AuthPayload): Promise<AuthTokenPair> {
+  async signTokenPair(payload: AuthPayload, refreshTokenId: string): Promise<AuthTokenPair> {
     const now = Date.now();
     const [accessToken, refreshToken] = await Promise.all([
       this.signAccessToken(payload),
-      this.signRefreshToken(payload),
+      this.signRefreshToken(payload, refreshTokenId),
     ]);
 
     return {
@@ -71,11 +76,14 @@ export class AuthUseCase {
     const role = this.normalizeRole(identity.role);
     const session = await this.authSessionRepo.create(identity.id, role);
 
-    return this.signTokenPair({
-      ...identity,
-      role,
-      sid: session.sessionId,
-    });
+    return this.signTokenPair(
+      {
+        ...identity,
+        role,
+        sid: session.sessionId,
+      },
+      session.refreshTokenId,
+    );
   }
 
   private async verifyToken(token: string, expectedType: AuthTokenType) {
@@ -109,6 +117,19 @@ export class AuthUseCase {
         throw new UnauthorizedError();
       }
 
+      if (expectedType === 'refresh') {
+        if (typeof payload.jti !== 'string' || session.refreshTokenId !== payload.jti) {
+          throw new UnauthorizedError();
+        }
+
+        return {
+          id: payload.id,
+          role,
+          sid: payload.sid,
+          refreshTokenId: payload.jti,
+        };
+      }
+
       return {
         id: payload.id,
         role,
@@ -128,23 +149,46 @@ export class AuthUseCase {
   }
 
   async verifyRefreshToken(token: string) {
-    return this.verifyToken(token, 'refresh');
+    const payload = await this.verifyRefreshTokenWithId(token);
+
+    return {
+      id: payload.id,
+      role: payload.role,
+      sid: payload.sid,
+    };
+  }
+
+  private verifyRefreshTokenWithId(token: string) {
+    return this.verifyToken(token, 'refresh') as Promise<
+      AuthPayload & { role: AuthRole; refreshTokenId: string }
+    >;
   }
 
   async refreshTokenPair(refreshToken: string) {
-    const payload = await this.verifyRefreshToken(refreshToken);
-    const extended = await this.authSessionRepo.extend(payload.role, payload.sid);
+    const payload = await this.verifyRefreshTokenWithId(refreshToken);
+    const nextRefreshTokenId = nanoid();
+    const tokens = await this.signTokenPair(payload, nextRefreshTokenId);
+    const rotated = await this.authSessionRepo.rotateRefreshToken(
+      payload.role,
+      payload.sid,
+      payload.refreshTokenId,
+      nextRefreshTokenId,
+    );
 
-    if (!extended) {
+    if (!rotated) {
       throw new UnauthorizedError();
     }
 
-    return this.signTokenPair(payload);
+    return tokens;
   }
 
   async refreshTokenPairWithLock(refreshToken: string) {
-    const payload = await this.verifyRefreshToken(refreshToken);
-    const cached = await this.authSessionRepo.getRefreshResult(payload.role, payload.sid);
+    const payload = await this.verifyRefreshTokenWithId(refreshToken);
+    const cached = await this.authSessionRepo.getRefreshResult(
+      payload.role,
+      payload.sid,
+      payload.refreshTokenId,
+    );
 
     if (cached) {
       return {
@@ -162,7 +206,11 @@ export class AuthUseCase {
     );
 
     if (!locked) {
-      const tokens = await this.waitForRefreshResult(payload.role, payload.sid);
+      const tokens = await this.waitForRefreshResult(
+        payload.role,
+        payload.sid,
+        payload.refreshTokenId,
+      );
 
       return {
         payload,
@@ -171,16 +219,23 @@ export class AuthUseCase {
     }
 
     try {
-      const extended = await this.authSessionRepo.extend(payload.role, payload.sid);
+      const nextRefreshTokenId = nanoid();
+      const tokens = await this.signTokenPair(payload, nextRefreshTokenId);
+      const rotated = await this.authSessionRepo.rotateRefreshToken(
+        payload.role,
+        payload.sid,
+        payload.refreshTokenId,
+        nextRefreshTokenId,
+      );
 
-      if (!extended) {
+      if (!rotated) {
         throw new UnauthorizedError();
       }
 
-      const tokens = await this.signTokenPair(payload);
       await this.authSessionRepo.saveRefreshResult(
         payload.role,
         payload.sid,
+        payload.refreshTokenId,
         tokens,
         REFRESH_RESULT_TTL_SECONDS,
       );
@@ -194,11 +249,11 @@ export class AuthUseCase {
     }
   }
 
-  private async waitForRefreshResult(role: AuthRole, sessionId: string) {
+  private async waitForRefreshResult(role: AuthRole, sessionId: string, refreshTokenId: string) {
     for (let i = 0; i < REFRESH_RESULT_POLL_ATTEMPTS; i++) {
       await Bun.sleep(REFRESH_RESULT_POLL_INTERVAL_MS);
 
-      const tokens = await this.authSessionRepo.getRefreshResult(role, sessionId);
+      const tokens = await this.authSessionRepo.getRefreshResult(role, sessionId, refreshTokenId);
 
       if (tokens) {
         return tokens;

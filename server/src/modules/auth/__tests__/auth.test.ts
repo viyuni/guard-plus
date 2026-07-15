@@ -23,18 +23,27 @@ function getSetCookieValue(response: Response, name: string) {
 }
 
 function createAuthUseCase() {
-  const sessions = new Map<string, { accountId: string; role: 'user' | 'admin' | 'superAdmin' }>();
+  const sessions = new Map<
+    string,
+    {
+      accountId: string;
+      role: 'user' | 'admin' | 'superAdmin';
+      refreshTokenId: string;
+    }
+  >();
   const refreshResults = new Map<string, AuthTokenPair>();
   const refreshLocks = new Set<string>();
   const authSessionRepo = {
     create: mock(async (accountId: string, role: 'user' | 'admin' | 'superAdmin') => {
       const sessionId = `${role}-${accountId}-session`;
-      sessions.set(`${role}:${sessionId}`, { accountId, role });
+      const refreshTokenId = `${sessionId}-refresh-0`;
+      sessions.set(`${role}:${sessionId}`, { accountId, role, refreshTokenId });
 
       return {
         accountId,
         role,
         sessionId,
+        refreshTokenId,
         createdAt: new Date().toISOString(),
       };
     }),
@@ -52,15 +61,34 @@ function createAuthUseCase() {
     delete: mock(async (role: 'user' | 'admin' | 'superAdmin', sessionId: string) => {
       sessions.delete(`${role}:${sessionId}`);
     }),
-    extend: mock(async (role: 'user' | 'admin' | 'superAdmin', sessionId: string) => {
-      return sessions.has(`${role}:${sessionId}`);
-    }),
-    getRefreshResult: mock(async (role: 'user' | 'admin' | 'superAdmin', sessionId: string) => {
-      return refreshResults.get(`${role}:${sessionId}`) ?? null;
-    }),
+    rotateRefreshToken: mock(
+      async (
+        role: 'user' | 'admin' | 'superAdmin',
+        sessionId: string,
+        currentRefreshTokenId: string,
+        nextRefreshTokenId: string,
+      ) => {
+        const session = sessions.get(`${role}:${sessionId}`);
+
+        if (!session || session.refreshTokenId !== currentRefreshTokenId) return false;
+
+        session.refreshTokenId = nextRefreshTokenId;
+        return true;
+      },
+    ),
+    getRefreshResult: mock(
+      async (role: 'user' | 'admin' | 'superAdmin', sessionId: string, refreshTokenId: string) => {
+        return refreshResults.get(`${role}:${sessionId}:${refreshTokenId}`) ?? null;
+      },
+    ),
     saveRefreshResult: mock(
-      async (role: 'user' | 'admin' | 'superAdmin', sessionId: string, tokens: AuthTokenPair) => {
-        refreshResults.set(`${role}:${sessionId}`, tokens);
+      async (
+        role: 'user' | 'admin' | 'superAdmin',
+        sessionId: string,
+        refreshTokenId: string,
+        tokens: AuthTokenPair,
+      ) => {
+        refreshResults.set(`${role}:${sessionId}:${refreshTokenId}`, tokens);
       },
     ),
     acquireRefreshLock: mock(async (role: 'user' | 'admin' | 'superAdmin', sessionId: string) => {
@@ -134,7 +162,8 @@ describe('AuthUseCase', () => {
       sid: 'user-user-id-session',
     });
     expect(refreshPayload).toEqual(payload);
-    expect(authSessionRepo.extend).toHaveBeenCalledWith('user', 'user-user-id-session');
+    expect(authSessionRepo.rotateRefreshToken).toHaveBeenCalledTimes(1);
+    expect(authUseCase.refreshTokenPair(refreshToken)).rejects.toThrow();
   });
 
   it('拒绝把 accessToken 当 refreshToken 使用', async () => {
@@ -163,7 +192,7 @@ describe('AuthUseCase', () => {
 
     expect(first.accessToken).toBe(second.accessToken);
     expect(first.refreshToken).toBe(second.refreshToken);
-    expect(authSessionRepo.extend).toHaveBeenCalledTimes(1);
+    expect(authSessionRepo.rotateRefreshToken).toHaveBeenCalledTimes(1);
     expect(authSessionRepo.saveRefreshResult).toHaveBeenCalledTimes(1);
   });
 });
@@ -318,6 +347,6 @@ describe('requiredAuth token refresh', () => {
     );
     expect(await authUseCase.verifyAccessToken(nextAccessToken)).toMatchObject({ id: 'user-id' });
     expect(await authUseCase.verifyRefreshToken(nextRefreshToken)).toMatchObject({ id: 'user-id' });
-    expect(authSessionRepo.extend).toHaveBeenCalledWith('user', 'user-user-id-session');
+    expect(authSessionRepo.rotateRefreshToken).toHaveBeenCalledTimes(1);
   });
 });
