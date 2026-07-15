@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid';
 import type { RedisClient } from '#redis';
 
 import { REFRESH_TOKEN_EXPIRES_IN_SECONDS } from '../constants';
-import type { AuthRole, AuthSession } from '../domain';
+import type { AuthRole, AuthSession, AuthTokenPair } from '../domain';
 import releaseRefreshLockScript from './release-refresh-lock.lua' with { type: 'text' };
 
 export class AuthSessionRedisRepository {
@@ -59,6 +59,10 @@ export class AuthSessionRedisRepository {
     await this.redis.del(this.key(role, sessionId));
   }
 
+  async extend(role: AuthRole, sessionId: string) {
+    return this.redis.expire(this.key(role, sessionId), this.ttlSeconds);
+  }
+
   async acquireRefreshLock(role: AuthRole, sessionId: string, lockValue: string, ttlMs: number) {
     const result = await this.redis.set(this.refreshLockKey(role, sessionId), lockValue, {
       expiration: {
@@ -83,11 +87,24 @@ export class AuthSessionRedisRepository {
   }
 
   async getRefreshResult(role: AuthRole, sessionId: string) {
-    return this.redis.get(this.refreshResultKey(role, sessionId));
+    const raw = await this.redis.get(this.refreshResultKey(role, sessionId));
+
+    if (!raw) return null;
+
+    try {
+      return JSON.parse(raw) as AuthTokenPair;
+    } catch {
+      return null;
+    }
   }
 
-  async saveRefreshResult(role: AuthRole, sessionId: string, accessToken: string, ttlSeconds = 5) {
-    await this.redis.set(this.refreshResultKey(role, sessionId), accessToken, {
+  async saveRefreshResult(
+    role: AuthRole,
+    sessionId: string,
+    tokens: AuthTokenPair,
+    ttlSeconds = 5,
+  ) {
+    await this.redis.set(this.refreshResultKey(role, sessionId), JSON.stringify(tokens), {
       expiration: {
         type: 'EX',
         value: ttlSeconds,

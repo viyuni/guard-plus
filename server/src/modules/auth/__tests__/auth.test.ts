@@ -2,12 +2,13 @@ import { describe, expect, it, mock } from 'bun:test';
 
 import Elysia from 'elysia';
 
+import type { AuthTokenPair } from '../domain';
 import { createAuthGuard, getAuthStateCookieOptions } from '../index';
 import { AuthUseCase } from '../usecase';
 
 function createAuthUseCase() {
   const sessions = new Map<string, { accountId: string; role: 'user' | 'admin' | 'superAdmin' }>();
-  const refreshResults = new Map<string, string>();
+  const refreshResults = new Map<string, AuthTokenPair>();
   const refreshLocks = new Set<string>();
   const authSessionRepo = {
     create: mock(async (accountId: string, role: 'user' | 'admin' | 'superAdmin') => {
@@ -35,12 +36,15 @@ function createAuthUseCase() {
     delete: mock(async (role: 'user' | 'admin' | 'superAdmin', sessionId: string) => {
       sessions.delete(`${role}:${sessionId}`);
     }),
+    extend: mock(async (role: 'user' | 'admin' | 'superAdmin', sessionId: string) => {
+      return sessions.has(`${role}:${sessionId}`);
+    }),
     getRefreshResult: mock(async (role: 'user' | 'admin' | 'superAdmin', sessionId: string) => {
       return refreshResults.get(`${role}:${sessionId}`) ?? null;
     }),
     saveRefreshResult: mock(
-      async (role: 'user' | 'admin' | 'superAdmin', sessionId: string, accessToken: string) => {
-        refreshResults.set(`${role}:${sessionId}`, accessToken);
+      async (role: 'user' | 'admin' | 'superAdmin', sessionId: string, tokens: AuthTokenPair) => {
+        refreshResults.set(`${role}:${sessionId}`, tokens);
       },
     ),
     acquireRefreshLock: mock(async (role: 'user' | 'admin' | 'superAdmin', sessionId: string) => {
@@ -96,21 +100,25 @@ describe('AuthUseCase', () => {
     });
   });
 
-  it('使用 refreshToken 刷新 AccessToken', async () => {
-    const { authUseCase } = createAuthUseCase();
+  it('使用 refreshToken 刷新 TokenPair 并延长会话', async () => {
+    const { authUseCase, authSessionRepo } = createAuthUseCase();
 
     const { refreshToken } = await authUseCase.createSessionTokenPair({
       id: 'user-id',
       role: 'user',
     });
-    const accessToken = await authUseCase.refreshAccessToken(refreshToken);
+    const tokens = await authUseCase.refreshTokenPair(refreshToken);
+    const { accessToken } = tokens;
     const payload = await authUseCase.verifyAccessToken(accessToken);
+    const refreshPayload = await authUseCase.verifyRefreshToken(tokens.refreshToken);
 
     expect(payload).toEqual({
       id: 'user-id',
       role: 'user',
       sid: 'user-user-id-session',
     });
+    expect(refreshPayload).toEqual(payload);
+    expect(authSessionRepo.extend).toHaveBeenCalledWith('user', 'user-user-id-session');
   });
 
   it('拒绝把 accessToken 当 refreshToken 使用', async () => {
@@ -121,10 +129,10 @@ describe('AuthUseCase', () => {
       role: 'user',
     });
 
-    expect(authUseCase.refreshAccessToken(accessToken)).rejects.toThrow();
+    expect(authUseCase.refreshTokenPair(accessToken)).rejects.toThrow();
   });
 
-  it('并发刷新时复用 Redis 锁内生成的 AccessToken', async () => {
+  it('并发刷新时复用 Redis 锁内生成的 TokenPair', async () => {
     const { authUseCase, authSessionRepo } = createAuthUseCase();
 
     const { refreshToken } = await authUseCase.createSessionTokenPair({
@@ -133,11 +141,13 @@ describe('AuthUseCase', () => {
     });
 
     const [first, second] = await Promise.all([
-      authUseCase.refreshAccessTokenWithLock(refreshToken),
-      authUseCase.refreshAccessTokenWithLock(refreshToken),
+      authUseCase.refreshTokenPairWithLock(refreshToken),
+      authUseCase.refreshTokenPairWithLock(refreshToken),
     ]);
 
     expect(first.accessToken).toBe(second.accessToken);
+    expect(first.refreshToken).toBe(second.refreshToken);
+    expect(authSessionRepo.extend).toHaveBeenCalledTimes(1);
     expect(authSessionRepo.saveRefreshResult).toHaveBeenCalledTimes(1);
   });
 });
@@ -249,5 +259,47 @@ describe('requiredSuperAdminAuth', () => {
 
     expect(response.status).toBe(401);
     expect(await response.text()).toContain('未登录');
+  });
+});
+
+describe('requiredAuth token refresh', () => {
+  it('同时刷新 accessToken 和 refreshToken Cookie', async () => {
+    const authUseCase = {
+      verifyAccessToken: mock(async () => {
+        throw new Error('expired');
+      }),
+      refreshTokenPairWithLock: mock(async () => ({
+        payload: {
+          id: 'user-id',
+          role: 'user',
+          sid: 'session-id',
+        },
+        accessToken: 'next-access-token',
+        accessTokenExpiresAt: Date.now() + 60_000,
+        refreshToken: 'next-refresh-token',
+        refreshTokenExpiresAt: Date.now() + 60_000,
+      })),
+    } as any;
+    const app = new Elysia()
+      .use(createAuthGuard(authUseCase))
+      .get('/me', ({ auth }) => auth, { requiredAuth: true });
+
+    const response = await app.handle(
+      new Request('http://localhost/me', {
+        headers: {
+          cookie: 'accessToken=expired; refreshToken=current-refresh-token',
+        },
+      }),
+    );
+    const setCookies = response.headers.getSetCookie();
+
+    expect(response.status).toBe(200);
+    expect(
+      setCookies.some(cookie => cookie.startsWith('accessToken=next-access-token;')),
+    ).toBeTrue();
+    expect(
+      setCookies.some(cookie => cookie.startsWith('refreshToken=next-refresh-token;')),
+    ).toBeTrue();
+    expect(authUseCase.refreshTokenPairWithLock).toHaveBeenCalledWith('current-refresh-token');
   });
 });

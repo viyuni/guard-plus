@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid';
 import { UnauthorizedError } from '#utils';
 
 import { ACCESS_TOKEN_EXPIRES_IN_SECONDS, REFRESH_TOKEN_EXPIRES_IN_SECONDS } from '../constants';
-import type { AuthPayload, AuthRole } from '../domain';
+import type { AuthPayload, AuthRole, AuthTokenPair } from '../domain';
 import type { AuthSessionRedisRepository } from '../repository';
 
 type AuthTokenType = 'access' | 'refresh';
@@ -52,7 +52,7 @@ export class AuthUseCase {
     return this.signToken(payload, 'refresh');
   }
 
-  async signTokenPair(payload: AuthPayload) {
+  async signTokenPair(payload: AuthPayload): Promise<AuthTokenPair> {
     const now = Date.now();
     const [accessToken, refreshToken] = await Promise.all([
       this.signAccessToken(payload),
@@ -131,20 +131,25 @@ export class AuthUseCase {
     return this.verifyToken(token, 'refresh');
   }
 
-  async refreshAccessToken(refreshToken: string) {
+  async refreshTokenPair(refreshToken: string) {
     const payload = await this.verifyRefreshToken(refreshToken);
+    const extended = await this.authSessionRepo.extend(payload.role, payload.sid);
 
-    return this.signAccessToken(payload);
+    if (!extended) {
+      throw new UnauthorizedError();
+    }
+
+    return this.signTokenPair(payload);
   }
 
-  async refreshAccessTokenWithLock(refreshToken: string) {
+  async refreshTokenPairWithLock(refreshToken: string) {
     const payload = await this.verifyRefreshToken(refreshToken);
     const cached = await this.authSessionRepo.getRefreshResult(payload.role, payload.sid);
 
     if (cached) {
       return {
         payload,
-        accessToken: cached,
+        ...cached,
       };
     }
 
@@ -157,26 +162,32 @@ export class AuthUseCase {
     );
 
     if (!locked) {
-      const accessToken = await this.waitForRefreshResult(payload.role, payload.sid);
+      const tokens = await this.waitForRefreshResult(payload.role, payload.sid);
 
       return {
         payload,
-        accessToken,
+        ...tokens,
       };
     }
 
     try {
-      const accessToken = await this.signAccessToken(payload);
+      const extended = await this.authSessionRepo.extend(payload.role, payload.sid);
+
+      if (!extended) {
+        throw new UnauthorizedError();
+      }
+
+      const tokens = await this.signTokenPair(payload);
       await this.authSessionRepo.saveRefreshResult(
         payload.role,
         payload.sid,
-        accessToken,
+        tokens,
         REFRESH_RESULT_TTL_SECONDS,
       );
 
       return {
         payload,
-        accessToken,
+        ...tokens,
       };
     } finally {
       await this.authSessionRepo.releaseRefreshLock(payload.role, payload.sid, lockValue);
@@ -187,10 +198,10 @@ export class AuthUseCase {
     for (let i = 0; i < REFRESH_RESULT_POLL_ATTEMPTS; i++) {
       await Bun.sleep(REFRESH_RESULT_POLL_INTERVAL_MS);
 
-      const accessToken = await this.authSessionRepo.getRefreshResult(role, sessionId);
+      const tokens = await this.authSessionRepo.getRefreshResult(role, sessionId);
 
-      if (accessToken) {
-        return accessToken;
+      if (tokens) {
+        return tokens;
       }
     }
 
