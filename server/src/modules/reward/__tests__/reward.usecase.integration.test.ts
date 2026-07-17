@@ -494,20 +494,22 @@ describeWithDatabase('奖励发放真实数据库', () => {
     const { authUseCase, pointAccountUseCase, rewardUseCase, userUseCase } = createDeps();
     const biliRegisterCode = 'U-234567';
     const verifier = 'test-verifier';
+    const getBiliRegisterChallenge = async (code: string, actualVerifier: string | undefined) =>
+      code === biliRegisterCode && actualVerifier === verifier
+        ? {
+            status: 'matched' as const,
+            code,
+            verifierHash: 'test-verifier-hash',
+            biliUid,
+            createdAt: new Date().toISOString(),
+            expiresAt: new Date(Date.now() + 60_000).toISOString(),
+          }
+        : null;
     const userAuthUseCase = new UserAuthUseCase({
       authUseCase,
       biliRegisterUseCase: {
-        consumeChallenge: async (code: string, actualVerifier: string | undefined) =>
-          code === biliRegisterCode && actualVerifier === verifier
-            ? {
-                status: 'matched',
-                code,
-                verifierHash: 'test-verifier-hash',
-                biliUid,
-                createdAt: new Date().toISOString(),
-                expiresAt: new Date(Date.now() + 60_000).toISOString(),
-              }
-            : null,
+        consumeChallenge: getBiliRegisterChallenge,
+        getOwnedChallenge: getBiliRegisterChallenge,
       } as unknown as BiliRegisterUseCase,
       biliRoom: 8315781,
       db,
