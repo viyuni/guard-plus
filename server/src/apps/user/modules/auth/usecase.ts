@@ -20,6 +20,9 @@ export class AuthUseCase {
       pointAccountUseCase: PointAccountUseCase;
       rewardUseCase: RewardUseCase;
       userUseCase: UserUseCase;
+      logger?: {
+        warn: (payload: Record<string, unknown>, message?: string) => void;
+      };
     },
   ) {}
 
@@ -52,11 +55,16 @@ export class AuthUseCase {
     input: UserRegisterBody,
     credential: { code: string; verifier: string } | undefined,
   ) {
-    const challenge = credential
-      ? await this.biliRegisterUseCase.consumeChallenge(credential.code, credential.verifier)
-      : null;
+    if (!credential) {
+      throw new BadRequestError('UID 归属验证已失效，请重新验证');
+    }
 
-    if (!challenge?.biliUid) {
+    const challenge = await this.biliRegisterUseCase.getOwnedChallenge(
+      credential.code,
+      credential.verifier,
+    );
+
+    if (challenge?.status !== 'matched' || !challenge.biliUid) {
       throw new BadRequestError('UID 归属验证已失效，请重新验证');
     }
 
@@ -71,8 +79,33 @@ export class AuthUseCase {
       return created;
     });
 
-    // 大航海奖励按事件独立事务回放并支持重试，故在注册事务提交后执行。
-    await this.deps.rewardUseCase.replayRewardBiliGuardByUserId(user.id);
+    // 用户创建成功后再消费验证，避免数据库事务失败时丢失已完成的 UID 验证。
+    try {
+      await this.biliRegisterUseCase.consumeChallenge(credential.code, credential.verifier);
+    } catch (error) {
+      this.deps.logger?.warn(
+        {
+          userId: user.id,
+          biliUid: user.biliUid,
+          error,
+        },
+        'Consume Bilibili register challenge failed after user registration',
+      );
+    }
+
+    // 奖励回放是注册后的可重试任务，不应让已经成功创建的用户看到注册失败。
+    try {
+      await this.deps.rewardUseCase.replayRewardBiliGuardByUserId(user.id);
+    } catch (error) {
+      this.deps.logger?.warn(
+        {
+          userId: user.id,
+          biliUid: user.biliUid,
+          error,
+        },
+        'Replay Bilibili guard rewards failed after user registration',
+      );
+    }
 
     return user;
   }

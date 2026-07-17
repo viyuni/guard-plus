@@ -15,6 +15,7 @@ import {
   REFRESH_TOKEN_COOKIE_OPTIONS,
   getAuthStateCookieOptions,
 } from '#modules/auth';
+import { logger } from '#utils/logger';
 
 import { userEnv } from '../../env';
 import { AuthUseCase } from './usecase';
@@ -59,6 +60,7 @@ export const auth = new Elysia({
         pointAccountUseCase,
         rewardUseCase,
         userUseCase,
+        logger: logger.scope('UserAuthUseCase'),
       }),
     }),
   )
@@ -118,7 +120,9 @@ export const auth = new Elysia({
   )
   .post(
     '/register',
-    async ({ body, cookie, userAuthUseCase }) => {
+    async ({ body, cookie, set, userAuthUseCase }) => {
+      set.headers['Cache-Control'] = 'private, no-store';
+
       const user = await userAuthUseCase.register(body, getBiliRegisterCredential(cookie));
 
       removeBiliRegisterCookies(cookie);
@@ -134,7 +138,9 @@ export const auth = new Elysia({
   )
   .post(
     '/biliRegisterCode',
-    async ({ cookie, userAuthUseCase }) => {
+    async ({ cookie, set, userAuthUseCase }) => {
+      set.headers['Cache-Control'] = 'private, no-store';
+
       const { verifier, ...result } = await userAuthUseCase.createBiliRegisterCode();
 
       cookie[BILI_REGISTER_CODE_COOKIE_NAME]!.set({
@@ -156,7 +162,9 @@ export const auth = new Elysia({
   )
   .get(
     '/biliRegisterCode',
-    ({ cookie, userAuthUseCase }) => {
+    ({ cookie, set, userAuthUseCase }) => {
+      set.headers['Cache-Control'] = 'private, no-store';
+
       const credential = getBiliRegisterCredential(cookie);
 
       return userAuthUseCase.getBiliRegisterCodeStatus(credential?.code, credential?.verifier);
