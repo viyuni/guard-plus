@@ -17,9 +17,13 @@ import {
   rewardRules,
   users,
 } from '#db/schema';
+import {
+  createBiliEventEnvelope,
+  type BiliGuardEventEnvelope,
+  type NormalizedBiliGuardEvent,
+} from '#modules/bili-event';
 
 import { createContainer } from '../../context';
-import type { BiliGuardRewardEvent } from '../../modules/reward';
 import { getTestDatabase } from './test-database';
 
 const testDatabaseUrl = Bun.env.TEST_DATABASE_URL;
@@ -223,35 +227,42 @@ export async function grantPoints(input: {
 export function createBiliGuardEvent(
   prefix: string,
   uid: number,
-  overrides: Partial<BiliGuardRewardEvent> = {},
-): BiliGuardRewardEvent {
-  return {
-    cmd: 'USER_TOAST_MSG_V2',
+  overrides: Partial<NormalizedBiliGuardEvent> = {},
+): BiliGuardEventEnvelope {
+  const event: NormalizedBiliGuardEvent = {
     type: 'guard',
     id: `${prefix}_guard_event`,
-    uid,
-    uname: `${prefix}_user`,
-    face: '',
+    roomId: 1,
+    occurredAt: Date.now(),
+    user: {
+      biliUid: String(uid),
+      username: `${prefix}_user`,
+      avatarUrl: null,
+    },
     message: `${prefix}_user 开通了舰长`,
     guardType: 3,
     guardName: '舰长',
-    price: 198000,
-    priceNormalized: 198,
-    duration: 1,
-    total: 198000,
-    totalNormalized: 198,
-    isYearGuard: false,
+    price: 198,
+    quantity: 1,
+    quantityNormalized: 1,
+    isYear: false,
     unit: '月',
-    color: '#00aeec',
-    guardTotalCount: 1,
-    effectId: 0,
-    roomId: 1,
-    timestamp: Date.now(),
-    timestampNormalized: Date.now(),
-    eventListenerUid: 1,
-    read: false,
     ...overrides,
-  } as BiliGuardRewardEvent;
+  };
+
+  return createBiliEventEnvelope({
+    source: {
+      provider: 'bevent',
+      channel: 'bevent-websocket',
+      sourceEventId: event.id,
+      receivedAt: Date.now(),
+      adapterVersion: 1,
+    },
+    event,
+    raw: {
+      fixture: prefix,
+    },
+  });
 }
 
 export function createBiliUid(): `${number}` {

@@ -4,15 +4,11 @@ import type { BiliGuardRewardEvent } from './types';
 
 export class RewardPolicy {
   static calculateBiliGuardPoints(basePoints: number, event: BiliGuardRewardEvent) {
-    return basePoints * event.totalNormalized;
+    return basePoints * event.quantityNormalized;
   }
 
   static getBiliGuardEventTime(event: BiliGuardRewardEvent) {
-    if (event.timestamp > 9_999_999_999) {
-      return new Date(event.timestamp);
-    }
-
-    return new Date(event.timestampNormalized);
+    return new Date(event.occurredAt);
   }
 
   static getErrorSnapshot(error: unknown) {

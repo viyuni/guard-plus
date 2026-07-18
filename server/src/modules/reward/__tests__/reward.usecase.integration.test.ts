@@ -6,6 +6,7 @@ import { AdminUserUseCase } from '#apps/admin/modules/user/usecase';
 import { AuthUseCase as UserAuthUseCase } from '#apps/user/modules/auth/usecase';
 import { pointTransactions } from '#db/schema';
 import type { BiliRegisterUseCase } from '#modules/auth';
+import type { BiliGuardEventEnvelope } from '#modules/bili-event';
 import {
   createDeps,
   createBiliGuardEvent,
@@ -21,7 +22,7 @@ import {
 } from '#test-helpers/concurrency-fixtures';
 
 import { PointIdempotencyKey } from '../../point';
-import { type BiliGuardRewardEvent, RewardRuleNameExistsError } from '../domain';
+import { RewardRuleNameExistsError } from '../domain';
 
 installConcurrencyTestHooks();
 
@@ -79,7 +80,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
       points: 20,
     });
     const event = createBiliGuardEvent(prefix, Number(biliUid), {
-      totalNormalized: 3,
+      quantityNormalized: 3,
     });
 
     const first = await rewardUseCase.rewardBiliGuard(event);
@@ -99,7 +100,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
         eq(
           pointTransactions.idempotencyKey,
           PointIdempotencyKey.biliGuard({
-            sourceId: event.id,
+            sourceId: event.event.id,
             ruleId: rule.id,
           }),
         ),
@@ -153,20 +154,26 @@ describeWithDatabase('奖励发放真实数据库', () => {
     const account = await db.query.pointAccounts.findFirst({
       where: { userId: user.id, pointTypeId: pointType.id },
     });
-    const snapshot = event?.eventSnapshot as BiliGuardRewardEvent | undefined;
+    const snapshot = event?.eventSnapshot as BiliGuardEventEnvelope | undefined;
 
     expect(event?.status).toBe('succeeded');
     expect(event?.occurredAt.getTime()).toBe(openedAt.getTime());
-    expect(snapshot?.id).toBe(biliEventId);
-    expect(snapshot?.isManual).toBe(true);
-    expect(snapshot?.timestamp).toBe(guardStartTime);
-    expect(snapshot?.timestampNormalized).toBe(openedAt.getTime());
-    expect(snapshot?.uname).toBe(`${prefix}_bili_user`);
-    expect(snapshot?.message).toBe(`${prefix}_bili_user 开通了提督2月`);
-    expect(snapshot?.guardName).toBe('提督');
-    expect(snapshot?.price).toBe(price);
-    expect(snapshot?.priceNormalized).toBe(1_998 * 2);
-    expect(snapshot?.totalNormalized).toBe(2);
+    expect(snapshot?.event.id).toBe(biliEventId);
+    expect(snapshot?.source.provider).toBe('manual');
+    expect(snapshot?.source.channel).toBe('manual');
+    expect(snapshot?.event.occurredAt).toBe(openedAt.getTime());
+    expect(snapshot?.event.user.username).toBe(`${prefix}_bili_user`);
+    expect(snapshot?.event.message).toBe(`${prefix}_bili_user 开通了提督2月`);
+    expect(snapshot?.event.guardName).toBe('提督');
+    expect(snapshot?.event.price).toBe(1_998 * 2);
+    expect(snapshot?.event.quantityNormalized).toBe(2);
+    expect(snapshot?.raw).toEqual({
+      uid: biliUid,
+      uname: `${prefix}_bili_user`,
+      total: 2,
+      openedAt: openedAt.toISOString(),
+      guardType: 2,
+    });
     expect(result.items[0]?.points).toBe(30);
     expect(account?.balance).toBe(30);
   });
@@ -216,7 +223,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
 
     const result = await rewardUseCase.rewardBiliGuard(
       createBiliGuardEvent(prefix, Number(biliUid), {
-        totalNormalized: 2,
+        quantityNormalized: 2,
       }),
     );
 
@@ -258,7 +265,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
 
     const result = await rewardUseCase.rewardBiliGuard(
       createBiliGuardEvent(prefix, Number(biliUid), {
-        totalNormalized: 2,
+        quantityNormalized: 2,
       }),
     );
 
@@ -292,8 +299,8 @@ describeWithDatabase('奖励发放真实数据库', () => {
 
     const result = await rewardUseCase.rewardBiliGuard(
       createBiliGuardEvent(prefix, Number(biliUid), {
-        totalNormalized: 2,
-        timestamp: now.getTime(),
+        quantityNormalized: 2,
+        occurredAt: now.getTime(),
       }),
     );
 
@@ -324,7 +331,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
       points: 20,
     });
     const event = createBiliGuardEvent(prefix, Number(biliUid), {
-      totalNormalized: 3,
+      quantityNormalized: 3,
     });
 
     await rewardUseCase.rewardBiliGuard(event);
@@ -332,7 +339,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
 
     const biliEvent = await db.query.biliEvents.findFirst({
       where: {
-        biliEventId: event.id,
+        biliEventId: event.event.id,
       },
     });
 
@@ -360,7 +367,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
       points: 12,
     });
     const event = createBiliGuardEvent(prefix, Number(createBiliUid()), {
-      totalNormalized: 2,
+      quantityNormalized: 2,
     });
 
     const result = await rewardUseCase.rewardBiliGuard(event);
@@ -371,13 +378,13 @@ describeWithDatabase('奖励发放真实数据库', () => {
 
     const biliEvent = await db.query.biliEvents.findFirst({
       where: {
-        biliEventId: event.id,
+        biliEventId: event.event.id,
       },
     });
     const [transactionRows] = await db
       .select({ total: count() })
       .from(pointTransactions)
-      .where(eq(pointTransactions.sourceId, event.id));
+      .where(eq(pointTransactions.sourceId, event.event.id));
 
     expect(result.ignored).toBe(true);
     expect(result.user).toBeNull();
@@ -405,7 +412,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
       points: 12,
     });
     const event = createBiliGuardEvent(prefix, Number(biliUid), {
-      totalNormalized: 2,
+      quantityNormalized: 2,
     });
 
     await rewardUseCase.rewardBiliGuard(event);
@@ -418,7 +425,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
       points: 99,
     });
     const user = await seedUser(`${prefix}_user`, biliUid);
-    const replayed = await rewardUseCase.replayRewardBiliGuard(event.id);
+    const replayed = await rewardUseCase.replayRewardBiliGuard(event.event.id);
 
     const account = await db.query.pointAccounts.findFirst({
       where: {
@@ -428,7 +435,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
     });
     const biliEvent = await db.query.biliEvents.findFirst({
       where: {
-        biliEventId: event.id,
+        biliEventId: event.event.id,
       },
     });
 
@@ -459,10 +466,10 @@ describeWithDatabase('奖励发放真实数据库', () => {
       points: 7,
     });
     const firstEvent = createBiliGuardEvent(`${prefix}_first`, Number(biliUid), {
-      totalNormalized: 2,
+      quantityNormalized: 2,
     });
     const secondEvent = createBiliGuardEvent(`${prefix}_second`, Number(biliUid), {
-      totalNormalized: 3,
+      quantityNormalized: 3,
     });
 
     await rewardUseCase.rewardBiliGuard(firstEvent);
@@ -494,20 +501,22 @@ describeWithDatabase('奖励发放真实数据库', () => {
     const { authUseCase, pointAccountUseCase, rewardUseCase, userUseCase } = createDeps();
     const biliRegisterCode = 'U-234567';
     const verifier = 'test-verifier';
+    const getBiliRegisterChallenge = async (code: string, actualVerifier: string | undefined) =>
+      code === biliRegisterCode && actualVerifier === verifier
+        ? {
+            status: 'matched' as const,
+            code,
+            verifierHash: 'test-verifier-hash',
+            biliUid,
+            createdAt: new Date().toISOString(),
+            expiresAt: new Date(Date.now() + 60_000).toISOString(),
+          }
+        : null;
     const userAuthUseCase = new UserAuthUseCase({
       authUseCase,
       biliRegisterUseCase: {
-        consumeChallenge: async (code: string, actualVerifier: string | undefined) =>
-          code === biliRegisterCode && actualVerifier === verifier
-            ? {
-                status: 'matched',
-                code,
-                verifierHash: 'test-verifier-hash',
-                biliUid,
-                createdAt: new Date().toISOString(),
-                expiresAt: new Date(Date.now() + 60_000).toISOString(),
-              }
-            : null,
+        consumeChallenge: getBiliRegisterChallenge,
+        getOwnedChallenge: getBiliRegisterChallenge,
       } as unknown as BiliRegisterUseCase,
       biliRoom: 8315781,
       db,
@@ -519,7 +528,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
       points: 8,
     });
     const event = createBiliGuardEvent(prefix, Number(biliUid), {
-      totalNormalized: 4,
+      quantityNormalized: 4,
     });
 
     const migration = await pointAccountUseCase.createLegacyMigration({
@@ -548,7 +557,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
     });
     const biliEvent = await db.query.biliEvents.findFirst({
       where: {
-        biliEventId: event.id,
+        biliEventId: event.event.id,
       },
     });
     const rewardResultSnapshot = biliEvent?.rewardResultSnapshots.find(
@@ -585,7 +594,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
       userUseCase,
     });
     const rule = await createRewardRule(prefix, pointType.id, { points: 9 });
-    const event = createBiliGuardEvent(prefix, Number(biliUid), { totalNormalized: 3 });
+    const event = createBiliGuardEvent(prefix, Number(biliUid), { quantityNormalized: 3 });
     const migration = await pointAccountUseCase.createLegacyMigration({
       biliUid,
       pointTypeId: pointType.id,
@@ -606,10 +615,10 @@ describeWithDatabase('奖励发放真实数据库', () => {
       where: { sourceType: 'legacyMigration', sourceId: migration.id },
     });
     const guardTransaction = await db.query.pointTransactions.findFirst({
-      where: { sourceType: 'guardEvent', sourceId: event.id },
+      where: { sourceType: 'guardEvent', sourceId: event.event.id },
     });
     const replayedEvent = await db.query.biliEvents.findFirst({
-      where: { biliEventId: event.id },
+      where: { biliEventId: event.event.id },
     });
 
     expect(account?.balance).toBe(40);

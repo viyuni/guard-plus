@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { BiliGuardEvent } from './BiliGuardEventListView.vue';
 
-interface BiliGuardEventSnapshot {
+interface LegacyBiliGuardEventSnapshot {
   uname: string;
   guardName: string;
   totalNormalized: number;
@@ -11,13 +11,68 @@ interface BiliGuardEventSnapshot {
   priceNormalized: number;
 }
 
+interface NormalizedBiliGuardEventSnapshot {
+  user: {
+    username: string;
+  };
+  guardName: string;
+  quantityNormalized: number;
+  isYear: boolean;
+  roomId: number;
+  price: number;
+}
+
+interface BiliGuardEventEnvelopeSnapshot {
+  schemaVersion: number;
+  source: {
+    provider: 'bevent' | 'laplace' | 'manual';
+    channel: string;
+  };
+  event: NormalizedBiliGuardEventSnapshot;
+  raw: unknown;
+}
+
 const props = defineProps<{
   event: BiliGuardEvent;
 }>();
 
 const open = defineModel<boolean>('open', { default: false });
 
-const snapshot = computed(() => props.event.eventSnapshot as BiliGuardEventSnapshot);
+const eventEnvelope = computed(() => {
+  const snapshot = props.event.eventSnapshot as
+    | BiliGuardEventEnvelopeSnapshot
+    | LegacyBiliGuardEventSnapshot;
+
+  return 'schemaVersion' in snapshot ? snapshot : null;
+});
+
+const snapshot = computed<NormalizedBiliGuardEventSnapshot>(() => {
+  if (eventEnvelope.value) return eventEnvelope.value.event;
+
+  const legacy = props.event.eventSnapshot as LegacyBiliGuardEventSnapshot;
+  return {
+    user: {
+      username: legacy.uname,
+    },
+    guardName: legacy.guardName,
+    quantityNormalized: legacy.totalNormalized,
+    isYear: legacy.isYearGuard,
+    roomId: legacy.roomId,
+    price: legacy.priceNormalized,
+  };
+});
+
+const sourceLabel = computed(() => {
+  const source = eventEnvelope.value?.source;
+  if (!source) return '旧版实时事件';
+  if (source.provider === 'manual') return '手动创建';
+  if (source.provider === 'laplace') return `Laplace · ${source.channel}`;
+  return `bevent · ${source.channel}`;
+});
+
+const rawEventJson = computed(() =>
+  JSON.stringify(eventEnvelope.value?.raw ?? props.event.eventSnapshot, null, 2),
+);
 </script>
 
 <template>
@@ -36,7 +91,7 @@ const snapshot = computed(() => props.event.eventSnapshot as BiliGuardEventSnaps
           </div>
           <div>
             <div class="text-muted-foreground text-xs">昵称</div>
-            <div>{{ snapshot.uname }}</div>
+            <div>{{ snapshot.user.username }}</div>
           </div>
           <div>
             <div class="text-muted-foreground text-xs">B站用户昵称</div>
@@ -52,19 +107,19 @@ const snapshot = computed(() => props.event.eventSnapshot as BiliGuardEventSnaps
           </div>
           <div>
             <div class="text-muted-foreground text-xs">来源</div>
-            <div>{{ snapshot.isManual ? '手动创建' : '实时事件' }}</div>
+            <div>{{ sourceLabel }}</div>
           </div>
           <div>
             <div class="text-muted-foreground text-xs">订单金额</div>
-            <div>{{ snapshot.priceNormalized }}</div>
+            <div>{{ snapshot.price }}</div>
           </div>
           <div>
             <div class="text-muted-foreground text-xs">折算月数</div>
-            <div>{{ snapshot.totalNormalized }}</div>
+            <div>{{ snapshot.quantityNormalized }}</div>
           </div>
           <div>
             <div class="text-muted-foreground text-xs">年度大航海</div>
-            <div>{{ snapshot.isYearGuard ? '是' : '否' }}</div>
+            <div>{{ snapshot.isYear ? '是' : '否' }}</div>
           </div>
         </div>
 
@@ -108,6 +163,13 @@ const snapshot = computed(() => props.event.eventSnapshot as BiliGuardEventSnaps
           </div>
           <div v-else class="text-muted-foreground text-sm">暂无发放记录</div>
         </div>
+
+        <details class="rounded-md border p-3 text-sm">
+          <summary class="cursor-pointer font-medium">原始事件</summary>
+          <pre class="mt-3 max-h-80 overflow-auto text-xs break-all whitespace-pre-wrap">{{
+            rawEventJson
+          }}</pre>
+        </details>
       </div>
     </DialogContent>
   </Dialog>

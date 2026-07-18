@@ -15,6 +15,10 @@ import {
   BiliEventNotFoundError,
   BiliEventPersistFailedError,
   BiliEventRepository,
+  createBiliEventEnvelope,
+  readBiliGuardEventSnapshot,
+  type BiliGuardEventEnvelope,
+  type NormalizedBiliGuardEvent,
 } from '#modules/bili-event';
 import {
   POINT_CHANGE_SOURCE_TYPE,
@@ -30,6 +34,7 @@ import {
   RewardPolicy,
   RewardRulePolicy,
   type BiliGuardRewardEvent,
+  type BiliGuardRewardEventEnvelope,
   type RewardGrantPlanItem,
 } from '../domain';
 import { RewardRuleRepository } from '../repository';
@@ -77,15 +82,16 @@ export class RewardUseCase {
     return items;
   }
 
-  async rewardBiliGuard(event: BiliGuardRewardEvent) {
+  async rewardBiliGuard(envelope: BiliGuardRewardEventEnvelope) {
+    const event = envelope.event;
     const rewardItems = await this.previewBiliGuard(event);
-    const biliEvent = await this.recordBiliGuardProcessing(event, rewardItems);
+    const biliEvent = await this.recordBiliGuardProcessing(envelope, rewardItems);
 
     if (!biliEvent) {
       return null;
     }
 
-    return await this.executeBiliGuardReward(event, rewardItems);
+    return await this.executeBiliGuardReward(envelope, rewardItems);
   }
 
   async createManualBiliGuardEvent(input: CreateManualBiliGuardEventBody) {
@@ -150,17 +156,19 @@ export class RewardUseCase {
   }
 
   private async executeBiliGuardReward(
-    event: BiliGuardRewardEvent,
+    envelope: BiliGuardRewardEventEnvelope,
     rewardItems: BiliEventRewardItemSnapshot[],
   ) {
+    const event = envelope.event;
+
     try {
       return await this.deps.db.transaction(async tx => {
-        const user = await this.deps.userUseCase.getAvailableByBiliUid(String(event.uid), tx);
+        const user = await this.deps.userUseCase.getAvailableByBiliUid(event.user.biliUid, tx);
         const results = [];
         const rewardResultSnapshots: BiliEventRewardResultSnapshot[] = [];
 
         for (const item of rewardItems) {
-          const result = await this.rewardBiliGuardItem(tx, event, user, item);
+          const result = await this.rewardBiliGuardItem(tx, envelope, user, item);
 
           results.push(result.item);
           rewardResultSnapshots.push(result.snapshot);
@@ -169,7 +177,7 @@ export class RewardUseCase {
         await this.markBiliGuardRewardSucceeded(tx, event, user, rewardResultSnapshots);
 
         return {
-          event,
+          event: envelope,
           user,
           ignored: false,
           items: results,
@@ -177,23 +185,24 @@ export class RewardUseCase {
       });
     } catch (error) {
       if (error instanceof UserNotFoundError) {
-        return await this.ignoreBiliGuardReward(event, error);
+        return await this.ignoreBiliGuardReward(envelope, error);
       }
 
-      await this.markBiliGuardRewardFailed(event, error);
+      await this.markBiliGuardRewardFailed(envelope, error);
       throw error;
     }
   }
 
   private async recordBiliGuardProcessing(
-    event: BiliGuardRewardEvent,
+    envelope: BiliGuardRewardEventEnvelope,
     rewardItems: BiliEventRewardItemSnapshot[],
   ) {
+    const event = envelope.event;
     const biliEvent = await this.deps.biliEventRepo.upsertProcessing({
       biliEventId: event.id,
-      biliUid: String(event.uid),
+      biliUid: event.user.biliUid,
       occurredAt: RewardPolicy.getBiliGuardEventTime(event),
-      eventSnapshot: event,
+      eventSnapshot: envelope,
       rewardItemSnapshots: rewardItems,
     });
 
@@ -202,10 +211,11 @@ export class RewardUseCase {
 
   private async rewardBiliGuardItem(
     tx: DbTransaction,
-    event: BiliGuardRewardEvent,
+    envelope: BiliGuardRewardEventEnvelope,
     user: User,
     item: RewardGrantPlanItem,
   ) {
+    const event = envelope.event;
     const rule = item.ruleSnapshot;
     const account = await this.deps.pointAccountRepo.ensureAccountAndLock(tx, {
       userId: user.id,
@@ -255,7 +265,7 @@ export class RewardUseCase {
       idempotencyKey,
       remark: `大航海积分奖励：${rule.name}`,
       metadata: {
-        event,
+        event: envelope,
         rewardItemSnapshot: item,
       },
     });
@@ -306,7 +316,11 @@ export class RewardUseCase {
     }
   }
 
-  private async ignoreBiliGuardReward(event: BiliGuardRewardEvent, error: UserNotFoundError) {
+  private async ignoreBiliGuardReward(
+    envelope: BiliGuardRewardEventEnvelope,
+    error: UserNotFoundError,
+  ) {
+    const event = envelope.event;
     const biliEvent = await this.deps.biliEventRepo.markIgnored(event.id, {
       lastErrorCode: error.code,
       lastErrorMessage: error.message,
@@ -317,14 +331,15 @@ export class RewardUseCase {
     }
 
     return {
-      event,
+      event: envelope,
       user: null,
       ignored: true,
       items: [],
     };
   }
 
-  private async markBiliGuardRewardFailed(event: BiliGuardRewardEvent, error: unknown) {
+  private async markBiliGuardRewardFailed(envelope: BiliGuardRewardEventEnvelope, error: unknown) {
+    const event = envelope.event;
     const biliEvent = await this.deps.biliEventRepo.markFailed(
       event.id,
       RewardPolicy.getErrorSnapshot(error),
@@ -336,15 +351,14 @@ export class RewardUseCase {
   }
 
   private getBiliGuardRewardEventSnapshot(biliEvent: BiliEvent) {
-    return biliEvent.eventSnapshot as BiliGuardRewardEvent;
+    return readBiliGuardEventSnapshot(biliEvent.eventSnapshot);
   }
 
-  private buildManualBiliGuardEvent(input: CreateManualBiliGuardEventBody): BiliGuardRewardEvent {
+  private buildManualBiliGuardEvent(input: CreateManualBiliGuardEventBody): BiliGuardEventEnvelope {
     const openedAt = input.openedAt instanceof Date ? input.openedAt : new Date(input.openedAt);
     const sendTime = Math.floor(openedAt.getTime() / 1000);
     const guardStartTime = sendTime;
     const timestampNormalized = openedAt.getTime();
-    const uid = Number(input.uid);
     const guard = this.getManualBiliGuardMeta(input.guardType);
     const uname = input.uname;
     const unit = input.total >= 12 && input.total % 12 === 0 ? '年' : '月';
@@ -358,52 +372,37 @@ export class RewardUseCase {
     const roomId = this.deps.biliRoom ?? 0;
     const id = `${sendTime}:${guardStartTime}:${roomId}:${input.uid}:${input.guardType}:${price}`;
 
-    return {
-      cmd: 'USER_TOAST_MSG_V2',
+    const event: NormalizedBiliGuardEvent = {
       type: 'guard',
       id,
-      isManual: true,
-      uid,
-      uname,
-      face: '',
-      message,
-      price,
-      priceNormalized,
-      duration: this.getManualBiliGuardDuration(priceNormalized),
-      color: guard.color,
-      guardType: input.guardType,
-      total: input.total,
-      totalNormalized: input.total,
-      isYearGuard: input.total >= 12 && input.total % 12 === 0,
-      unit,
-      guardName: guard.name,
-      guardTotalCount: 1,
-      effectId: 0,
-      timestamp: guardStartTime,
-      timestampNormalized,
-      eventListenerUid: 0,
       roomId,
-      read: false,
+      occurredAt: timestampNormalized,
+      user: {
+        biliUid: input.uid,
+        username: uname,
+        avatarUrl: null,
+      },
+      message,
+      guardType: input.guardType,
+      guardName: guard.name,
+      quantity: displayTotal,
+      quantityNormalized: input.total,
+      unit,
+      isYear: unit === '年',
+      price: priceNormalized,
     };
-  }
 
-  private getManualBiliGuardDuration(price: number) {
-    if (price > 0 && price < 1) return 4;
-    if (price >= 1 && price < 5) return 6;
-    if (price >= 5 && price < 10) return 10;
-    if (price >= 10 && price < 15) return 20;
-    if (price >= 15 && price < 30) return 30;
-    if (price >= 30 && price < 50) return 60;
-    if (price >= 50 && price < 100) return 60 * 2;
-    if (price >= 100 && price < 500) return 60 * 5;
-    if (price >= 500 && price < 1000) return 60 * 30;
-    if (price >= 1000 && price < 2000) return 60 * 60;
-    if (price >= 2000 && price < 5000) return 60 * 60 * 2;
-    if (price >= 5000 && price < 10000) return 60 * 60 * 3;
-    if (price >= 10000 && price < 20000) return 60 * 60 * 4;
-    if (price >= 20000) return 60 * 60 * 5;
-
-    return 30;
+    return createBiliEventEnvelope({
+      source: {
+        provider: 'manual',
+        channel: 'manual',
+        sourceEventId: id,
+        receivedAt: Date.now(),
+        adapterVersion: 1,
+      },
+      event,
+      raw: input,
+    });
   }
 
   private getManualBiliGuardMeta(guardType: CreateManualBiliGuardEventBody['guardType']) {
@@ -411,21 +410,18 @@ export class RewardUseCase {
       [BiliGuardType.Zongdu]: {
         name: '总督',
         priceNormalized: 19_998,
-        color: '#ff5c7c',
       },
       [BiliGuardType.Tidu]: {
         name: '提督',
         priceNormalized: 1_998,
-        color: '#e17aff',
       },
       [BiliGuardType.Jianzhang]: {
         name: '舰长',
         priceNormalized: 198,
-        color: '#00aeec',
       },
     } satisfies Record<
       CreateManualBiliGuardEventBody['guardType'],
-      { name: string; priceNormalized: number; color: string }
+      { name: string; priceNormalized: number }
     >;
 
     return metas[guardType];

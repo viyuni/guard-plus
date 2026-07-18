@@ -14,6 +14,8 @@
     "@elysia/html": "^1.4.1",
     "@elysia/openapi": "^1.4.15",
     "@elysia/static": "^1.4.11",
+    "@laplace.live/event-bridge-sdk": "^1.1.0",
+    "@laplace.live/event-types": "^2.0.20",
     "@shared/schema": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
     "@valibot/to-json-schema": "^1.7.1",

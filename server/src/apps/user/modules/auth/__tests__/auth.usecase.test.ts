@@ -20,23 +20,47 @@ const credential = {
   verifier: 'verifier',
 };
 
-function createUseCase(challenge: BiliRegisterChallenge | null) {
+function createUseCase(
+  challenge: BiliRegisterChallenge | null,
+  options: {
+    consumeError?: Error;
+    migrationError?: Error;
+    rewardError?: Error;
+  } = {},
+) {
   const tx = {};
   const create = mock(async () => ({
     id: 'user-id',
     biliUid: input.biliUid,
     username: input.username,
   }));
-  const replayRewardBiliGuardByUserId = mock(async () => ({
-    total: 0,
-    succeeded: 0,
-    failed: 0,
-  }));
-  const consumeChallenge = mock(async () => challenge);
-  const replayLegacyMigrations = mock(async () => []);
+  const replayRewardBiliGuardByUserId = mock(async () => {
+    if (options.rewardError) throw options.rewardError;
+
+    return {
+      total: 0,
+      succeeded: 0,
+      failed: 0,
+    };
+  });
+  const getOwnedChallenge = mock(async () => challenge);
+  const consumeChallenge = mock(async () => {
+    if (options.consumeError) throw options.consumeError;
+
+    return challenge;
+  });
+  const replayLegacyMigrations = mock(async () => {
+    if (options.migrationError) throw options.migrationError;
+
+    return [];
+  });
+  const warn = mock(() => {});
   const useCase = new AuthUseCase({
     authUseCase: {} as SharedAuthUseCase,
-    biliRegisterUseCase: { consumeChallenge } as unknown as BiliRegisterUseCase,
+    biliRegisterUseCase: {
+      consumeChallenge,
+      getOwnedChallenge,
+    } as unknown as BiliRegisterUseCase,
     biliRoom: 8315781,
     db: {
       transaction: async (callback: (actualTx: unknown) => unknown) => callback(tx),
@@ -44,15 +68,18 @@ function createUseCase(challenge: BiliRegisterChallenge | null) {
     pointAccountUseCase: { replayLegacyMigrations } as unknown as PointAccountUseCase,
     rewardUseCase: { replayRewardBiliGuardByUserId } as unknown as RewardUseCase,
     userUseCase: { create } as unknown as UserUseCase,
+    logger: { warn },
   });
 
   return {
     consumeChallenge,
     create,
+    getOwnedChallenge,
     replayRewardBiliGuardByUserId,
     replayLegacyMigrations,
     tx,
     useCase,
+    warn,
   };
 }
 
@@ -68,24 +95,41 @@ function matchedChallenge(biliUid = input.biliUid): BiliRegisterChallenge {
 }
 
 it('用户注册会拒绝失效的 UID 归属验证', async () => {
-  const { create, useCase } = createUseCase(null);
+  const { consumeChallenge, create, getOwnedChallenge, useCase } = createUseCase(null);
 
   await expect(useCase.register(input, credential)).rejects.toBeInstanceOf(BadRequestError);
+  expect(getOwnedChallenge).toHaveBeenCalledWith(credential.code, credential.verifier);
+  expect(consumeChallenge).not.toHaveBeenCalled();
+  expect(create).not.toHaveBeenCalled();
+});
+
+it('用户注册会拒绝已经消费的 UID 归属验证', async () => {
+  const challenge = {
+    ...matchedChallenge(),
+    status: 'consumed' as const,
+  };
+  const { consumeChallenge, create, useCase } = createUseCase(challenge);
+
+  await expect(useCase.register(input, credential)).rejects.toBeInstanceOf(BadRequestError);
+  expect(consumeChallenge).not.toHaveBeenCalled();
   expect(create).not.toHaveBeenCalled();
 });
 
 it('用户注册会拒绝缺少服务端验证凭据的请求', async () => {
-  const { consumeChallenge, create, useCase } = createUseCase(matchedChallenge());
+  const { consumeChallenge, create, getOwnedChallenge, useCase } =
+    createUseCase(matchedChallenge());
 
   await expect(useCase.register(input, undefined)).rejects.toBeInstanceOf(BadRequestError);
+  expect(getOwnedChallenge).not.toHaveBeenCalled();
   expect(consumeChallenge).not.toHaveBeenCalled();
   expect(create).not.toHaveBeenCalled();
 });
 
 it('用户注册会拒绝与验证结果不一致的 UID', async () => {
-  const { create, useCase } = createUseCase(matchedChallenge('654321'));
+  const { consumeChallenge, create, useCase } = createUseCase(matchedChallenge('654321'));
 
   await expect(useCase.register(input, credential)).rejects.toBeInstanceOf(BadRequestError);
+  expect(consumeChallenge).not.toHaveBeenCalled();
   expect(create).not.toHaveBeenCalled();
 });
 
@@ -93,6 +137,7 @@ it('用户注册验证 UID 后会创建用户并回放迁移积分及奖励', as
   const {
     consumeChallenge,
     create,
+    getOwnedChallenge,
     replayLegacyMigrations,
     replayRewardBiliGuardByUserId,
     tx,
@@ -104,6 +149,7 @@ it('用户注册验证 UID 后会创建用户并回放迁移积分及奖励', as
     biliUid: input.biliUid,
   });
   expect(consumeChallenge).toHaveBeenCalledWith(credential.code, credential.verifier);
+  expect(getOwnedChallenge).toHaveBeenCalledWith(credential.code, credential.verifier);
   expect(create).toHaveBeenCalledWith(
     {
       biliUid: input.biliUid,
@@ -118,4 +164,31 @@ it('用户注册验证 UID 后会创建用户并回放迁移积分及奖励', as
     username: input.username,
   });
   expect(replayRewardBiliGuardByUserId).toHaveBeenCalledWith('user-id');
+});
+
+it('用户注册事务失败时不会消费已完成的 UID 验证', async () => {
+  const migrationError = new Error('migration failed');
+  const { consumeChallenge, replayRewardBiliGuardByUserId, useCase } = createUseCase(
+    matchedChallenge(),
+    { migrationError },
+  );
+
+  await expect(useCase.register(input, credential)).rejects.toBe(migrationError);
+  expect(consumeChallenge).not.toHaveBeenCalled();
+  expect(replayRewardBiliGuardByUserId).not.toHaveBeenCalled();
+});
+
+it('用户创建成功后验证消费或奖励回放失败不会让注册失败', async () => {
+  const consumeError = new Error('redis failed');
+  const rewardError = new Error('reward failed');
+  const { useCase, warn } = createUseCase(matchedChallenge(), {
+    consumeError,
+    rewardError,
+  });
+
+  await expect(useCase.register(input, credential)).resolves.toMatchObject({
+    id: 'user-id',
+    biliUid: input.biliUid,
+  });
+  expect(warn).toHaveBeenCalledTimes(2);
 });

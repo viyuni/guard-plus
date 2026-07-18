@@ -184,8 +184,13 @@ services:
     logging: *logging
     environment:
       <<: *app-environment
+      EVENT_SOURCE: ${EVENT_SOURCE:-bevent}
       VIYUNI_LOGIN_SYNC_URL: ${VIYUNI_LOGIN_SYNC_URL:?set VIYUNI_LOGIN_SYNC_URL in .env.prod}
       VIYUNI_LOGIN_SYNC_PASSWORD: ${VIYUNI_LOGIN_SYNC_PASSWORD:?set VIYUNI_LOGIN_SYNC_PASSWORD in .env.prod}
+      LAPLACE_EVENT_BRIDGE_URL: ${LAPLACE_EVENT_BRIDGE_URL:-}
+      LAPLACE_EVENT_BRIDGE_TOKEN: ${LAPLACE_EVENT_BRIDGE_TOKEN:-}
+      LAPLACE_SERVER_KIND: ${LAPLACE_SERVER_KIND:-eventFetcher}
+      LAPLACE_ACCEPT_MOCK: ${LAPLACE_ACCEPT_MOCK:-0}
     depends_on: *app-depends-on
     networks:
       - guard-plus

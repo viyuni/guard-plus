@@ -63,18 +63,20 @@ export class DashboardRepository {
   }
 
   async listMonthlyBiliGuardStats(start: Date) {
+    const guardType = sql<number>`coalesce(
+      (${biliEvents.eventSnapshot}->'event'->>'guardType')::int,
+      (${biliEvents.eventSnapshot}->>'guardType')::int
+    )`;
+
     return await this.db
       .select({
         month: sql<string>`to_char(date_trunc('month', ${biliEvents.occurredAt}), 'YYYY-MM')`,
-        guardType: sql<number>`(${biliEvents.eventSnapshot}->>'guardType')::int`,
+        guardType,
         count: count(),
       })
       .from(biliEvents)
       .where(and(eq(biliEvents.eventType, 'biliGuard'), gte(biliEvents.occurredAt, start)))
-      .groupBy(
-        sql`date_trunc('month', ${biliEvents.occurredAt})`,
-        sql`(${biliEvents.eventSnapshot}->>'guardType')::int`,
-      )
+      .groupBy(sql`date_trunc('month', ${biliEvents.occurredAt})`, guardType)
       .orderBy(sql`date_trunc('month', ${biliEvents.occurredAt})`);
   }
 
