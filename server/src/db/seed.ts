@@ -2,8 +2,12 @@ import { fakerZH_CN as faker } from '@faker-js/faker';
 import { seed as drizzleSeed } from 'drizzle-seed';
 
 import { createDatabase, db } from '.';
+import {
+  createBiliEventEnvelope,
+  type BiliGuardEventEnvelope,
+  type NormalizedBiliGuardEvent,
+} from '../modules/bili-event';
 import { createPointContext } from '../modules/point/context';
-import type { BiliGuardRewardEvent } from '../modules/reward';
 import { createRewardContext } from '../modules/reward/context';
 import { createUserContext } from '../modules/user/context';
 import {
@@ -192,84 +196,92 @@ const seedPointConversionRuleNames = {
 
 function createSeedBiliGuardEvent(
   input: Pick<
-    BiliGuardRewardEvent,
-    | 'id'
-    | 'uid'
-    | 'uname'
-    | 'guardType'
-    | 'guardName'
-    | 'total'
-    | 'totalNormalized'
-    | 'roomId'
-    | 'timestamp'
-  >,
-): BiliGuardRewardEvent {
-  return {
-    cmd: 'USER_TOAST_MSG_V2',
+    NormalizedBiliGuardEvent,
+    'id' | 'guardType' | 'guardName' | 'quantity' | 'quantityNormalized' | 'roomId' | 'occurredAt'
+  > & {
+    biliUid: string;
+    username: string;
+  },
+): BiliGuardEventEnvelope {
+  const event: NormalizedBiliGuardEvent = {
     type: 'guard',
-    face: '',
-    message: `${input.uname} 开通了${input.guardName}`,
-    price: input.total,
-    priceNormalized: input.totalNormalized * 198,
-    duration: input.totalNormalized,
-    isYearGuard: false,
+    id: input.id,
+    roomId: input.roomId,
+    occurredAt: input.occurredAt,
+    user: {
+      biliUid: input.biliUid,
+      username: input.username,
+      avatarUrl: null,
+    },
+    message: `${input.username} 开通了${input.guardName}`,
+    guardType: input.guardType,
+    guardName: input.guardName,
+    quantity: input.quantity,
+    quantityNormalized: input.quantityNormalized,
     unit: '月',
-    color: '#00aeec',
-    guardTotalCount: 1,
-    effectId: 0,
-    timestampNormalized: input.timestamp,
-    eventListenerUid: input.roomId,
-    read: false,
-    ...input,
+    isYear: false,
+    price: input.quantityNormalized * 198,
   };
+
+  return createBiliEventEnvelope({
+    source: {
+      provider: 'manual',
+      channel: 'manual',
+      sourceEventId: event.id,
+      receivedAt: event.occurredAt,
+      adapterVersion: 1,
+    },
+    event,
+    raw: input,
+  });
 }
 
 const seedBiliGuardEvents = [
   createSeedBiliGuardEvent({
     id: 'seed-bili-guard-registered-jianzhang-001',
-    uid: 100000000,
-    uname: '测试已注册舰长',
+    biliUid: '100000000',
+    username: '测试已注册舰长',
     guardType: 3,
     guardName: '舰长',
-    total: 198000,
-    totalNormalized: 1,
+    quantity: 1,
+    quantityNormalized: 1,
     roomId: 1270,
-    timestamp: new Date('2026-05-01T12:00:00.000Z').getTime(),
+    occurredAt: new Date('2026-05-01T12:00:00.000Z').getTime(),
   }),
   createSeedBiliGuardEvent({
     id: 'seed-bili-guard-registered-tidu-001',
-    uid: 100000001,
-    uname: '测试已注册提督',
+    biliUid: '100000001',
+    username: '测试已注册提督',
     guardType: 2,
     guardName: '提督',
-    total: 1998000,
-    totalNormalized: 10,
+    quantity: 10,
+    quantityNormalized: 10,
     roomId: 1270,
-    timestamp: new Date('2026-05-02T12:00:00.000Z').getTime(),
+    occurredAt: new Date('2026-05-02T12:00:00.000Z').getTime(),
   }),
   createSeedBiliGuardEvent({
     id: 'seed-bili-guard-unregistered-jianzhang-001',
-    uid: 200000001,
-    uname: '测试未注册舰长',
+    biliUid: '200000001',
+    username: '测试未注册舰长',
     guardType: 3,
     guardName: '舰长',
-    total: 198000,
-    totalNormalized: 1,
+    quantity: 1,
+    quantityNormalized: 1,
     roomId: 1270,
-    timestamp: new Date('2026-05-03T12:00:00.000Z').getTime(),
+    occurredAt: new Date('2026-05-03T12:00:00.000Z').getTime(),
   }),
   createSeedBiliGuardEvent({
     id: 'seed-bili-guard-unregistered-zongdu-001',
-    uid: 200000002,
-    uname: '测试未注册总督',
+    biliUid: '200000002',
+    username: '测试未注册总督',
     guardType: 1,
     guardName: '总督',
-    total: 19998000,
-    totalNormalized: 100,
+    quantity: 100,
+    quantityNormalized: 100,
     roomId: 1270,
-    timestamp: new Date('2026-05-04T12:00:00.000Z').getTime(),
+    occurredAt: new Date('2026-05-04T12:00:00.000Z').getTime(),
   }),
-] satisfies BiliGuardRewardEvent[];
+] satisfies BiliGuardEventEnvelope[];
 
 async function findPointType(targetDb: typeof db, name: string) {
   const pointType = await targetDb.query.pointTypes.findFirst({

@@ -1,21 +1,21 @@
-import { createListener } from '@viyuni/bevent-relay';
-import type { Guard } from '@viyuni/bevent-relay/events';
 import { Worker } from 'bunqueue/client';
 
 import { createEventContainer } from '#context';
-import { sharedEnv } from '#env/shared';
-import {
-  EventServiceMonitor,
-  isEventMonitorMessage,
-  receiveEventMonitorMessage,
-} from '#modules/event';
-import { publishBilibiliGuardEvent } from '#queues';
+import { readBiliGuardEventSnapshot } from '#modules/bili-event';
+import { EventServiceMonitor } from '#modules/event';
 import { BILIBILI_EVENT_QUEUE_NAME } from '#queues';
 import { redis } from '#redis';
 import { logger } from '#utils/logger';
 import { db } from '~/src/db';
 
+import { createBiliEventDispatcher } from './dispatch';
 import { eventEnv } from './env';
+import {
+  BeventEventSource,
+  ConnectionState,
+  LaplaceEventSource,
+  type BiliEventSource,
+} from './sources';
 
 const {
   useCases: { biliRegisterUseCase, rewardUseCase },
@@ -24,24 +24,16 @@ const {
   env: eventEnv,
 });
 
-const _worker = new Worker<Guard>(
+const _worker = new Worker<unknown>(
   BILIBILI_EVENT_QUEUE_NAME,
   job => {
-    return rewardUseCase.rewardBiliGuard(job.data);
+    return rewardUseCase.rewardBiliGuard(readBiliGuardEventSnapshot(job.data));
   },
   {
     embedded: true,
     concurrency: 5,
   },
 );
-
-const listener = createListener({
-  roomId: eventEnv.BILI_ROOM,
-  cookieSync: {
-    url: eventEnv.VIYUNI_LOGIN_SYNC_URL,
-    password: eventEnv.VIYUNI_LOGIN_SYNC_PASSWORD,
-  },
-});
 
 const eventServiceMonitor = new EventServiceMonitor({
   redis,
@@ -52,6 +44,49 @@ const eventServiceMonitor = new EventServiceMonitor({
   },
 });
 const eventServiceMonitorLogger = logger.scope('EventServiceMonitor');
+const eventSourceLogger = logger.scope('BilibiliEventSource');
+
+function createEventSource(): BiliEventSource {
+  if (eventEnv.EVENT_SOURCE === 'laplace') {
+    if (!eventEnv.LAPLACE_EVENT_BRIDGE_URL) {
+      throw new Error('EVENT_SOURCE=laplace 时必须配置 LAPLACE_EVENT_BRIDGE_URL');
+    }
+
+    return new LaplaceEventSource({
+      url: eventEnv.LAPLACE_EVENT_BRIDGE_URL,
+      token: eventEnv.LAPLACE_EVENT_BRIDGE_TOKEN,
+      roomId: eventEnv.BILI_ROOM,
+      channel:
+        eventEnv.LAPLACE_SERVER_KIND === 'eventBridge'
+          ? 'laplace-event-bridge'
+          : 'laplace-event-fetcher',
+      acceptMock: eventEnv.NODE_ENV !== 'production' && eventEnv.LAPLACE_ACCEPT_MOCK === '1',
+      onError: error => eventSourceLogger.error(error, 'Laplace event handling failed'),
+      onConnectionStateChange: state => {
+        const message = `Laplace connection state changed: ${state}`;
+        if (state === ConnectionState.CONNECTED) {
+          eventSourceLogger.info(message);
+        } else {
+          eventSourceLogger.warn(message);
+        }
+      },
+    });
+  }
+
+  return new BeventEventSource({
+    roomId: eventEnv.BILI_ROOM,
+    cookieSync: {
+      url: eventEnv.VIYUNI_LOGIN_SYNC_URL,
+      password: eventEnv.VIYUNI_LOGIN_SYNC_PASSWORD,
+    },
+    onError: error => eventSourceLogger.error(error, 'bevent event handling failed'),
+  });
+}
+
+const eventSource = createEventSource();
+const dispatchBiliEvent = createBiliEventDispatcher({ biliRegisterUseCase });
+
+eventSource.onEvent(dispatchBiliEvent);
 
 async function checkEventService() {
   try {
@@ -69,58 +104,22 @@ async function checkEventService() {
   }
 }
 
-listener.on('event', event => {
-  if (event.type === 'guard') {
-  }
+eventSource
+  .start()
+  .then(() =>
+    eventSourceLogger.info({ source: eventEnv.EVENT_SOURCE }, 'Bilibili event source started'),
+  )
+  .catch(error => eventSourceLogger.error(error, 'Bilibili event source start failed'));
 
-  switch (event.type) {
-    case 'guard': {
-      publishBilibiliGuardEvent(event);
-      logger.info(event, 'Bilibili Guard Message');
-      break;
-    }
-    case 'message': {
-      // logger.info(event, 'Bilibili Message');
-
-      if (isEventMonitorMessage(event.content)) {
-        receiveEventMonitorMessage(redis, event.content).catch(error =>
-          logger.error(error, 'Event monitor message receive failed'),
-        );
-        break;
-      }
-
-      biliRegisterUseCase
-        .matchMessage({
-          code: event.content,
-          biliUid: event.uid.toString(),
-          biliName: event.uname,
-        })
-        .catch(error => logger.error(error, 'Bilibili register message match failed'));
-
-      break;
-    }
-    case 'gift':
-    case 'superChat':
-    case 'superChatDelete':
-    case 'liveStart':
-    case 'liveEnd':
-    case 'liveCutoff':
-    case 'liveWarning':
-    case 'likesUpdate':
-    case 'likeClick':
-    case 'entryEffect': {
-      if (sharedEnv.NODE_ENV === 'development') console.log(event);
-    }
-  }
-});
-
-listener.start().then(() => {
-  logger.info('Bilibili Event Listener started...');
-});
-
-Bun.cron('0 4 * * *', async () => {
-  await listener.refreshCookie(true);
-  await listener.restart();
-});
+if (eventSource instanceof BeventEventSource) {
+  Bun.cron('0 4 * * *', () => eventSource.refresh());
+}
 
 Bun.cron('0 * * * *', checkEventService);
+
+function stopEventSource() {
+  eventSource.stop();
+}
+
+process.once('SIGINT', stopEventSource);
+process.once('SIGTERM', stopEventSource);
