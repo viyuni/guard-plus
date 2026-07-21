@@ -12,9 +12,6 @@
   "scripts": {
     "prepare": "vp config"
   },
-  "dependencies": {
-    "@viyuni/bevent-relay": "0.0.6"
-  },
   "devDependencies": {
     "@golar/vue": "catalog:",
     "@tsconfig/node24": "catalog:",
