@@ -34,4 +34,6 @@ FROM base AS event-server
 
 WORKDIR /app/server
 
+EXPOSE 3700
+
 CMD ["bun", "run", "src/apps/event/index.ts"]

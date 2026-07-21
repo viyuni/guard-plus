@@ -128,8 +128,6 @@ services:
       ADMIN_API_ORIGIN: ${ADMIN_API_ORIGIN:?set ADMIN_API_ORIGIN in .env.prod}
       ADMIN_WEB_ORIGINS: ${ADMIN_WEB_ORIGINS:?set ADMIN_WEB_ORIGINS in .env.prod}
       ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET:?set ADMIN_JWT_SECRET in .env.prod}
-      VIYUNI_LOGIN_SYNC_URL: ${VIYUNI_LOGIN_SYNC_URL:?set VIYUNI_LOGIN_SYNC_URL in .env.prod}
-      VIYUNI_LOGIN_SYNC_PASSWORD: ${VIYUNI_LOGIN_SYNC_PASSWORD:?set VIYUNI_LOGIN_SYNC_PASSWORD in .env.prod}
       SUPER_ADMIN_UID: ${SUPER_ADMIN_UID:-0721}
       SUPER_ADMIN_USERNAME: ${SUPER_ADMIN_USERNAME:-Admin}
       SUPER_ADMIN_PASSWORD: ${SUPER_ADMIN_PASSWORD:?set SUPER_ADMIN_PASSWORD in .env.prod}
@@ -184,8 +182,14 @@ services:
     logging: *logging
     environment:
       <<: *app-environment
+      EVENT_PORT: 3700
       VIYUNI_LOGIN_SYNC_URL: ${VIYUNI_LOGIN_SYNC_URL:?set VIYUNI_LOGIN_SYNC_URL in .env.prod}
       VIYUNI_LOGIN_SYNC_PASSWORD: ${VIYUNI_LOGIN_SYNC_PASSWORD:?set VIYUNI_LOGIN_SYNC_PASSWORD in .env.prod}
+    ports:
+      - target: 3700
+        published: ${GUARD_PLUS_EVENT_PUBLISHED_PORT:-39970}
+        protocol: tcp
+        host_ip: 0.0.0.0
     depends_on: *app-depends-on
     networks:
       - guard-plus

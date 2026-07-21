@@ -5,12 +5,10 @@ import type { ColumnDef } from '@tanstack/vue-table';
 import { Button } from '@web/ui/components/ui/button';
 import { useOverlay } from '@web/ui/components/ui/overlay';
 import { DataTable } from '@web/ui/components/ui/table';
-import { Activity, Eye, Loader2, MoreHorizontal, Plus, RotateCcw } from 'lucide-vue-next';
+import { Eye, MoreHorizontal, Plus, RotateCcw } from 'lucide-vue-next';
 
 import type { AdminApi } from '~/plugins/api';
 
-import { useAdminSession } from '../../auth';
-import { useCheckEventService } from '../../event';
 import { useReplayBiliGuardReward } from '../mutations';
 import { biliGuardEventPageQuery } from '../queries';
 import BiliGuardEventDetailDialog from './BiliGuardEventDetailDialog.vue';
@@ -48,8 +46,6 @@ const {
   isLoading: isTableLoading,
 } = usePageQuery(() => biliGuardEventPageQuery(query.value));
 const { mutate: replayBiliGuardReward, isLoading: isReplaying } = useReplayBiliGuardReward();
-const { mutate: checkEventService, isLoading: isCheckingEventService } = useCheckEventService();
-const { user } = useAdminSession();
 const [openEventDetailDialog] = useOverlay(BiliGuardEventDetailDialog);
 const manualCreateDialogOpen = ref(false);
 
@@ -102,18 +98,6 @@ function formatDateTime(value: Date | string | number | null | undefined) {
         </NativeSelect>
 
         <template #actions>
-          <Button
-            v-if="user?.role === 'superAdmin'"
-            type="button"
-            variant="outline"
-            :disabled="isCheckingEventService"
-            @click="checkEventService()"
-          >
-            <Loader2 v-if="isCheckingEventService" class="animate-spin" />
-            <Activity v-else />
-            {{ isCheckingEventService ? '检测中' : '检测服务' }}
-          </Button>
-
           <Button type="button" @click="manualCreateDialogOpen = true">
             <Plus />
             手动创建
