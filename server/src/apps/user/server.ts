@@ -3,6 +3,7 @@ import { Elysia } from 'elysia';
 
 import { imageEnv } from '#env/image';
 import { errorHandler } from '#modules/error-handler';
+import { health } from '#modules/health';
 import { image } from '#modules/image';
 import { openapi } from '#modules/openapi';
 import { version } from '~/package.json' with { type: 'json' };
@@ -42,6 +43,7 @@ export const app = new Elysia({
   .use(pointConversion)
   .use(pointTransaction)
   .use(order)
+  .use(health)
   .get('/', () => 'Viyuni Guard plus server running... :)');
 
 if (userEnv.NODE_ENV === 'development') {

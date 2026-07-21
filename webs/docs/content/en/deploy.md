@@ -69,9 +69,24 @@ docker compose -f server/compose.prod.yml --env-file .env.prod ps
 | `db-push`      | One-shot Drizzle schema push      | —              |
 | `admin-server` | Admin Elysia API                  | `39960`        |
 | `user-server`  | User Elysia API                   | `39980`        |
-| `event-server` | Bilibili event ingestion and jobs | —              |
+| `event-server` | Bilibili event ingestion and jobs | `39970`        |
+| `uptime-kuma`  | Service uptime monitoring         | `39901`        |
 
-PostgreSQL, Redis, uploaded assets, and images persist under `/home/guard-plus-data`.
+PostgreSQL, Redis, uploaded assets, images, and Uptime Kuma data persist under
+`/home/guard-plus-data`.
+
+After the first start, open `http://<server-address>:39901` to create the Uptime Kuma administrator,
+then add three HTTP(s) monitors. Use `200-299` as the accepted status range for each monitor:
+
+| Name                      | URL                                |
+| ------------------------- | ---------------------------------- |
+| `Guard Plus Admin Server` | `http://admin-server:3600/health/` |
+| `Guard Plus User Server`  | `http://user-server:3800/health/`  |
+| `Guard Plus Event Server` | `http://event-server:3700/health`  |
+
+Uptime Kuma and all three services share the same Docker network, so use service names and
+container ports instead of `localhost` with published host ports. In production, expose the Kuma UI
+through an authenticated TLS reverse proxy or restrict port `39901` with a firewall.
 
 ---
 

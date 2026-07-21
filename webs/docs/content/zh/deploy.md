@@ -68,9 +68,24 @@ docker compose -f server/compose.prod.yml --env-file .env.prod ps
 | `db-push`      | 一次性执行 Drizzle Schema Push | —            |
 | `admin-server` | 管理端 Elysia API              | `39960`      |
 | `user-server`  | 用户端 Elysia API              | `39980`      |
-| `event-server` | Bilibili 事件接入与后台任务    | —            |
+| `event-server` | Bilibili 事件接入与后台任务    | `39970`      |
+| `uptime-kuma`  | 服务可用性监控                 | `39901`      |
 
-PostgreSQL、Redis、上传资源和图片持久化在 `/home/guard-plus-data` 下。
+PostgreSQL、Redis、上传资源、图片和 Uptime Kuma 数据持久化在
+`/home/guard-plus-data` 下。
+
+首次启动后访问 `http://<服务器地址>:39901` 完成 Uptime Kuma 管理员初始化，然后添加三个
+HTTP(s) 监控，接受的状态码均为 `200-299`：
+
+| 名称                      | URL                                |
+| ------------------------- | ---------------------------------- |
+| `Guard Plus Admin Server` | `http://admin-server:3600/health/` |
+| `Guard Plus User Server`  | `http://user-server:3800/health/`  |
+| `Guard Plus Event Server` | `http://event-server:3700/health`  |
+
+Uptime Kuma 与三个服务位于同一 Docker 网络，因此应使用容器服务名和容器端口，不能使用
+`localhost` 加宿主机发布端口。生产环境建议通过带认证和 TLS 的反向代理访问 Kuma 管理界面，或通过
+防火墙限制 `39901` 端口。
 
 ---
 

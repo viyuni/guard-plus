@@ -194,6 +194,21 @@ services:
     networks:
       - guard-plus
 
+  uptime-kuma:
+    image: louislam/uptime-kuma:2
+    container_name: uptime-kuma
+    restart: unless-stopped
+    logging: *logging
+    ports:
+      - target: 3001
+        published: ${GUARD_PLUS_UPTIME_KUMA_PUBLISHED_PORT:-39901}
+        protocol: tcp
+        host_ip: 0.0.0.0
+    volumes:
+      - /home/guard-plus-data/uptime-kuma:/app/data
+    networks:
+      - guard-plus
+
 networks:
   guard-plus:
     name: guard-plus
