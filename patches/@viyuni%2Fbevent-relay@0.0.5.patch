@@ -6,16 +6,22 @@ index db8d2350644dbafe789ca3e81d56df05abbbb3ce..ddb591cd517bc0487e853c32a66e3766
  import { n as GuardType, r as ViyuniEventType, t as Cmd } from "./common-BZB63Oky.mjs";
  import { EventEmitter } from "events";
 -import { KeepLiveTCP } from "bilibili-live-ws";
-+import { LiveTCP } from "bilibili-live-ws";
++import { LiveWS } from "bilibili-live-ws";
  import { nanoid } from "nanoid";
  import { parseCookie } from "cookie";
  import ky from "ky";
-@@ -744,7 +744,7 @@ const defaultDependencies = {
+@@ -744,7 +744,13 @@ const defaultDependencies = {
  	fetchNavInfo,
  	fetchDanmuInfo,
  	sendDanmu,
 -	createWebSocket: (roomId, options) => new KeepLiveTCP(roomId, options)
-+	createWebSocket: (roomId, options) => new LiveTCP(roomId, options)
++	createWebSocket: (roomId, options) => new LiveWS(roomId, {
++		address: options.host ? `wss://${options.host}:443/sub` : void 0,
++		key: options.key,
++		uid: 0,
++		buvid: "",
++		protover: 3
++	})
  };
  /**
  * Bilibili 直播间事件监听器。
