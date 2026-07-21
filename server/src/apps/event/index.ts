@@ -82,6 +82,6 @@ listener.on('event', event => {
 
 createEventServer(listener, eventEnv.EVENT_PORT).compile().listen({}, logger.printUrls);
 
-listener.start().then(() => {
+await listener.start().then(() => {
   logger.info('Bilibili Event Listener started...');
 });

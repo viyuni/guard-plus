@@ -249,6 +249,9 @@
       },
     },
   },
+  "patchedDependencies": {
+    "@viyuni/bevent-relay@0.0.5": "patches/@viyuni%2Fbevent-relay@0.0.5.patch",
+  },
   "overrides": {
     "bun-types": "catalog:",
     "vite": "catalog:",

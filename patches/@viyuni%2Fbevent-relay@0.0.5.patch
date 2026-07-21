@@ -1,0 +1,21 @@
+diff --git a/dist/index.mjs b/dist/index.mjs
+index db8d2350644dbafe789ca3e81d56df05abbbb3ce..ddb591cd517bc0487e853c32a66e3766f35edc37 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -1,6 +1,6 @@
+ import { n as GuardType, r as ViyuniEventType, t as Cmd } from "./common-BZB63Oky.mjs";
+ import { EventEmitter } from "events";
+-import { KeepLiveTCP } from "bilibili-live-ws";
++import { LiveTCP } from "bilibili-live-ws";
+ import { nanoid } from "nanoid";
+ import { parseCookie } from "cookie";
+ import ky from "ky";
+@@ -744,7 +744,7 @@ const defaultDependencies = {
+ 	fetchNavInfo,
+ 	fetchDanmuInfo,
+ 	sendDanmu,
+-	createWebSocket: (roomId, options) => new KeepLiveTCP(roomId, options)
++	createWebSocket: (roomId, options) => new LiveTCP(roomId, options)
+ };
+ /**
+ * Bilibili 直播间事件监听器。

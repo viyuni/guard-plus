@@ -85,5 +85,8 @@
     "markdown-exit": "^1.1.0-beta.2",
     "@golar/vue": "^0.1.8",
     "golar": "^0.1.8"
+  },
+  "patchedDependencies": {
+    "@viyuni/bevent-relay@0.0.5": "patches/@viyuni%2Fbevent-relay@0.0.5.patch"
   }
 }
