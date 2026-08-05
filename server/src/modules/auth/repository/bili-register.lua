@@ -9,7 +9,7 @@ end
 local challenge = cjson.decode(raw)
 
 if ARGV[1] == 'match' then
-  if challenge.status ~= 'pending' then
+  if challenge.status ~= 'pending' or challenge.expectedBiliUid ~= ARGV[2] then
     return nil
   end
 
@@ -19,12 +19,16 @@ if ARGV[1] == 'match' then
   challenge.matchedAt = ARGV[4]
   raw = cjson.encode(challenge)
 elseif ARGV[1] == 'consume' then
-  if challenge.status ~= 'matched' or challenge.verifierHash ~= ARGV[2] or not challenge.biliUid then
+  if challenge.status ~= 'matched'
+    or challenge.verifierHash ~= ARGV[2]
+    or challenge.expectedBiliUid ~= ARGV[3]
+    or challenge.biliUid ~= ARGV[3]
+  then
     return nil
   end
 
   challenge.status = 'consumed'
-  challenge.consumedAt = ARGV[3]
+  challenge.consumedAt = ARGV[4]
 else
   return nil
 end

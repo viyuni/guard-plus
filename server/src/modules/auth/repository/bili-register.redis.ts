@@ -9,8 +9,8 @@ export class BiliRegisterRedisRepository {
     private readonly ttlSeconds: number,
   ) {}
 
-  private key(code: string) {
-    return `bili-register:user:code:${code}`;
+  private key(biliUid: string, code: string) {
+    return `bili-register:user:uid:${biliUid}:code:${code}`;
   }
 
   /**
@@ -18,19 +18,23 @@ export class BiliRegisterRedisRepository {
    * 两个验证流程共用同一个注册码。
    */
   async create(challenge: BiliRegisterChallenge) {
-    const result = await this.redis.set(this.key(challenge.code), JSON.stringify(challenge), {
-      expiration: {
-        type: 'EX',
-        value: this.ttlSeconds,
+    const result = await this.redis.set(
+      this.key(challenge.expectedBiliUid, challenge.code),
+      JSON.stringify(challenge),
+      {
+        expiration: {
+          type: 'EX',
+          value: this.ttlSeconds,
+        },
+        condition: 'NX',
       },
-      condition: 'NX',
-    });
+    );
 
     return result === 'OK';
   }
 
-  async find(code: string) {
-    const raw = await this.redis.get(this.key(code));
+  async find(code: string, biliUid: string) {
+    const raw = await this.redis.get(this.key(biliUid, code));
 
     if (!raw) return null;
 
@@ -43,7 +47,7 @@ export class BiliRegisterRedisRepository {
    */
   async matchPending(code: string, biliUid: string, biliName: string | undefined) {
     const raw = await this.redis.eval(biliRegisterScript, {
-      keys: [this.key(code)],
+      keys: [this.key(biliUid, code)],
       arguments: ['match', biliUid, biliName ?? '', new Date().toISOString()],
     });
 
@@ -56,10 +60,10 @@ export class BiliRegisterRedisRepository {
    * 原子地消费已匹配的注册码。脚本会验证归属，并返回消费前的数据，
    * 供注册流程读取已验证的 B 站身份。
    */
-  async consumeMatched(code: string, verifierHash: string) {
+  async consumeMatched(code: string, biliUid: string, verifierHash: string) {
     const raw = await this.redis.eval(biliRegisterScript, {
-      keys: [this.key(code)],
-      arguments: ['consume', verifierHash, new Date().toISOString()],
+      keys: [this.key(biliUid, code)],
+      arguments: ['consume', verifierHash, biliUid, new Date().toISOString()],
     });
 
     if (!raw || typeof raw !== 'string') return null;

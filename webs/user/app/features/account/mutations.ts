@@ -59,8 +59,8 @@ export const useRegister = defineMutation(() => {
 
 export const useCreateBiliRegisterCode = defineMutation(() => {
   return useMutation({
-    mutation() {
-      return api.auth.biliRegisterCode.post();
+    mutation({ biliUid }: { biliUid: string }) {
+      return api.auth.biliRegisterCode.post({ biliUid });
     },
   });
 });
@@ -68,7 +68,9 @@ export const useCreateBiliRegisterCode = defineMutation(() => {
 export const useConfirmBiliRegisterCode = defineMutation(() => {
   return useMutation({
     async mutation({ biliUid }: { biliUid: string }) {
-      const response = await api.auth.biliRegisterCode.get();
+      const response = await api.auth.biliRegisterCode.get({
+        query: { biliUid },
+      });
       const { data } = response;
 
       if (!data) {
@@ -76,11 +78,11 @@ export const useConfirmBiliRegisterCode = defineMutation(() => {
       }
 
       if (data.status === 'matched') {
-        if (data.biliUser.uid === biliUid) {
-          toast.success('UID 归属验证成功');
-        } else {
-          toast.error(`验证码归属于 UID ${data.biliUser.uid}，与输入的 UID 不一致`);
+        if (data.biliUser.uid !== biliUid) {
+          throw new Error('UID 归属验证信息不匹配');
         }
+
+        toast.success('UID 归属验证成功');
       } else if (data.status === 'pending') {
         toast.error('尚未收到直播间消息，请发送验证码后重试');
       }

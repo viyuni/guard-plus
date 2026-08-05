@@ -94,7 +94,7 @@ async function createCode() {
   }
 
   try {
-    const { data } = await createMutation.mutateAsync();
+    const { data } = await createMutation.mutateAsync({ biliUid: props.biliUid });
 
     if (!data) {
       toast.error('生成注册码失败');

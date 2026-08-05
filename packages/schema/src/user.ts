@@ -28,6 +28,15 @@ export const UserRegisterSchema = v.object({
 export type UserRegisterBody = v.InferOutput<typeof UserRegisterSchema>;
 
 /**
+ * B 站 UID 归属验证请求 Schema
+ */
+export const BiliRegisterVerificationSchema = v.object({
+  biliUid: bilibiliUid,
+});
+
+export type BiliRegisterVerification = v.InferOutput<typeof BiliRegisterVerificationSchema>;
+
+/**
  * 用户更新 Schema
  */
 export const UserUpdateSchema = v.object({

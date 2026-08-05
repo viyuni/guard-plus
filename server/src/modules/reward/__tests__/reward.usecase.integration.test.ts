@@ -500,6 +500,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
             status: 'matched' as const,
             code,
             verifierHash: 'test-verifier-hash',
+            expectedBiliUid: biliUid,
             biliUid,
             createdAt: new Date().toISOString(),
             expiresAt: new Date(Date.now() + 60_000).toISOString(),

@@ -83,22 +83,65 @@ function createUseCase(
   };
 }
 
-function matchedChallenge(biliUid = input.biliUid): BiliRegisterChallenge {
+function matchedChallenge(
+  biliUid = input.biliUid,
+  expectedBiliUid = biliUid,
+): BiliRegisterChallenge {
   return {
     status: 'matched',
     code: credential.code,
     verifierHash: 'verifier-hash',
+    expectedBiliUid,
     biliUid,
     createdAt: new Date().toISOString(),
     expiresAt: new Date(Date.now() + 60_000).toISOString(),
   };
 }
 
+it('验证码状态只在 verifier、code 和待验证 UID 全部匹配时返回身份', async () => {
+  const { getOwnedChallenge, useCase } = createUseCase(matchedChallenge());
+
+  await expect(
+    useCase.getBiliRegisterCodeStatus(input.biliUid, credential.code, credential.verifier),
+  ).resolves.toMatchObject({
+    status: 'matched',
+    biliUser: {
+      uid: input.biliUid,
+      name: undefined,
+    },
+  });
+  expect(getOwnedChallenge).toHaveBeenCalledWith(
+    credential.code,
+    credential.verifier,
+    input.biliUid,
+  );
+});
+
+it('验证码状态拒绝错误的 verifier 或 code', async () => {
+  const { useCase } = createUseCase(null);
+
+  await expect(
+    useCase.getBiliRegisterCodeStatus(input.biliUid, credential.code, 'wrong-verifier'),
+  ).rejects.toBeInstanceOf(BadRequestError);
+});
+
+it('验证码状态拒绝与待验证 UID 不同的弹幕 UID', async () => {
+  const { useCase } = createUseCase(matchedChallenge('654321', input.biliUid));
+
+  await expect(
+    useCase.getBiliRegisterCodeStatus(input.biliUid, credential.code, credential.verifier),
+  ).rejects.toBeInstanceOf(BadRequestError);
+});
+
 it('用户注册会拒绝失效的 UID 归属验证', async () => {
   const { consumeChallenge, create, getOwnedChallenge, useCase } = createUseCase(null);
 
   await expect(useCase.register(input, credential)).rejects.toBeInstanceOf(BadRequestError);
-  expect(getOwnedChallenge).toHaveBeenCalledWith(credential.code, credential.verifier);
+  expect(getOwnedChallenge).toHaveBeenCalledWith(
+    credential.code,
+    credential.verifier,
+    input.biliUid,
+  );
   expect(consumeChallenge).not.toHaveBeenCalled();
   expect(create).not.toHaveBeenCalled();
 });
@@ -148,8 +191,16 @@ it('用户注册验证 UID 后会创建用户并回放迁移积分及奖励', as
     id: 'user-id',
     biliUid: input.biliUid,
   });
-  expect(consumeChallenge).toHaveBeenCalledWith(credential.code, credential.verifier);
-  expect(getOwnedChallenge).toHaveBeenCalledWith(credential.code, credential.verifier);
+  expect(consumeChallenge).toHaveBeenCalledWith(
+    credential.code,
+    credential.verifier,
+    input.biliUid,
+  );
+  expect(getOwnedChallenge).toHaveBeenCalledWith(
+    credential.code,
+    credential.verifier,
+    input.biliUid,
+  );
   expect(create).toHaveBeenCalledWith(
     {
       biliUid: input.biliUid,

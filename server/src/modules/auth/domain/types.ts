@@ -37,6 +37,7 @@ export interface BiliRegisterChallenge {
   status: 'pending' | 'matched' | 'consumed';
   code: string;
   verifierHash: string;
+  expectedBiliUid: string;
   createdAt: string;
   expiresAt: string;
   biliUid?: string;

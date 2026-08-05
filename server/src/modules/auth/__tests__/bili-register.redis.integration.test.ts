@@ -15,21 +15,26 @@ const ttlSeconds = 60;
 let redis: RedisClient;
 let repo: BiliRegisterRedisRepository;
 let useCase: BiliRegisterUseCase;
-const createdCodes = new Set<string>();
+const createdKeys = new Set<string>();
+
+function redisKey(biliUid: string, code: string) {
+  return `bili-register:user:uid:${biliUid}:code:${code}`;
+}
 
 function hashVerifier(verifier: string) {
   return createHash('sha256').update(verifier).digest('hex');
 }
 
 async function createMatchedChallenge() {
-  const { challenge, verifier } = await useCase.createChallenge();
-  createdCodes.add(challenge.code);
+  const biliUid = `uid-${crypto.randomUUID()}`;
+  const { challenge, verifier } = await useCase.createChallenge(biliUid);
+  createdKeys.add(redisKey(biliUid, challenge.code));
 
   expect(challenge.code).toStartWith(BiliRegisterUseCase.codePrefix);
 
   const matched = await useCase.matchMessage({
     code: challenge.code.toLowerCase(),
-    biliUid: `uid-${crypto.randomUUID()}`,
+    biliUid,
     biliName: 'tester',
   });
 
@@ -38,6 +43,7 @@ async function createMatchedChallenge() {
   return {
     code: challenge.code,
     verifier,
+    biliUid,
   };
 }
 
@@ -58,21 +64,51 @@ afterEach(async () => {
   if (!redis) return;
 
   try {
-    for (const code of createdCodes) {
-      await redis.del(`bili-register:user:code:${code}`);
+    for (const key of createdKeys) {
+      await redis.del(key);
     }
   } finally {
-    createdCodes.clear();
+    createdKeys.clear();
     await redis.close();
   }
 });
 
 describeWithRedis('BiliRegisterRedisRepository 真实 Redis', () => {
-  it('拒绝错误 verifier 消费，且不会破坏原注册码', async () => {
-    const { code, verifier } = await createMatchedChallenge();
+  it('只允许待验证 UID 对应的弹幕匹配注册码', async () => {
+    const expectedBiliUid = `uid-${crypto.randomUUID()}`;
+    const { challenge } = await useCase.createChallenge(expectedBiliUid);
+    createdKeys.add(redisKey(expectedBiliUid, challenge.code));
 
-    const stolen = await useCase.consumeChallenge(code, 'stolen-verifier');
-    const afterStolenAttempt = await repo.find(code);
+    const mismatched = await useCase.matchMessage({
+      code: challenge.code,
+      biliUid: `uid-${crypto.randomUUID()}`,
+      biliName: 'attacker',
+    });
+
+    expect(mismatched).toBeNull();
+    expect(await repo.find(challenge.code, expectedBiliUid)).toMatchObject({
+      status: 'pending',
+      expectedBiliUid,
+    });
+
+    const matched = await useCase.matchMessage({
+      code: challenge.code,
+      biliUid: expectedBiliUid,
+      biliName: 'tester',
+    });
+
+    expect(matched).toMatchObject({
+      status: 'matched',
+      expectedBiliUid,
+      biliUid: expectedBiliUid,
+    });
+  });
+
+  it('拒绝错误 verifier 消费，且不会破坏原注册码', async () => {
+    const { code, verifier, biliUid } = await createMatchedChallenge();
+
+    const stolen = await useCase.consumeChallenge(code, 'stolen-verifier', biliUid);
+    const afterStolenAttempt = await repo.find(code, biliUid);
 
     expect(stolen).toBeNull();
     expect(afterStolenAttempt).toMatchObject({
@@ -80,8 +116,8 @@ describeWithRedis('BiliRegisterRedisRepository 真实 Redis', () => {
       code,
     });
 
-    const consumed = await useCase.consumeChallenge(code, verifier);
-    const stored = await repo.find(code);
+    const consumed = await useCase.consumeChallenge(code, verifier, biliUid);
+    const stored = await repo.find(code, biliUid);
 
     expect(consumed).toMatchObject({
       status: 'matched',
@@ -95,15 +131,15 @@ describeWithRedis('BiliRegisterRedisRepository 真实 Redis', () => {
   });
 
   it('并发重复消费时只有一个请求成功', async () => {
-    const { code, verifier } = await createMatchedChallenge();
+    const { code, verifier, biliUid } = await createMatchedChallenge();
     const verifierHash = hashVerifier(verifier);
 
     const results = await Promise.all(
-      Array.from({ length: 4 }, () => repo.consumeMatched(code, verifierHash)),
+      Array.from({ length: 4 }, () => repo.consumeMatched(code, biliUid, verifierHash)),
     );
 
     const successes = results.filter(Boolean);
-    const stored = await repo.find(code);
+    const stored = await repo.find(code, biliUid);
 
     expect(successes).toHaveLength(1);
     expect(successes[0]).toMatchObject({
@@ -118,15 +154,19 @@ describeWithRedis('BiliRegisterRedisRepository 真实 Redis', () => {
   });
 
   it('不能消费未匹配或缺少 B 站身份的注册码', async () => {
-    const { challenge, verifier } = await useCase.createChallenge();
-    createdCodes.add(challenge.code);
+    const { challenge, verifier } = await useCase.createChallenge('123456');
+    createdKeys.add(redisKey(challenge.expectedBiliUid, challenge.code));
 
-    const pendingConsumed = await useCase.consumeChallenge(challenge.code, verifier);
+    const pendingConsumed = await useCase.consumeChallenge(
+      challenge.code,
+      verifier,
+      challenge.expectedBiliUid,
+    );
 
     expect(pendingConsumed).toBeNull();
 
     await redis.set(
-      `bili-register:user:code:${challenge.code}`,
+      redisKey(challenge.expectedBiliUid, challenge.code),
       JSON.stringify({
         ...challenge,
         status: 'matched',
@@ -140,8 +180,12 @@ describeWithRedis('BiliRegisterRedisRepository 真实 Redis', () => {
       },
     );
 
-    const missingIdentityConsumed = await useCase.consumeChallenge(challenge.code, verifier);
-    const stored = await repo.find(challenge.code);
+    const missingIdentityConsumed = await useCase.consumeChallenge(
+      challenge.code,
+      verifier,
+      challenge.expectedBiliUid,
+    );
+    const stored = await repo.find(challenge.code, challenge.expectedBiliUid);
 
     expect(missingIdentityConsumed).toBeNull();
     expect(stored).toMatchObject({

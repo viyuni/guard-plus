@@ -27,7 +27,7 @@ export class BiliRegisterUseCase {
     },
   ) {}
 
-  async createChallenge() {
+  async createChallenge(expectedBiliUid: string) {
     for (let attempt = 0; attempt < 5; attempt++) {
       const code = `${BiliRegisterUseCase.codePrefix}${createCodeSuffix()}`;
       const verifier = createVerifier();
@@ -36,6 +36,7 @@ export class BiliRegisterUseCase {
         status: 'pending',
         code,
         verifierHash: this.hashVerifier(verifier),
+        expectedBiliUid,
         createdAt: new Date(now).toISOString(),
         expiresAt: new Date(now + this.deps.ttlSeconds * 1000).toISOString(),
       };
@@ -51,16 +52,21 @@ export class BiliRegisterUseCase {
     throw new Error('生成注册码失败，请稍后再试');
   }
 
-  async getChallenge(code: string) {
-    return this.deps.biliRegisterRepo.find(this.normalizeCode(code));
+  async getChallenge(code: string, biliUid: string) {
+    return this.deps.biliRegisterRepo.find(this.normalizeCode(code), biliUid);
   }
 
-  async getOwnedChallenge(code: string, verifier: string | undefined) {
-    if (!verifier) return null;
+  async getOwnedChallenge(code: string | undefined, verifier: string | undefined, biliUid: string) {
+    if (!code || !verifier) return null;
 
-    const challenge = await this.getChallenge(code);
+    const normalizedCode = this.normalizeCode(code);
+    const challenge = await this.getChallenge(normalizedCode, biliUid);
 
-    if (!challenge || challenge.verifierHash !== this.hashVerifier(verifier)) {
+    if (
+      !challenge ||
+      challenge.code !== normalizedCode ||
+      challenge.verifierHash !== this.hashVerifier(verifier)
+    ) {
       return null;
     }
 
@@ -77,11 +83,12 @@ export class BiliRegisterUseCase {
     return this.deps.biliRegisterRepo.matchPending(code, input.biliUid, input.biliName);
   }
 
-  async consumeChallenge(code: string, verifier: string | undefined) {
+  async consumeChallenge(code: string, verifier: string | undefined, biliUid: string) {
     if (!verifier) return null;
 
     return this.deps.biliRegisterRepo.consumeMatched(
       this.normalizeCode(code),
+      biliUid,
       this.hashVerifier(verifier),
     );
   }

@@ -1,4 +1,8 @@
-import { UserLoginSchema, UserRegisterSchema } from '@shared/schema/user';
+import {
+  BiliRegisterVerificationSchema,
+  UserLoginSchema,
+  UserRegisterSchema,
+} from '@shared/schema/user';
 import Elysia from 'elysia';
 
 import { appContext } from '#apps/user/context';
@@ -138,10 +142,10 @@ export const auth = new Elysia({
   )
   .post(
     '/biliRegisterCode',
-    async ({ cookie, set, userAuthUseCase }) => {
+    async ({ body, cookie, set, userAuthUseCase }) => {
       set.headers['Cache-Control'] = 'private, no-store';
 
-      const { verifier, ...result } = await userAuthUseCase.createBiliRegisterCode();
+      const { verifier, ...result } = await userAuthUseCase.createBiliRegisterCode(body.biliUid);
 
       cookie[BILI_REGISTER_CODE_COOKIE_NAME]!.set({
         ...BILI_REGISTER_COOKIE_OPTIONS,
@@ -155,6 +159,7 @@ export const auth = new Elysia({
       return result;
     },
     {
+      body: BiliRegisterVerificationSchema,
       detail: {
         summary: '生成直播间注册验证码',
       },
@@ -162,14 +167,19 @@ export const auth = new Elysia({
   )
   .get(
     '/biliRegisterCode',
-    ({ cookie, set, userAuthUseCase }) => {
+    ({ cookie, query, set, userAuthUseCase }) => {
       set.headers['Cache-Control'] = 'private, no-store';
 
       const credential = getBiliRegisterCredential(cookie);
 
-      return userAuthUseCase.getBiliRegisterCodeStatus(credential?.code, credential?.verifier);
+      return userAuthUseCase.getBiliRegisterCodeStatus(
+        query.biliUid,
+        credential?.code,
+        credential?.verifier,
+      );
     },
     {
+      query: BiliRegisterVerificationSchema,
       detail: {
         summary: '查询直播间注册验证码状态',
       },

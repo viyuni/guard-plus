@@ -62,13 +62,14 @@ export class AuthUseCase {
     const challenge = await this.biliRegisterUseCase.getOwnedChallenge(
       credential.code,
       credential.verifier,
+      input.biliUid,
     );
 
     if (challenge?.status !== 'matched' || !challenge.biliUid) {
       throw new BadRequestError('UID 归属验证已失效，请重新验证');
     }
 
-    if (challenge.biliUid !== input.biliUid) {
+    if (challenge.expectedBiliUid !== input.biliUid || challenge.biliUid !== input.biliUid) {
       throw new BadRequestError('注册 UID 与已验证 UID 不一致');
     }
 
@@ -81,7 +82,11 @@ export class AuthUseCase {
 
     // 用户创建成功后再消费验证，避免数据库事务失败时丢失已完成的 UID 验证。
     try {
-      await this.biliRegisterUseCase.consumeChallenge(credential.code, credential.verifier);
+      await this.biliRegisterUseCase.consumeChallenge(
+        credential.code,
+        credential.verifier,
+        input.biliUid,
+      );
     } catch (error) {
       this.deps.logger?.warn(
         {
@@ -110,8 +115,8 @@ export class AuthUseCase {
     return user;
   }
 
-  async createBiliRegisterCode() {
-    const { challenge, verifier } = await this.biliRegisterUseCase.createChallenge();
+  async createBiliRegisterCode(biliUid: string) {
+    const { challenge, verifier } = await this.biliRegisterUseCase.createChallenge(biliUid);
 
     return {
       code: challenge.code,
@@ -121,21 +126,20 @@ export class AuthUseCase {
     };
   }
 
-  async getBiliRegisterCodeStatus(code: string | undefined, verifier: string | undefined) {
-    if (!code) {
-      return {
-        status: 'expired' as const,
-        roomId: this.deps.biliRoom,
-      };
-    }
+  async getBiliRegisterCodeStatus(
+    biliUid: string,
+    code: string | undefined,
+    verifier: string | undefined,
+  ) {
+    const challenge = await this.biliRegisterUseCase.getOwnedChallenge(code, verifier, biliUid);
 
-    const challenge = await this.biliRegisterUseCase.getOwnedChallenge(code, verifier);
-
-    if (!challenge || challenge.status === 'consumed') {
-      return {
-        status: 'expired' as const,
-        roomId: this.deps.biliRoom,
-      };
+    if (
+      !challenge ||
+      challenge.status === 'consumed' ||
+      challenge.expectedBiliUid !== biliUid ||
+      (challenge.status === 'matched' && challenge.biliUid !== biliUid)
+    ) {
+      throw new BadRequestError('UID 归属验证信息不匹配，请重新验证');
     }
 
     if (challenge.status === 'matched') {
