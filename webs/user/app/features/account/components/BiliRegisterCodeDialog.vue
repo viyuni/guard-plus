@@ -107,7 +107,7 @@ async function createCode() {
     startCountdown(data.expiresAt);
     open.value = true;
   } catch {
-    // The global mutation handler reports request errors.
+    toast.error('生成注册码失败，请稍后重试');
   }
 }
 
@@ -122,12 +122,18 @@ async function confirmCode() {
     status.value = data.status;
     biliRoomId.value = data.roomId;
 
+    if (data.status === 'pending') {
+      toast.error('尚未收到直播间消息，请发送验证码后重试');
+      return;
+    }
+
     if (data.status === 'matched' && data.biliUser.uid === props.biliUid) {
+      toast.success('UID 归属验证成功');
       emit('matched', data.biliUser);
       open.value = false;
     }
   } catch {
-    // The global mutation handler reports request errors.
+    toast.error('UID 归属验证失败，请重新验证');
   }
 }
 

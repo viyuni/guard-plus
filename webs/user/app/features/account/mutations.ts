@@ -1,6 +1,5 @@
 import { defineMutation, useMutation, useQueryCache } from '@pinia/colada';
 import type { UpdateUserBody, UserLoginBody, UserRegisterBody } from '@shared/schema/user';
-import { toast } from 'vue-sonner';
 
 import { USER_SESSION_QUERY_KEYS } from './queries';
 
@@ -81,16 +80,9 @@ export const useConfirmBiliRegisterCode = defineMutation(() => {
         if (data.biliUser.uid !== biliUid) {
           throw new Error('UID 归属验证信息不匹配');
         }
-
-        toast.success('UID 归属验证成功');
-      } else if (data.status === 'pending') {
-        toast.error('尚未收到直播间消息，请发送验证码后重试');
       }
 
       return data;
-    },
-    onError() {
-      toast.error('验证码验证失败，请检查输入的验证码是否正确');
     },
   });
 });
