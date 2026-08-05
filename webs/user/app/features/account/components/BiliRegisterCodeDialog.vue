@@ -122,11 +122,6 @@ async function confirmCode() {
     status.value = data.status;
     biliRoomId.value = data.roomId;
 
-    if (data.status === 'expired') {
-      expireCode();
-      return;
-    }
-
     if (data.status === 'matched' && data.biliUser.uid === props.biliUid) {
       emit('matched', data.biliUser);
       open.value = false;
