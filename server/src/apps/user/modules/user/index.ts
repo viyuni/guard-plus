@@ -1,4 +1,4 @@
-import { UserUpdateSchema } from '@shared/schema/user';
+import { UserUpdatePasswordSchema, UserUpdateSchema } from '@shared/schema/user';
 import Elysia from 'elysia';
 
 import { appContext } from '#apps/user/context';
@@ -35,4 +35,16 @@ export const user = new Elysia({
       tags: ['User'],
       summary: '更新当前用户信息',
     },
-  });
+  })
+  .patch(
+    '/me/password',
+    ({ auth: { id: userId }, body, userUseCase }) => userUseCase.updatePassword(userId, body),
+    {
+      body: UserUpdatePasswordSchema,
+      requiredAuth: true,
+      detail: {
+        tags: ['User'],
+        summary: '修改当前用户密码',
+      },
+    },
+  );

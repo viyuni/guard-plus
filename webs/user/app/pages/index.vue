@@ -15,6 +15,9 @@ const AuthDialog = defineAsyncComponent(
 const ProfileDialog = defineAsyncComponent(
   () => import('~/features/account/components/ProfileDialog.vue'),
 );
+const PasswordDialog = defineAsyncComponent(
+  () => import('~/features/account/components/PasswordDialog.vue'),
+);
 const OrdersDialog = defineAsyncComponent(
   () => import('~/features/order/components/OrdersDialog.vue'),
 );
@@ -37,6 +40,7 @@ const createOrderMutation = useCreateOrder();
 const { isAuthenticated, refreshUserSession } = useUserSession();
 const [openAuthDialogOverlay] = useOverlay(AuthDialog);
 const [openProfileDialog] = useOverlay(ProfileDialog);
+const [openPasswordDialog] = useOverlay(PasswordDialog);
 const [openOrdersDialog] = useOverlay(OrdersDialog);
 const [openPurchaseDetailDialog] = useOverlay(PurchaseDetailDialog);
 const [openPointActionsDialog] = useOverlay(PointActionsDialog);
@@ -126,6 +130,7 @@ async function buyProduct(product: Product) {
     <AppHeader
       @login="openAuthDialog('login')"
       @edit-profile="openProfileDialog"
+      @change-password="openPasswordDialog"
       @view-points="openPointActions"
       @view-transactions="openPointTransactionsDialog"
       @view-orders="openOrdersDialog"

@@ -17,8 +17,8 @@ let repo: BiliRegisterRedisRepository;
 let useCase: BiliRegisterUseCase;
 const createdKeys = new Set<string>();
 
-function redisKey(biliUid: string, code: string) {
-  return `bili-register:user:uid:${biliUid}:code:${code}`;
+function redisKey(biliUid: string, code: string, purpose = 'register') {
+  return `bili-verification:${purpose}:user:uid:${biliUid}:code:${code}`;
 }
 
 function hashVerifier(verifier: string) {
@@ -192,5 +192,21 @@ describeWithRedis('BiliRegisterRedisRepository 真实 Redis', () => {
       status: 'matched',
       code: challenge.code,
     });
+  });
+
+  it('注册与密码重置使用独立 Redis key，不能跨流程读取', async () => {
+    const biliUid = `uid-${crypto.randomUUID()}`;
+    const resetRepo = new BiliRegisterRedisRepository(redis, ttlSeconds, 'password-reset');
+    const resetUseCase = new BiliRegisterUseCase({
+      biliRegisterRepo: resetRepo,
+      codePrefix: 'P-',
+      ttlSeconds,
+    });
+    const { challenge } = await resetUseCase.createChallenge(biliUid);
+    createdKeys.add(redisKey(biliUid, challenge.code, 'password-reset'));
+
+    expect(challenge.code).toStartWith('P-');
+    expect(await resetRepo.find(challenge.code, biliUid)).not.toBeNull();
+    expect(await repo.find(challenge.code, biliUid)).toBeNull();
   });
 });

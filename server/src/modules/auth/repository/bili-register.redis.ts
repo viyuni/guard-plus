@@ -7,10 +7,11 @@ export class BiliRegisterRedisRepository {
   constructor(
     private readonly redis: RedisClient,
     private readonly ttlSeconds: number,
+    private readonly purpose: 'register' | 'password-reset' = 'register',
   ) {}
 
   private key(biliUid: string, code: string) {
-    return `bili-register:user:uid:${biliUid}:code:${code}`;
+    return `bili-verification:${this.purpose}:user:uid:${biliUid}:code:${code}`;
   }
 
   /**

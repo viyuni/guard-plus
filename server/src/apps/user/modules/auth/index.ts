@@ -2,6 +2,7 @@ import {
   BiliRegisterVerificationSchema,
   UserLoginSchema,
   UserRegisterSchema,
+  UserResetPasswordSchema,
 } from '@shared/schema/user';
 import Elysia from 'elysia';
 
@@ -15,6 +16,8 @@ import {
   BILI_REGISTER_CODE_COOKIE_NAME,
   BILI_REGISTER_COOKIE_OPTIONS,
   BILI_REGISTER_VERIFIER_COOKIE_NAME,
+  BILI_PASSWORD_RESET_CODE_COOKIE_NAME,
+  BILI_PASSWORD_RESET_VERIFIER_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_OPTIONS,
   getAuthStateCookieOptions,
@@ -46,6 +49,20 @@ function removeBiliRegisterCookies(cookie: Record<string, { remove: () => void }
   cookie[BILI_REGISTER_VERIFIER_COOKIE_NAME]?.remove();
 }
 
+function getBiliPasswordResetCredential(cookie: Record<string, { value: unknown } | undefined>) {
+  const code = getCookieString(cookie[BILI_PASSWORD_RESET_CODE_COOKIE_NAME]?.value);
+  const verifier = getCookieString(cookie[BILI_PASSWORD_RESET_VERIFIER_COOKIE_NAME]?.value);
+
+  return code && verifier ? { code, verifier } : undefined;
+}
+
+function removeBiliPasswordResetCookies(
+  cookie: Record<string, { remove: () => void } | undefined>,
+) {
+  cookie[BILI_PASSWORD_RESET_CODE_COOKIE_NAME]?.remove();
+  cookie[BILI_PASSWORD_RESET_VERIFIER_COOKIE_NAME]?.remove();
+}
+
 export const auth = new Elysia({
   name: 'AuthRoute',
   prefix: '/auth',
@@ -55,9 +72,17 @@ export const auth = new Elysia({
 })
   .use(appContext)
   .derive(
-    ({ authUseCase, biliRegisterUseCase, pointAccountUseCase, rewardUseCase, userUseCase }) => ({
+    ({
+      authUseCase,
+      biliPasswordResetUseCase,
+      biliRegisterUseCase,
+      pointAccountUseCase,
+      rewardUseCase,
+      userUseCase,
+    }) => ({
       userAuthUseCase: new AuthUseCase({
         authUseCase,
+        biliPasswordResetUseCase,
         biliRegisterUseCase,
         biliRoom: userEnv.BILI_ROOM,
         db,
@@ -182,6 +207,69 @@ export const auth = new Elysia({
       query: BiliRegisterVerificationSchema,
       detail: {
         summary: '查询直播间注册验证码状态',
+      },
+    },
+  )
+  .post(
+    '/passwordResetCode',
+    async ({ body, cookie, set, userAuthUseCase }) => {
+      set.headers['Cache-Control'] = 'private, no-store';
+
+      const { verifier, ...result } = await userAuthUseCase.createBiliPasswordResetCode(
+        body.biliUid,
+      );
+
+      cookie[BILI_PASSWORD_RESET_CODE_COOKIE_NAME]!.set({
+        ...BILI_REGISTER_COOKIE_OPTIONS,
+        value: result.code,
+      });
+      cookie[BILI_PASSWORD_RESET_VERIFIER_COOKIE_NAME]!.set({
+        ...BILI_REGISTER_COOKIE_OPTIONS,
+        value: verifier,
+      });
+
+      return result;
+    },
+    {
+      body: BiliRegisterVerificationSchema,
+      detail: {
+        summary: '生成直播间密码重置验证码',
+      },
+    },
+  )
+  .get(
+    '/passwordResetCode',
+    ({ cookie, query, set, userAuthUseCase }) => {
+      set.headers['Cache-Control'] = 'private, no-store';
+      const credential = getBiliPasswordResetCredential(cookie);
+
+      return userAuthUseCase.getBiliPasswordResetCodeStatus(
+        query.biliUid,
+        credential?.code,
+        credential?.verifier,
+      );
+    },
+    {
+      query: BiliRegisterVerificationSchema,
+      detail: {
+        summary: '查询直播间密码重置验证码状态',
+      },
+    },
+  )
+  .post(
+    '/resetPassword',
+    async ({ body, cookie, set, userAuthUseCase }) => {
+      set.headers['Cache-Control'] = 'private, no-store';
+
+      await userAuthUseCase.resetPassword(body, getBiliPasswordResetCredential(cookie));
+      removeBiliPasswordResetCookies(cookie);
+
+      return { success: true };
+    },
+    {
+      body: UserResetPasswordSchema,
+      detail: {
+        summary: '重置用户密码',
       },
     },
   );
