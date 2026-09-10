@@ -33,7 +33,9 @@ const columns = [
     >
       <DialogHeader>
         <DialogTitle>积分流水</DialogTitle>
-        <DialogDescription>最近 20 条积分变动。</DialogDescription>
+        <DialogDescription>
+          最近 20 条积分变动, 如发现积分遗漏或数量有误，请联系管理员核实。
+        </DialogDescription>
       </DialogHeader>
 
       <DataTable

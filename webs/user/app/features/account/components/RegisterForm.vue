@@ -2,6 +2,7 @@
 import { UserRegisterSchema } from '@shared/schema/user';
 import { Button } from '@web/ui/components/ui/button';
 import { DialogFooter } from '@web/ui/components/ui/dialog';
+import { FieldDescription } from '@web/ui/components/ui/field';
 import { FormFieldItem, useForm } from '@web/ui/components/ui/form';
 import {
   InputGroup,
@@ -92,13 +93,7 @@ defineExpose({
 
 <template>
   <form class="grid gap-3" @submit="handleSubmit">
-    <FormFieldItem
-      v-slot="{ componentField }"
-      name="biliUid"
-      label="B 站 UID"
-      required
-      description="需要验证 UID 后才能注册"
-    >
+    <FormFieldItem v-slot="{ componentField }" name="biliUid" label="B 站 UID" required>
       <InputGroup>
         <InputGroupInput
           v-bind="componentField"
@@ -125,6 +120,10 @@ defineExpose({
           </InputGroupAddon>
         </BiliRegisterCodeDialog>
       </InputGroup>
+      <FieldDescription class="text-xs">
+        <span class="block">需要验证 UID 后才能注册</span>
+        <span class="block">如多次验证失败，请联系管理员处理</span>
+      </FieldDescription>
     </FormFieldItem>
 
     <FormFieldItem v-slot="{ componentField }" name="username" label="用户名" required>

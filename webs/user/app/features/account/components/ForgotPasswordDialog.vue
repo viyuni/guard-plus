@@ -105,7 +105,10 @@ watch(open, isOpen => {
                 </InputGroupAddon>
               </BiliRegisterCodeDialog>
             </InputGroup>
-            <FieldDescription class="text-xs">需要验证 UID 后才能重置密码</FieldDescription>
+            <FieldDescription class="text-xs">
+              <span class="block">需要验证 UID 后才能重置密码</span>
+              <span class="block">如多次验证失败，请联系管理员处理</span>
+            </FieldDescription>
             <FieldError :errors="errors" />
           </Field>
         </FormField>
