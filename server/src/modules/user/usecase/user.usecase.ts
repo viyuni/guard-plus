@@ -162,8 +162,8 @@ export class UserUseCase {
     };
   }
 
-  async updatePassword(data: UpdateUserPasswordBody) {
-    const user = await this.getAvailableByBiliUid(data.biliUid);
+  async updatePassword(userId: string, data: UpdateUserPasswordBody) {
+    const user = await this.getAvailableById(userId);
 
     const isValidPassword = await PasswordUtil.verify(data.oldPassword, user.passwordHash);
 
@@ -172,6 +172,13 @@ export class UserUseCase {
     }
 
     const passwordHash = await PasswordUtil.hash(data.newPassword);
+
+    await this.deps.userRepo.updatePassword(user.id, passwordHash);
+  }
+
+  async setPassword(userId: string, newPassword: string) {
+    const user = await this.getAvailableById(userId);
+    const passwordHash = await PasswordUtil.hash(newPassword);
 
     await this.deps.userRepo.updatePassword(user.id, passwordHash);
   }

@@ -7,3 +7,4 @@ export { default as FormMessage } from './FormMessage.vue';
 export { FORM_ITEM_INJECTION_KEY } from './injectionKeys';
 export * from './useForm';
 export { Form, Field as FormField, FieldArray as FormFieldArray } from 'vee-validate';
+export { toTypedSchema } from '@vee-validate/valibot';

@@ -54,12 +54,21 @@ export type UpdateUserBody = v.InferOutput<typeof UserUpdateSchema>;
  * 用户更新密码 Schema
  */
 export const UserUpdatePasswordSchema = v.object({
-  biliUid: username,
   oldPassword: password,
   newPassword: password,
 });
 
 export type UpdateUserPasswordBody = v.InferOutput<typeof UserUpdatePasswordSchema>;
+
+/**
+ * 用户忘记密码 Schema
+ */
+export const UserResetPasswordSchema = v.object({
+  biliUid: bilibiliUid,
+  newPassword: password,
+});
+
+export type UserResetPasswordBody = v.InferOutput<typeof UserResetPasswordSchema>;
 
 /**
  * 用户登录 Schema

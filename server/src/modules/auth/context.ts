@@ -19,10 +19,22 @@ export function createBiliRegisterContext({
     biliRegisterRepo,
     ttlSeconds: env.BILI_REGISTER_CODE_TTL_SECONDS,
   });
+  const biliPasswordResetRepo = new BiliRegisterRedisRepository(
+    redis,
+    env.BILI_REGISTER_CODE_TTL_SECONDS,
+    'password-reset',
+  );
+  const biliPasswordResetUseCase = new BiliRegisterUseCase({
+    biliRegisterRepo: biliPasswordResetRepo,
+    codePrefix: 'P-',
+    ttlSeconds: env.BILI_REGISTER_CODE_TTL_SECONDS,
+  });
 
   return {
     biliRegisterRepo,
     biliRegisterUseCase,
+    biliPasswordResetRepo,
+    biliPasswordResetUseCase,
   };
 }
 
