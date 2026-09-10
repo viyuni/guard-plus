@@ -23,6 +23,7 @@ const inputs = {
 
 export default defineConfig({
   pack: {
+    deps: { resolveDepSubpath: true },
     entry: {
       eden: './src/eden.ts',
     },

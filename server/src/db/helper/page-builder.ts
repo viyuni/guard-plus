@@ -1,4 +1,4 @@
-import { relationsFilterToSQL } from 'drizzle-orm';
+import { EmptyFilter, relationsFilterToSQL } from 'drizzle-orm';
 import type { AnyPgTable } from 'drizzle-orm/pg-core';
 
 import type { DbExecutor } from '..';
@@ -59,6 +59,34 @@ type QueryRunner<TQuery extends FindManyQuery, TItem> = (
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 20;
 const DEFAULT_MAX_PAGE_SIZE = 100;
+
+function normalizeFilterValue(value: unknown): unknown {
+  if (value === undefined) {
+    return EmptyFilter;
+  }
+
+  if (Array.isArray(value)) {
+    if (!value.length) {
+      return EmptyFilter;
+    }
+
+    const items = value.map(normalizeFilterValue).filter(item => item !== EmptyFilter);
+
+    return items.length ? items : EmptyFilter;
+  }
+
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    Object.getPrototypeOf(value) !== Object.prototype
+  ) {
+    return value;
+  }
+
+  return Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [key, normalizeFilterValue(item)]),
+  );
+}
 
 export function resolvePagination(options: ResolvePaginationOptions = {}): ResolvedPagination {
   const maxPageSize = Math.max(
@@ -151,7 +179,9 @@ export class QueryPageBuilder<
   }
 
   where<const TWhere extends ConfigWhere<TQuery>>(where: TWhere | undefined) {
-    this.whereValue = where;
+    this.whereValue = (where === undefined ? undefined : normalizeFilterValue(where)) as
+      | ConfigWhere<TQuery>
+      | undefined;
     return this;
   }
 

@@ -1,5 +1,7 @@
 import { describe, expect, it, mock } from 'bun:test';
 
+import { EmptyFilter } from 'drizzle-orm';
+
 import { pointTypes } from '#db/schema';
 
 import { QueryPageBuilder } from '../page-builder';
@@ -110,7 +112,7 @@ describe('QueryPageBuilder', () => {
         .paginate();
 
       const config = findMany.mock.calls[0]?.[0];
-      expect(config.where).toBe(where);
+      expect(config.where).toEqual(where);
       expect(db.$count.mock.calls[0]?.[0]).toBe(pointTypes);
       expect(db.$count.mock.calls[0]?.[1]).toBeDefined();
     });
@@ -126,6 +128,30 @@ describe('QueryPageBuilder', () => {
       const config = findMany.mock.calls[0]?.[0];
       expect(config.where).toBeUndefined();
       expect(db.$count).toHaveBeenCalledWith(mockTable, undefined);
+    });
+
+    it('where 会将 undefined 和空逻辑数组转换为 EmptyFilter', async () => {
+      const { db, query, findMany } = createMockRelationalDb([], 0);
+
+      await new QueryPageBuilder(db, pointTypes, query)
+        .where({
+          name: undefined,
+          OR: [],
+          createdAt: {
+            gte: undefined,
+          },
+        })
+        .query((findMany, input) => findMany(input))
+        .paginate();
+
+      expect(findMany.mock.calls[0]?.[0]?.where).toEqual({
+        name: EmptyFilter,
+        OR: EmptyFilter,
+        createdAt: {
+          gte: EmptyFilter,
+        },
+      });
+      expect(db.$count).toHaveBeenCalledWith(pointTypes, undefined);
     });
 
     it('pageSize 超过 maxPageSize 时被截断', async () => {

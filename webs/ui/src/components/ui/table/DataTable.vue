@@ -116,17 +116,21 @@ type DataTableDisplayColumnSlotKeys<TColumns extends readonly ColumnDef<any>[]> 
 >;
 
 type DataTableAccessorColumnFieldSlots<TData, TColumns extends readonly ColumnDef<any>[]> = {
-  [Key in KnownStringKey<
-    DataTableAccessorColumnSlotKeys<TColumns>
-  > as Key extends `${string}-header` ? never : Key]?: (
+  [
+    Key in KnownStringKey<
+      DataTableAccessorColumnSlotKeys<TColumns>
+    > as Key extends `${string}-header` ? never : Key
+  ]?: (
     props: DataTableCellSlotProps<TData, DataTableAccessorColumnSlotValue<TData, TColumns, Key>>,
   ) => unknown;
 };
 
 type DataTableDisplayColumnFieldSlots<TData, TColumns extends readonly ColumnDef<any>[]> = {
-  [Key in KnownStringKey<DataTableDisplayColumnSlotKeys<TColumns>> as Key extends `${string}-header`
-    ? never
-    : Key]?: (props: DataTableDisplayCellSlotProps<TData>) => unknown;
+  [
+    Key in KnownStringKey<
+      DataTableDisplayColumnSlotKeys<TColumns>
+    > as Key extends `${string}-header` ? never : Key
+  ]?: (props: DataTableDisplayCellSlotProps<TData>) => unknown;
 };
 
 type DataTableColumnHeaderSlots<TData, TSlotKey extends string> = {
