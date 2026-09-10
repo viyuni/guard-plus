@@ -1,3 +1,40 @@
+## v0.0.1-beta.8
+
+[compare changes](https://github.com/viyuni/guard-plus/compare/v0.0.1-beta.7...v0.0.1-beta.8)
+
+### 🚀 Enhancements
+
+- **server:** Expose event service health status ([3a5f213](https://github.com/viyuni/guard-plus/commit/3a5f213))
+- **server:** Add Uptime Kuma monitoring ([294bd3b](https://github.com/viyuni/guard-plus/commit/294bd3b))
+- **user:** Add password management flows ([#18](https://github.com/viyuni/guard-plus/pull/18))
+- **web/user:** Add administrator contact reminders ([cbbb61f](https://github.com/viyuni/guard-plus/commit/cbbb61f))
+
+### 🩹 Fixes
+
+- **server/auth:** Harden user registration flow ([8a45be3](https://github.com/viyuni/guard-plus/commit/8a45be3))
+- **server:** Avoid duplicate event listener reconnects ([6368c98](https://github.com/viyuni/guard-plus/commit/6368c98))
+- **server:** Use websocket event listener in containers ([0124ef0](https://github.com/viyuni/guard-plus/commit/0124ef0))
+- **server/auth:** Bind bili registration to uid ([1884d83](https://github.com/viyuni/guard-plus/commit/1884d83))
+- **web/user:** Remove unreachable verification status ([fad1e47](https://github.com/viyuni/guard-plus/commit/fad1e47))
+- **web/user:** Show bili verification feedback ([2e74dbe](https://github.com/viyuni/guard-plus/commit/2e74dbe))
+
+### 💅 Refactors
+
+- **point:** Move transaction notice to table footer ([73efffc](https://github.com/viyuni/guard-plus/commit/73efffc))
+
+### 📦 Build
+
+- **deps:** Update bevent-relay to 0.0.6 ([2c3b746](https://github.com/viyuni/guard-plus/commit/2c3b746))
+- **deps:** Update bevent-relay to 0.0.7 ([be48aea](https://github.com/viyuni/guard-plus/commit/be48aea))
+
+### ✅ Tests
+
+- **server/auth:** Update registration integration mock ([0557829](https://github.com/viyuni/guard-plus/commit/0557829))
+
+### ❤️ Contributors
+
+- Byc ([@YanChenBai](https://github.com/YanChenBai))
+
 ## v0.0.1-beta.7
 
 [compare changes](https://github.com/viyuni/guard-plus/compare/v0.0.1-beta.6...v0.0.1-beta.7)
