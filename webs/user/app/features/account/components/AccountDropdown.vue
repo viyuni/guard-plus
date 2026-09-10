@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { LogOut, ReceiptText, ShoppingBag, UserRound, ChevronDown } from 'lucide-vue-next';
+import {
+  ChevronDown,
+  KeyRound,
+  LogOut,
+  ReceiptText,
+  ShoppingBag,
+  UserRound,
+} from 'lucide-vue-next';
 
 import { useUserSession } from '~/composables/useUserSession';
 
@@ -9,6 +16,7 @@ defineProps<{
 
 const emit = defineEmits<{
   editProfile: [];
+  changePassword: [];
   viewTransactions: [];
   viewOrders: [];
   logout: [];
@@ -39,6 +47,11 @@ const { user } = useUserSession();
       <DropdownMenuItem @click="emit('editProfile')">
         <UserRound />
         个人信息
+      </DropdownMenuItem>
+
+      <DropdownMenuItem @click="emit('changePassword')">
+        <KeyRound />
+        修改密码
       </DropdownMenuItem>
 
       <DropdownMenuItem @click="emit('viewTransactions')">

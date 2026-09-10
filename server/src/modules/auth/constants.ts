@@ -7,6 +7,8 @@ export const AUTH_STATE_COOKIE_VALUE = '1';
 export const AUTH_COOKIE_NAME = ACCESS_TOKEN_COOKIE_NAME;
 export const BILI_REGISTER_CODE_COOKIE_NAME = 'biliRegisterCode';
 export const BILI_REGISTER_VERIFIER_COOKIE_NAME = 'biliRegisterVerifier';
+export const BILI_PASSWORD_RESET_CODE_COOKIE_NAME = 'biliPasswordResetCode';
+export const BILI_PASSWORD_RESET_VERIFIER_COOKIE_NAME = 'biliPasswordResetVerifier';
 
 export const ACCESS_TOKEN_EXPIRES_IN_SECONDS = 60 * 15;
 export const REFRESH_TOKEN_EXPIRES_IN_SECONDS = 60 * 60 * 24 * 30;

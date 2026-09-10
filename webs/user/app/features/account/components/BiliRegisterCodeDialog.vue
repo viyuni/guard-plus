@@ -11,7 +11,12 @@ import {
 import { Copy, ExternalLink, Loader2 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
-import { useConfirmBiliRegisterCode, useCreateBiliRegisterCode } from '../mutations';
+import {
+  useConfirmBiliPasswordResetCode,
+  useConfirmBiliRegisterCode,
+  useCreateBiliPasswordResetCode,
+  useCreateBiliRegisterCode,
+} from '../mutations';
 
 export type BiliRegisterStatus = 'idle' | 'pending' | 'matched' | 'expired';
 
@@ -19,6 +24,7 @@ const FRONTEND_CODE_TTL_MILLISECONDS = 3 * 60 * 1000;
 
 const props = defineProps<{
   biliUid: string;
+  purpose?: 'register' | 'password-reset';
 }>();
 
 const emit = defineEmits<{
@@ -38,8 +44,14 @@ const open = ref(false);
 let countdownTimer: ReturnType<typeof setInterval> | undefined;
 const createMutation = useCreateBiliRegisterCode();
 const confirmMutation = useConfirmBiliRegisterCode();
-const { isLoading: isCreating } = createMutation;
-const { isLoading: isConfirming } = confirmMutation;
+const createPasswordResetMutation = useCreateBiliPasswordResetCode();
+const confirmPasswordResetMutation = useConfirmBiliPasswordResetCode();
+const isCreating = computed(
+  () => createMutation.isLoading.value || createPasswordResetMutation.isLoading.value,
+);
+const isConfirming = computed(
+  () => confirmMutation.isLoading.value || confirmPasswordResetMutation.isLoading.value,
+);
 
 const remainingTime = computed(() => {
   const minutes = Math.floor(remainingSeconds.value / 60);
@@ -94,7 +106,9 @@ async function createCode() {
   }
 
   try {
-    const { data } = await createMutation.mutateAsync({ biliUid: props.biliUid });
+    const { data } = await (
+      props.purpose === 'password-reset' ? createPasswordResetMutation : createMutation
+    ).mutateAsync({ biliUid: props.biliUid });
 
     if (!data) {
       toast.error('生成注册码失败');
@@ -115,9 +129,9 @@ async function confirmCode() {
   if (!code.value) return;
 
   try {
-    const data = await confirmMutation.mutateAsync({
-      biliUid: props.biliUid,
-    });
+    const data = await (
+      props.purpose === 'password-reset' ? confirmPasswordResetMutation : confirmMutation
+    ).mutateAsync({ biliUid: props.biliUid });
 
     status.value = data.status;
     biliRoomId.value = data.roomId;

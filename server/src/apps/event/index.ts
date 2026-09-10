@@ -13,7 +13,7 @@ import { eventEnv } from './env';
 import { createEventServer } from './server';
 
 const {
-  useCases: { biliRegisterUseCase, rewardUseCase },
+  useCases: { biliPasswordResetUseCase, biliRegisterUseCase, rewardUseCase },
 } = createEventContainer({
   db,
   env: eventEnv,
@@ -62,6 +62,13 @@ listener.on('event', event => {
           biliName: event.uname,
         })
         .catch(error => logger.error(error, 'Bilibili register message match failed'));
+      biliPasswordResetUseCase
+        .matchMessage({
+          code: event.content,
+          biliUid: event.uid.toString(),
+          biliName: event.uname,
+        })
+        .catch(error => logger.error(error, 'Bilibili password reset message match failed'));
 
       break;
     }

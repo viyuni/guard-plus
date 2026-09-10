@@ -1,5 +1,11 @@
 import { defineMutation, useMutation, useQueryCache } from '@pinia/colada';
-import type { UpdateUserBody, UserLoginBody, UserRegisterBody } from '@shared/schema/user';
+import type {
+  UpdateUserBody,
+  UpdateUserPasswordBody,
+  UserLoginBody,
+  UserRegisterBody,
+  UserResetPasswordBody,
+} from '@shared/schema/user';
 
 import { USER_SESSION_QUERY_KEYS } from './queries';
 
@@ -87,6 +93,35 @@ export const useConfirmBiliRegisterCode = defineMutation(() => {
   });
 });
 
+export const useCreateBiliPasswordResetCode = defineMutation(() => {
+  return useMutation({
+    mutation({ biliUid }: { biliUid: string }) {
+      return api.auth.passwordResetCode.post({ biliUid });
+    },
+  });
+});
+
+export const useConfirmBiliPasswordResetCode = defineMutation(() => {
+  return useMutation({
+    async mutation({ biliUid }: { biliUid: string }) {
+      const response = await api.auth.passwordResetCode.get({
+        query: { biliUid },
+      });
+      const { data } = response;
+
+      if (!data) {
+        throw new Error('确认 UID 归属失败');
+      }
+
+      if (data.status === 'matched' && data.biliUser.uid !== biliUid) {
+        throw new Error('UID 归属验证信息不匹配');
+      }
+
+      return data;
+    },
+  });
+});
+
 export const useUpdateCurrentUser = defineMutation(() => {
   const invalidateUserSession = useInvalidateUserSession();
 
@@ -99,6 +134,30 @@ export const useUpdateCurrentUser = defineMutation(() => {
       return api.me.put(body);
     },
     onSuccess: invalidateUserSession,
+  });
+});
+
+export const useUpdateCurrentUserPassword = defineMutation(() => {
+  return useMutation({
+    meta: {
+      showToast: true,
+      successMessage: '密码已修改',
+    },
+    mutation(body: UpdateUserPasswordBody) {
+      return api.me.password.patch(body);
+    },
+  });
+});
+
+export const useResetUserPassword = defineMutation(() => {
+  return useMutation({
+    meta: {
+      showToast: true,
+      successMessage: '密码已重置，请使用新密码登录',
+    },
+    mutation(body: UserResetPasswordBody) {
+      return api.auth.resetPassword.post(body);
+    },
   });
 });
 

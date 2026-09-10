@@ -6,6 +6,7 @@ import { AccountDropdown, useLogout } from '~/features/account';
 
 const emit = defineEmits<{
   editProfile: [];
+  changePassword: [];
   login: [];
   viewPoints: [];
   viewOrders: [];
@@ -55,6 +56,7 @@ async function logout() {
           v-if="isAuthenticated"
           :is-logging-out="isLoggingOut"
           @edit-profile="emit('editProfile')"
+          @change-password="emit('changePassword')"
           @view-transactions="emit('viewTransactions')"
           @view-orders="emit('viewOrders')"
           @logout="logout"

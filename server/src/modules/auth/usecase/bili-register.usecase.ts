@@ -23,13 +23,14 @@ export class BiliRegisterUseCase {
   constructor(
     private readonly deps: {
       biliRegisterRepo: BiliRegisterRedisRepository;
+      codePrefix?: string;
       ttlSeconds: number;
     },
   ) {}
 
   async createChallenge(expectedBiliUid: string) {
     for (let attempt = 0; attempt < 5; attempt++) {
-      const code = `${BiliRegisterUseCase.codePrefix}${createCodeSuffix()}`;
+      const code = `${this.codePrefix}${createCodeSuffix()}`;
       const verifier = createVerifier();
       const now = Date.now();
       const challenge: BiliRegisterChallenge = {
@@ -76,7 +77,7 @@ export class BiliRegisterUseCase {
   async matchMessage(input: BiliRegisterMatchInput) {
     const code = this.normalizeCode(input.code);
 
-    if (!code.startsWith(BiliRegisterUseCase.codePrefix)) {
+    if (!code.startsWith(this.codePrefix)) {
       return null;
     }
 
@@ -99,5 +100,9 @@ export class BiliRegisterUseCase {
 
   private hashVerifier(verifier: string) {
     return createHash('sha256').update(verifier).digest('hex');
+  }
+
+  private get codePrefix() {
+    return this.deps.codePrefix ?? BiliRegisterUseCase.codePrefix;
   }
 }

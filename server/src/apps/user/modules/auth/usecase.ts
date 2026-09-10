@@ -1,4 +1,4 @@
-import type { UserLoginBody, UserRegisterBody } from '@shared/schema/user';
+import type { UserLoginBody, UserRegisterBody, UserResetPasswordBody } from '@shared/schema/user';
 
 import type { DbClient } from '#db';
 import type { AuthUseCase as SharedAuthUseCase } from '#modules/auth';
@@ -15,6 +15,7 @@ export class AuthUseCase {
     private readonly deps: {
       authUseCase: SharedAuthUseCase;
       db: DbClient;
+      biliPasswordResetUseCase?: BiliRegisterUseCase;
       biliRegisterUseCase?: BiliRegisterUseCase;
       biliRoom: number;
       pointAccountUseCase: PointAccountUseCase;
@@ -115,6 +116,42 @@ export class AuthUseCase {
     return user;
   }
 
+  async resetPassword(
+    input: UserResetPasswordBody,
+    credential: { code: string; verifier: string } | undefined,
+  ) {
+    if (!credential) {
+      throw new BadRequestError('UID 归属验证已失效，请重新验证');
+    }
+
+    const challenge = await this.biliPasswordResetUseCase.getOwnedChallenge(
+      credential.code,
+      credential.verifier,
+      input.biliUid,
+    );
+
+    if (
+      challenge?.status !== 'matched' ||
+      challenge.expectedBiliUid !== input.biliUid ||
+      challenge.biliUid !== input.biliUid
+    ) {
+      throw new BadRequestError('UID 归属验证已失效，请重新验证');
+    }
+
+    const user = await this.deps.userUseCase.getAvailableByBiliUid(input.biliUid);
+    const consumed = await this.biliPasswordResetUseCase.consumeChallenge(
+      credential.code,
+      credential.verifier,
+      input.biliUid,
+    );
+
+    if (!consumed) {
+      throw new BadRequestError('UID 归属验证已失效，请重新验证');
+    }
+
+    await this.deps.userUseCase.setPassword(user.id, input.newPassword);
+  }
+
   async createBiliRegisterCode(biliUid: string) {
     const { challenge, verifier } = await this.biliRegisterUseCase.createChallenge(biliUid);
 
@@ -163,11 +200,72 @@ export class AuthUseCase {
     };
   }
 
+  async createBiliPasswordResetCode(biliUid: string) {
+    await this.deps.userUseCase.getAvailableByBiliUid(biliUid);
+    const { challenge, verifier } = await this.biliPasswordResetUseCase.createChallenge(biliUid);
+
+    return {
+      code: challenge.code,
+      expiresAt: challenge.expiresAt,
+      roomId: this.deps.biliRoom,
+      verifier,
+    };
+  }
+
+  async getBiliPasswordResetCodeStatus(
+    biliUid: string,
+    code: string | undefined,
+    verifier: string | undefined,
+  ) {
+    const challenge = await this.biliPasswordResetUseCase.getOwnedChallenge(
+      code,
+      verifier,
+      biliUid,
+    );
+
+    if (
+      !challenge ||
+      challenge.status === 'consumed' ||
+      challenge.expectedBiliUid !== biliUid ||
+      (challenge.status === 'matched' && challenge.biliUid !== biliUid)
+    ) {
+      throw new BadRequestError('UID 归属验证信息不匹配，请重新验证');
+    }
+
+    if (challenge.status === 'matched') {
+      return {
+        status: 'matched' as const,
+        code: challenge.code,
+        expiresAt: challenge.expiresAt,
+        roomId: this.deps.biliRoom,
+        biliUser: {
+          uid: challenge.biliUid!,
+          name: challenge.biliName,
+        },
+      };
+    }
+
+    return {
+      status: 'pending' as const,
+      code: challenge.code,
+      expiresAt: challenge.expiresAt,
+      roomId: this.deps.biliRoom,
+    };
+  }
+
   private get biliRegisterUseCase() {
     if (!this.deps.biliRegisterUseCase) {
       throw new Error('Bilibili register use case is not configured');
     }
 
     return this.deps.biliRegisterUseCase;
+  }
+
+  private get biliPasswordResetUseCase() {
+    if (!this.deps.biliPasswordResetUseCase) {
+      throw new Error('Bilibili password reset use case is not configured');
+    }
+
+    return this.deps.biliPasswordResetUseCase;
   }
 }

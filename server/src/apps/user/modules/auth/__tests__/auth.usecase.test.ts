@@ -25,6 +25,7 @@ function createUseCase(
   options: {
     consumeError?: Error;
     migrationError?: Error;
+    passwordResetChallenge?: BiliRegisterChallenge | null;
     rewardError?: Error;
   } = {},
 ) {
@@ -49,6 +50,18 @@ function createUseCase(
 
     return challenge;
   });
+  const passwordResetChallenge = Object.hasOwn(options, 'passwordResetChallenge')
+    ? options.passwordResetChallenge!
+    : challenge;
+  const getPasswordResetChallenge = mock(async () => passwordResetChallenge);
+  const consumePasswordResetChallenge = mock(async () => passwordResetChallenge);
+  const getAvailableByBiliUid = mock(async () => ({
+    id: 'user-id',
+    biliUid: input.biliUid,
+    username: input.username,
+    status: 'active' as const,
+  }));
+  const setPassword = mock(async () => {});
   const replayLegacyMigrations = mock(async () => {
     if (options.migrationError) throw options.migrationError;
 
@@ -57,6 +70,10 @@ function createUseCase(
   const warn = mock(() => {});
   const useCase = new AuthUseCase({
     authUseCase: {} as SharedAuthUseCase,
+    biliPasswordResetUseCase: {
+      consumeChallenge: consumePasswordResetChallenge,
+      getOwnedChallenge: getPasswordResetChallenge,
+    } as unknown as BiliRegisterUseCase,
     biliRegisterUseCase: {
       consumeChallenge,
       getOwnedChallenge,
@@ -67,17 +84,21 @@ function createUseCase(
     } as unknown as DbClient,
     pointAccountUseCase: { replayLegacyMigrations } as unknown as PointAccountUseCase,
     rewardUseCase: { replayRewardBiliGuardByUserId } as unknown as RewardUseCase,
-    userUseCase: { create } as unknown as UserUseCase,
+    userUseCase: { create, getAvailableByBiliUid, setPassword } as unknown as UserUseCase,
     logger: { warn },
   });
 
   return {
     consumeChallenge,
+    consumePasswordResetChallenge,
     create,
     getOwnedChallenge,
+    getPasswordResetChallenge,
+    getAvailableByBiliUid,
     replayRewardBiliGuardByUserId,
     replayLegacyMigrations,
     tx,
+    setPassword,
     useCase,
     warn,
   };
@@ -242,4 +263,61 @@ it('用户创建成功后验证消费或奖励回放失败不会让注册失败'
     biliUid: input.biliUid,
   });
   expect(warn).toHaveBeenCalledTimes(2);
+});
+
+it('忘记密码只接受独立的密码重置验证并设置新密码', async () => {
+  const challenge = matchedChallenge();
+  const {
+    consumeChallenge,
+    consumePasswordResetChallenge,
+    getOwnedChallenge,
+    getPasswordResetChallenge,
+    setPassword,
+    useCase,
+  } = createUseCase(challenge, { passwordResetChallenge: challenge });
+
+  await expect(
+    useCase.resetPassword({ biliUid: input.biliUid, newPassword: 'new_password_1' }, credential),
+  ).resolves.toBeUndefined();
+
+  expect(getPasswordResetChallenge).toHaveBeenCalledWith(
+    credential.code,
+    credential.verifier,
+    input.biliUid,
+  );
+  expect(consumePasswordResetChallenge).toHaveBeenCalledWith(
+    credential.code,
+    credential.verifier,
+    input.biliUid,
+  );
+  expect(setPassword).toHaveBeenCalledWith('user-id', 'new_password_1');
+  expect(getOwnedChallenge).not.toHaveBeenCalled();
+  expect(consumeChallenge).not.toHaveBeenCalled();
+});
+
+it('忘记密码拒绝缺少或失效的密码重置验证', async () => {
+  const { setPassword, useCase } = createUseCase(matchedChallenge(), {
+    passwordResetChallenge: null,
+  });
+
+  await expect(
+    useCase.resetPassword({ biliUid: input.biliUid, newPassword: 'new_password_1' }, undefined),
+  ).rejects.toBeInstanceOf(BadRequestError);
+  await expect(
+    useCase.resetPassword({ biliUid: input.biliUid, newPassword: 'new_password_1' }, credential),
+  ).rejects.toBeInstanceOf(BadRequestError);
+  expect(setPassword).not.toHaveBeenCalled();
+});
+
+it('忘记密码在验证凭证无法原子消费时不会设置密码', async () => {
+  const challenge = matchedChallenge();
+  const { consumePasswordResetChallenge, setPassword, useCase } = createUseCase(challenge, {
+    passwordResetChallenge: challenge,
+  });
+  consumePasswordResetChallenge.mockResolvedValueOnce(null);
+
+  await expect(
+    useCase.resetPassword({ biliUid: input.biliUid, newPassword: 'new_password_1' }, credential),
+  ).rejects.toBeInstanceOf(BadRequestError);
+  expect(setPassword).not.toHaveBeenCalled();
 });

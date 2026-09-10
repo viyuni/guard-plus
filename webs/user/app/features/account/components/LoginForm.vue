@@ -10,6 +10,7 @@ import { useLogin } from '../mutations';
 
 const emit = defineEmits<{
   authenticated: [];
+  forgotPassword: [];
 }>();
 
 const loginMutation = useLogin();
@@ -41,9 +42,19 @@ defineExpose({
       <Input v-bind="componentField" />
     </FormFieldItem>
 
-    <FormFieldItem v-slot="{ componentField }" name="password" label="密码" required>
-      <Input v-bind="componentField" type="password" />
-    </FormFieldItem>
+    <div class="grid gap-2">
+      <FormFieldItem v-slot="{ componentField }" name="password" label="密码" required>
+        <Input v-bind="componentField" type="password" autocomplete="current-password" />
+      </FormFieldItem>
+      <Button
+        type="button"
+        variant="link"
+        class="text-muted-foreground hover:text-primary h-auto justify-self-end p-0 text-xs"
+        @click="emit('forgotPassword')"
+      >
+        忘记密码？
+      </Button>
+    </div>
 
     <DialogFooter>
       <Button type="submit" class="w-full" :disabled="!canSubmit">

@@ -6,6 +6,7 @@ type Tabs = (typeof tabs)[number];
 <script setup lang="ts">
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@web/ui/components/ui/tabs';
 
+import ForgotPasswordDialog from './ForgotPasswordDialog.vue';
 import LoginForm from './LoginForm.vue';
 import RegisterForm from './RegisterForm.vue';
 
@@ -23,6 +24,7 @@ const loginForm = useTemplateRef<InstanceType<typeof LoginForm>>('loginForm');
 const registerForm = useTemplateRef<InstanceType<typeof RegisterForm>>('registerForm');
 
 const selectedAuthMode = ref<Tabs>(props.authMode);
+const forgotPasswordOpen = ref(false);
 
 watch(
   () => props.authMode,
@@ -38,6 +40,10 @@ function handleAuthenticated() {
 
 function handleRegistered() {
   selectedAuthMode.value = 'login';
+}
+
+function openForgotPasswordDialog() {
+  forgotPasswordOpen.value = true;
 }
 
 watch(open, isOpen => {
@@ -78,7 +84,11 @@ watch(open, isOpen => {
             class="col-start-1 row-start-1 grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-200 ease-out data-[state=active]:grid-rows-[1fr] data-[state=active]:opacity-100 data-[state=inactive]:pointer-events-none"
           >
             <div class="min-h-0 overflow-hidden p-1">
-              <LoginForm ref="loginForm" @authenticated="handleAuthenticated" />
+              <LoginForm
+                ref="loginForm"
+                @authenticated="handleAuthenticated"
+                @forgot-password="openForgotPasswordDialog"
+              />
             </div>
           </TabsContent>
 
@@ -95,4 +105,6 @@ watch(open, isOpen => {
       </Tabs>
     </DialogContent>
   </Dialog>
+
+  <ForgotPasswordDialog v-model:open="forgotPasswordOpen" />
 </template>

@@ -81,6 +81,7 @@ export function createContainer({ db, env }: CreateSharedContextOptions) {
     repositories: {
       authSessionRepo: auth.authSessionRepo,
       biliRegisterRepo: auth.biliRegisterRepo,
+      biliPasswordResetRepo: auth.biliPasswordResetRepo,
       userRepo: user.userRepo,
       pointAccountRepo: point.pointAccountRepo,
       legacyPointMigrationRepo: point.legacyPointMigrationRepo,
@@ -97,6 +98,7 @@ export function createContainer({ db, env }: CreateSharedContextOptions) {
     useCases: {
       authUseCase: auth.authUseCase,
       biliRegisterUseCase: auth.biliRegisterUseCase,
+      biliPasswordResetUseCase: auth.biliPasswordResetUseCase,
       userUseCase: user.userUseCase,
       pointTypeUseCase: point.pointTypeUseCase,
       pointAccountUseCase: point.pointAccountUseCase,
@@ -146,6 +148,7 @@ export function createEventContainer({ db, env }: CreateEventContextOptions) {
       biliEventRepo: reward.biliEventRepo,
       rewardRuleRepo: reward.rewardRuleRepo,
       biliRegisterRepo: biliRegister.biliRegisterRepo,
+      biliPasswordResetRepo: biliRegister.biliPasswordResetRepo,
     },
     useCases: {
       userUseCase: user.userUseCase,
@@ -156,6 +159,7 @@ export function createEventContainer({ db, env }: CreateEventContextOptions) {
       pointConversionUseCase: point.pointConversionUseCase,
       rewardUseCase: reward.rewardUseCase,
       biliRegisterUseCase: biliRegister.biliRegisterUseCase,
+      biliPasswordResetUseCase: biliRegister.biliPasswordResetUseCase,
     },
   };
 }
