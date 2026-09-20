@@ -17,6 +17,7 @@ import {
   rewardRules,
   users,
 } from '#db/schema';
+import { redis } from '#redis';
 
 import { createContainer } from '../../context';
 import type { BiliGuardRewardEvent } from '../../modules/reward';
@@ -24,6 +25,7 @@ import { getTestDatabase } from './test-database';
 
 const testDatabaseUrl = Bun.env.TEST_DATABASE_URL;
 const batches = new Set<string>();
+const runtimes = new Set<Awaited<ReturnType<typeof createContainer>>['runtime']>();
 
 export const describeWithDatabase = testDatabaseUrl ? describe : describe.skip;
 
@@ -44,6 +46,8 @@ export function installConcurrencyTestHooks() {
       }
     } finally {
       batches.clear();
+      await Promise.all([...runtimes].map(runtime => runtime.dispose()));
+      runtimes.clear();
     }
   });
 }
@@ -73,9 +77,10 @@ export async function expectRejectsInstanceOf<T extends Error>(
   throw new Error(`expected promise to reject with ${errorType.name}`);
 }
 
-export function createDeps() {
-  const { repositories, useCases } = createContainer({
+export async function createDeps() {
+  const { repositories, useCases, runtime } = await createContainer({
     db,
+    redis,
     env: {
       NODE_ENV: 'test',
       LOG_LEVEL: 'error',
@@ -93,6 +98,8 @@ export function createDeps() {
     },
   });
 
+  runtimes.add(runtime);
+
   return {
     ...repositories,
     ...useCases,
@@ -100,7 +107,7 @@ export function createDeps() {
 }
 
 export async function seedPointType(name: string) {
-  const { pointTypeUseCase } = createDeps();
+  const { pointTypeUseCase } = await createDeps();
   const pointType = expectSeeded(
     await pointTypeUseCase.create({
       name,
@@ -114,7 +121,8 @@ export async function seedPointType(name: string) {
 export async function seedUser(name: string, biliUid?: `${number}`) {
   const userBiliUid =
     biliUid ?? (`${Date.now()}${Math.floor(Math.random() * 100_000_000)}` as const);
-  const created = await createDeps().userUseCase.create({
+  const { userUseCase } = await createDeps();
+  const created = await userUseCase.create({
     biliUid: userBiliUid,
     username: name,
     password: 'test_password',
@@ -132,7 +140,7 @@ export async function seedProduct(input: {
   startAt?: Date;
   stock: number;
 }) {
-  const { productUseCase } = createDeps();
+  const { productUseCase } = await createDeps();
   const product = expectSeeded(
     await productUseCase.create({
       ...input,
@@ -150,7 +158,8 @@ export async function seedConversionFixture(
   const fromPointType = await seedPointType(`${prefix}_from_point`);
   const toPointType = await seedPointType(`${prefix}_to_point`);
   const user = await seedUser(`${prefix}_conversion_user`);
-  const rule = await createDeps().pointConversionUseCase.create({
+  const { pointConversionUseCase } = await createDeps();
+  const rule = await pointConversionUseCase.create({
     name: `${prefix}_conversion_rule`,
     fromPointTypeId: fromPointType.id,
     toPointTypeId: toPointType.id,
@@ -173,7 +182,8 @@ export async function createConversionRule(
   toPointTypeId: string,
   overrides: Partial<CreatePointConversionRuleBody> = {},
 ) {
-  const rule = await createDeps().pointConversionUseCase.create({
+  const { pointConversionUseCase } = await createDeps();
+  const rule = await pointConversionUseCase.create({
     name: `${prefix}_conversion_rule`,
     fromPointTypeId,
     toPointTypeId,
@@ -190,7 +200,8 @@ export async function createRewardRule(
   pointTypeId: string,
   overrides: Partial<CreateRewardRuleBody> = {},
 ) {
-  const rule = await createDeps().rewardRuleUseCase.create({
+  const { rewardRuleUseCase } = await createDeps();
+  const rule = await rewardRuleUseCase.create({
     name: `${prefix}_reward_rule_${crypto.randomUUID().slice(0, 8)}`,
     conditions: {
       type: 'biliGuard',
@@ -212,7 +223,9 @@ export async function grantPoints(input: {
   delta: number;
   nonce: string;
 }) {
-  return createDeps().pointAccountUseCase.adjustBalance(input.adminId, {
+  const { pointAccountUseCase } = await createDeps();
+
+  return pointAccountUseCase.adjustBalance(input.adminId, {
     userId: input.userId,
     pointTypeId: input.pointTypeId,
     delta: input.delta,

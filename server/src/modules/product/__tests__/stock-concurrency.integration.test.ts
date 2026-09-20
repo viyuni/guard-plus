@@ -25,7 +25,7 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
   it('兑换商城列表会展示监修中商品', async () => {
     const prefix = newBatch('product_reviewing_list');
     const pointType = await seedPointType(`${prefix}_point`);
-    const { productUseCase } = createDeps();
+    const { productUseCase } = await createDeps();
     const product = expectSeeded(
       await productUseCase.create({
         name: `${prefix}_product`,
@@ -56,7 +56,7 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
       price: 1,
       stock: 2_147_483_647,
     });
-    const { productUseCase } = createDeps();
+    const { productUseCase } = await createDeps();
 
     await expectRejectsInstanceOf(
       productUseCase.adminAdjustStock(product.id, `${prefix}_admin`, {
@@ -74,7 +74,7 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
   it('商品创建允许重复名称', async () => {
     const prefix = newBatch('product_name');
     const pointType = await seedPointType(`${prefix}_point`);
-    const { productUseCase } = createDeps();
+    const { productUseCase } = await createDeps();
 
     const first = await productUseCase.create({
       name: `${prefix}_product`,
@@ -101,7 +101,7 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
   it('商品创建会拒绝重复编码', async () => {
     const prefix = newBatch('product_code');
     const pointType = await seedPointType(`${prefix}_point`);
-    const { productUseCase } = createDeps();
+    const { productUseCase } = await createDeps();
     const code = `${prefix}_code`;
 
     await productUseCase.create({
@@ -127,7 +127,7 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
   it('商品编码唯一索引会阻止并发重复创建', async () => {
     const prefix = newBatch('product_code_concurrency');
     const pointType = await seedPointType(`${prefix}_point`);
-    const { productUseCase } = createDeps();
+    const { productUseCase } = await createDeps();
     const code = `${prefix}_code`;
     const results = await runConcurrent(5, index =>
       productUseCase.create({
@@ -159,7 +159,7 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
       stock: 1,
     });
 
-    const { productUseCase } = createDeps();
+    const { productUseCase } = await createDeps();
 
     const updated = await productUseCase.update(second.id, {
       name: first.name,
@@ -185,7 +185,7 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
     });
 
     await expectRejectsInstanceOf(
-      createDeps().productUseCase.update(second.id, { code: first.code }),
+      (await createDeps()).productUseCase.update(second.id, { code: first.code }),
       ProductCodeExistsError,
     );
   });
@@ -200,7 +200,7 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
       stock: 1,
     });
 
-    const { productUseCase } = createDeps();
+    const { productUseCase } = await createDeps();
     const updated = await productUseCase.update(product.id, {
       name: product.name,
       price: 2,
@@ -220,7 +220,7 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
       stock: 1,
     });
 
-    const { productUseCase } = createDeps();
+    const { productUseCase } = await createDeps();
 
     await productUseCase.remove(product.id);
 
@@ -246,7 +246,9 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
     const prefix = newBatch('product_code_search');
     const pointType = await seedPointType(`${prefix}_point`);
     const product = expectSeeded(
-      await createDeps().productUseCase.create({
+      await (
+        await createDeps()
+      ).productUseCase.create({
         code: `${prefix}_SEARCH_CODE`,
         name: `${prefix}_product`,
         pointTypeId: pointType.id,
@@ -256,7 +258,9 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
       'seed searchable product failed',
     );
 
-    const page = await createDeps().productUseCase.pageManage({
+    const page = await (
+      await createDeps()
+    ).productUseCase.pageManage({
       keyword: 'search_code',
       page: 1,
       pageSize: 10,
@@ -275,7 +279,7 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
       stock: 3,
     });
 
-    const { productUseCase } = createDeps();
+    const { productUseCase } = await createDeps();
     const results = await runConcurrent(10, index =>
       productUseCase.adminAdjustStock(product.id, `${prefix}_admin_${index}`, {
         delta: -1,
@@ -300,7 +304,7 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
       stock: 0,
     });
 
-    const { productUseCase } = createDeps();
+    const { productUseCase } = await createDeps();
     const results = await runConcurrent(5, () =>
       productUseCase.adminAdjustStock(product.id, `${prefix}_admin`, {
         delta: 1,

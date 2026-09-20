@@ -1,11 +1,12 @@
 import { fakerZH_CN as faker } from '@faker-js/faker';
+import { Cyrene } from 'cyrenejs';
 import { seed as drizzleSeed } from 'drizzle-seed';
 
+import { Database, DataSecret, BiliRoom, PointImageUseCase, RewardLogger } from '#context/tokens';
+
 import { createDatabase, db } from '.';
-import { createPointContext } from '../modules/point/context';
 import type { BiliGuardRewardEvent } from '../modules/reward';
-import { createRewardContext } from '../modules/reward/context';
-import { createUserContext } from '../modules/user/context';
+import { rewardUseCase } from '../modules/reward/context';
 import {
   admins,
   pointTypes,
@@ -422,22 +423,17 @@ async function seedBiliGuardRewardEvents(targetDb: typeof db) {
   await seedRewardRules(targetDb, pointTypeMap);
   await seedPointConversionRules(targetDb, pointTypeMap);
 
-  const user = createUserContext({
-    db: targetDb,
-    dataSecret: Bun.env.DATA_SECRET ?? 'seed-data-secret-seed-data-secret',
+  await using runtime = new Cyrene({
+    providers: { rewardUseCase },
+    bindings: [
+      { token: Database, value: targetDb },
+      { token: DataSecret, value: Bun.env.DATA_SECRET ?? 'seed-data-secret-seed-data-secret' },
+      { token: BiliRoom, value: undefined },
+      { token: PointImageUseCase, value: undefined },
+      { token: RewardLogger, value: undefined },
+    ],
   });
-  const point = createPointContext({
-    db: targetDb,
-    userUseCase: user.userUseCase,
-  });
-  const reward = createRewardContext({
-    db: targetDb,
-    pointAccountRepo: point.pointAccountRepo,
-    pointBalanceUseCase: point.pointBalanceUseCase,
-    pointTransactionRepo: point.pointTransactionRepo,
-    pointTypeUseCase: point.pointTypeUseCase,
-    userUseCase: user.userUseCase,
-  });
+  const reward = await runtime.start();
 
   for (const event of seedBiliGuardEvents) {
     await reward.rewardUseCase.rewardBiliGuard(event);

@@ -28,7 +28,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
     const prefix = newBatch('order_product_reviewing');
     const pointType = await seedPointType(`${prefix}_point`);
     const user = await seedUser(`${prefix}_user`);
-    const { orderUseCase, productUseCase } = createDeps();
+    const { orderUseCase, productUseCase } = await createDeps();
     const product = expectSeeded(
       await productUseCase.create({
         name: `${prefix}_product`,
@@ -81,7 +81,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
       stock: 3,
     });
 
-    const { orderUseCase } = createDeps();
+    const { orderUseCase } = await createDeps();
 
     await grantPoints({
       adminId: `${prefix}_admin`,
@@ -125,7 +125,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
       stock: 5,
     });
 
-    const { orderUseCase } = createDeps();
+    const { orderUseCase } = await createDeps();
 
     await grantPoints({
       adminId: `${prefix}_admin`,
@@ -193,7 +193,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
     const prefix = newBatch('order_product_time_range');
     const pointType = await seedPointType(`${prefix}_point`);
     const user = await seedUser(`${prefix}_user`);
-    const { orderUseCase } = createDeps();
+    const { orderUseCase } = await createDeps();
 
     await grantPoints({
       adminId: `${prefix}_admin`,
@@ -251,7 +251,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
       price: 1,
       stock: 1,
     });
-    const { orderUseCase } = createDeps();
+    const { orderUseCase } = await createDeps();
 
     await grantPoints({
       adminId: `${prefix}_admin`,
@@ -314,7 +314,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
       price: 1,
       stock: 1,
     });
-    const { orderUseCase } = createDeps();
+    const { orderUseCase } = await createDeps();
 
     await grantPoints({
       adminId: `${prefix}_admin`,

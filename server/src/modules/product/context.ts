@@ -1,36 +1,28 @@
-import type { DbClient } from '#db';
-import type { ImageUseCase } from '#modules/image';
-import type { PointTypeUseCase } from '#modules/point';
+import { ripple } from 'cyrenejs';
+
+import { Database } from '#context/tokens';
+import { imageUseCase } from '#modules/image/context';
+import { pointTypeUseCase } from '#modules/point/context';
 
 import { ProductRepository, StockMovementRepository } from './repository';
 import { ProductUseCase, StockMovementUseCase } from './usecase';
 
-export function createProductContext({
-  db,
-  imageUseCase,
-  pointTypeUseCase,
-}: {
-  db: DbClient;
-  imageUseCase: ImageUseCase;
-  pointTypeUseCase: PointTypeUseCase;
-}) {
-  const productRepo = new ProductRepository(db);
-  const stockMovementRepo = new StockMovementRepository(db);
-  const productUseCase = new ProductUseCase({
-    db,
-    pointTypeUseCase,
-    productRepo,
-    stockMovementRepo,
-    imageUseCase,
-  });
-  const stockMovementUseCase = new StockMovementUseCase({
-    stockMovementRepo,
-  });
+export const productRepo = ripple({ db: Database }, ({ db }) => new ProductRepository(db), {
+  debugName: 'ProductRepository',
+});
+export const stockMovementRepo = ripple(
+  { db: Database },
+  ({ db }) => new StockMovementRepository(db),
+  { debugName: 'StockMovementRepository' },
+);
 
-  return {
-    productRepo,
-    stockMovementRepo,
-    productUseCase,
-    stockMovementUseCase,
-  };
-}
+export const productUseCase = ripple(
+  { db: Database, pointTypeUseCase, productRepo, stockMovementRepo, imageUseCase },
+  deps => new ProductUseCase(deps),
+  { debugName: 'ProductUseCase' },
+);
+export const stockMovementUseCase = ripple(
+  { stockMovementRepo },
+  deps => new StockMovementUseCase(deps),
+  { debugName: 'StockMovementUseCase' },
+);

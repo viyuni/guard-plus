@@ -25,7 +25,7 @@ export default defineNuxtPlugin(() => {
 
   const originalFetch = window.fetch.bind(window);
 
-  window.fetch = async (input, init) => {
+  window.fetch = (async (input, init) => {
     const response = await originalFetch(input, init);
 
     if (response.status !== 401 || !isApiRequest(input, apiBaseUrl)) {
@@ -52,5 +52,5 @@ export default defineNuxtPlugin(() => {
     });
 
     return response;
-  };
+  }) as typeof window.fetch;
 });

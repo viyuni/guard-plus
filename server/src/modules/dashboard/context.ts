@@ -1,14 +1,15 @@
-import type { DbClient } from '#db';
+import { ripple } from 'cyrenejs';
+
+import { Database } from '#context/tokens';
 
 import { DashboardRepository } from './repository';
 import { DashboardUseCase } from './usecase';
 
-export function createDashboardContext({ db }: { db: DbClient }) {
-  const dashboardRepo = new DashboardRepository(db);
-  const dashboardUseCase = new DashboardUseCase(dashboardRepo);
-
-  return {
-    dashboardRepo,
-    dashboardUseCase,
-  };
-}
+export const dashboardRepo = ripple({ db: Database }, ({ db }) => new DashboardRepository(db), {
+  debugName: 'DashboardRepository',
+});
+export const dashboardUseCase = ripple(
+  { dashboardRepo },
+  ({ dashboardRepo }) => new DashboardUseCase(dashboardRepo),
+  { debugName: 'DashboardUseCase' },
+);

@@ -1,31 +1,20 @@
-import type { DbClient } from '#db';
-import type { PointAccountRepository, PointBalanceUseCase, PointTypeUseCase } from '#modules/point';
-import type { ProductUseCase } from '#modules/product';
-import type { UserBasicInfoCrypto, UserUseCase } from '#modules/user';
+import { ripple } from 'cyrenejs';
+
+import { Database } from '#context/tokens';
+import { pointAccountRepo, pointBalanceUseCase, pointTypeUseCase } from '#modules/point/context';
+import { productUseCase } from '#modules/product/context';
+import { userBasicInfoCrypto, userUseCase } from '#modules/user/context';
 
 import { OrderRepository } from './repository';
 import { OrderUseCase } from './usecase';
 
-export function createOrderContext({
-  db,
-  pointAccountRepo,
-  pointBalanceUseCase,
-  pointTypeUseCase,
-  productUseCase,
-  userBasicInfoCrypto,
-  userUseCase,
-}: {
-  db: DbClient;
-  pointAccountRepo: PointAccountRepository;
-  pointBalanceUseCase: PointBalanceUseCase;
-  pointTypeUseCase: PointTypeUseCase;
-  productUseCase: ProductUseCase;
-  userBasicInfoCrypto: UserBasicInfoCrypto;
-  userUseCase: UserUseCase;
-}) {
-  const orderRepo = new OrderRepository(db);
-  const orderUseCase = new OrderUseCase({
-    db,
+export const orderRepo = ripple({ db: Database }, ({ db }) => new OrderRepository(db), {
+  debugName: 'OrderRepository',
+});
+
+export const orderUseCase = ripple(
+  {
+    db: Database,
     orderRepo,
     pointAccountRepo,
     pointBalanceUseCase,
@@ -33,10 +22,7 @@ export function createOrderContext({
     productUseCase,
     userBasicInfoCrypto,
     userUseCase,
-  });
-
-  return {
-    orderRepo,
-    orderUseCase,
-  };
-}
+  },
+  deps => new OrderUseCase(deps),
+  { debugName: 'OrderUseCase' },
+);

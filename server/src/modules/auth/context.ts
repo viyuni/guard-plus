@@ -1,59 +1,42 @@
-import type { RedisEnv } from '#env/redis';
-import type { RedisClient } from '#redis';
+import { ripple } from 'cyrenejs';
+
+import { Redis, RegisterCodeTtl, JwtSecret } from '#context/tokens';
 
 import { AuthSessionRedisRepository, BiliRegisterRedisRepository } from './repository';
 import { AuthUseCase, BiliRegisterUseCase } from './usecase';
 
-export function createBiliRegisterContext({
-  env,
-  redis,
-}: {
-  env: Pick<RedisEnv, 'BILI_REGISTER_CODE_TTL_SECONDS'>;
-  redis: RedisClient;
-}) {
-  const biliRegisterRepo = new BiliRegisterRedisRepository(
-    redis,
-    env.BILI_REGISTER_CODE_TTL_SECONDS,
-  );
-  const biliRegisterUseCase = new BiliRegisterUseCase({
-    biliRegisterRepo,
-    ttlSeconds: env.BILI_REGISTER_CODE_TTL_SECONDS,
-  });
-  const biliPasswordResetRepo = new BiliRegisterRedisRepository(
-    redis,
-    env.BILI_REGISTER_CODE_TTL_SECONDS,
-    'password-reset',
-  );
-  const biliPasswordResetUseCase = new BiliRegisterUseCase({
+export const authSessionRepo = ripple(
+  { redis: Redis },
+  ({ redis }) => new AuthSessionRedisRepository(redis),
+  { debugName: 'AuthSessionRepository' },
+);
+export const authUseCase = ripple(
+  { jwtSecret: JwtSecret, authSessionRepo },
+  ({ jwtSecret, authSessionRepo }) => new AuthUseCase(jwtSecret, authSessionRepo),
+  { debugName: 'AuthUseCase' },
+);
+
+export const biliRegisterRepo = ripple(
+  { redis: Redis, ttlSeconds: RegisterCodeTtl },
+  ({ redis, ttlSeconds }) => new BiliRegisterRedisRepository(redis, ttlSeconds),
+  { debugName: 'BiliRegisterRepository' },
+);
+export const biliRegisterUseCase = ripple(
+  { biliRegisterRepo, ttlSeconds: RegisterCodeTtl },
+  deps => new BiliRegisterUseCase(deps),
+  { debugName: 'BiliRegisterUseCase' },
+);
+
+export const biliPasswordResetRepo = ripple(
+  { redis: Redis, ttlSeconds: RegisterCodeTtl },
+  ({ redis, ttlSeconds }) => new BiliRegisterRedisRepository(redis, ttlSeconds, 'password-reset'),
+  { debugName: 'BiliPasswordResetRepository' },
+);
+export const biliPasswordResetUseCase = ripple(
+  {
     biliRegisterRepo: biliPasswordResetRepo,
-    codePrefix: 'P-',
-    ttlSeconds: env.BILI_REGISTER_CODE_TTL_SECONDS,
-  });
-
-  return {
-    biliRegisterRepo,
-    biliRegisterUseCase,
-    biliPasswordResetRepo,
-    biliPasswordResetUseCase,
-  };
-}
-
-export function createAuthContext({
-  env,
-  redis,
-}: {
-  env: Pick<RedisEnv, 'BILI_REGISTER_CODE_TTL_SECONDS'> & {
-    JWT_SECRET: string;
-  };
-  redis: RedisClient;
-}) {
-  const authSessionRepo = new AuthSessionRedisRepository(redis);
-  const authUseCase = new AuthUseCase(env.JWT_SECRET, authSessionRepo);
-  const biliRegister = createBiliRegisterContext({ env, redis });
-
-  return {
-    authSessionRepo,
-    authUseCase,
-    ...biliRegister,
-  };
-}
+    ttlSeconds: RegisterCodeTtl,
+  },
+  deps => new BiliRegisterUseCase({ ...deps, codePrefix: 'P-' }),
+  { debugName: 'BiliPasswordResetUseCase' },
+);

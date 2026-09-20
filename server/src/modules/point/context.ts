@@ -1,14 +1,15 @@
-import type { DbClient } from '#db';
-import type { ImageUseCase } from '#modules/image';
-import type { UserUseCase } from '#modules/user';
+import { ripple } from 'cyrenejs';
+
+import { Database, PointImageUseCase } from '#context/tokens';
+import { userUseCase } from '#modules/user/context';
 
 import {
   PointAccountRepository,
+  LegacyPointMigrationRepository,
   PointConversionRuleRepository,
   PointTransactionRepository,
   PointTypeRepository,
 } from './repository';
-import { LegacyPointMigrationRepository } from './repository';
 import {
   PointAccountUseCase,
   PointBalanceUseCase,
@@ -17,63 +18,65 @@ import {
   PointTypeUseCase,
 } from './usecase';
 
-export function createPointContext({
-  db,
-  imageUseCase,
-  userUseCase,
-}: {
-  db: DbClient;
-  imageUseCase?: ImageUseCase;
-  userUseCase: UserUseCase;
-}) {
-  const pointAccountRepo = new PointAccountRepository(db);
-  const legacyPointMigrationRepo = new LegacyPointMigrationRepository(db);
-  const pointConversionRuleRepo = new PointConversionRuleRepository(db);
-  const pointTransactionRepo = new PointTransactionRepository(db);
-  const pointTypeRepo = new PointTypeRepository(db);
+export const pointAccountRepo = ripple(
+  { db: Database },
+  ({ db }) => new PointAccountRepository(db),
+  { debugName: 'PointAccountRepository' },
+);
+export const legacyPointMigrationRepo = ripple(
+  { db: Database },
+  ({ db }) => new LegacyPointMigrationRepository(db),
+  { debugName: 'LegacyPointMigrationRepository' },
+);
+export const pointConversionRuleRepo = ripple(
+  { db: Database },
+  ({ db }) => new PointConversionRuleRepository(db),
+  { debugName: 'PointConversionRuleRepository' },
+);
+export const pointTransactionRepo = ripple(
+  { db: Database },
+  ({ db }) => new PointTransactionRepository(db),
+  { debugName: 'PointTransactionRepository' },
+);
+export const pointTypeRepo = ripple({ db: Database }, ({ db }) => new PointTypeRepository(db), {
+  debugName: 'PointTypeRepository',
+});
 
-  const pointTypeUseCase = new PointTypeUseCase({
-    imageUseCase,
-    pointTypeRepo,
-  });
-  const pointBalanceUseCase = new PointBalanceUseCase({
-    pointAccountRepo,
-    pointTransactionRepo,
-    pointTypeUseCase,
-    userUseCase,
-  });
-  const pointAccountUseCase = new PointAccountUseCase({
-    db,
+export const pointTypeUseCase = ripple(
+  { imageUseCase: PointImageUseCase, pointTypeRepo },
+  deps => new PointTypeUseCase(deps),
+  { debugName: 'PointTypeUseCase' },
+);
+export const pointBalanceUseCase = ripple(
+  { pointAccountRepo, pointTransactionRepo, pointTypeUseCase, userUseCase },
+  deps => new PointBalanceUseCase(deps),
+  { debugName: 'PointBalanceUseCase' },
+);
+export const pointAccountUseCase = ripple(
+  {
+    db: Database,
     legacyPointMigrationRepo,
     pointAccountRepo,
     pointBalanceUseCase,
     pointTypeUseCase,
     userUseCase,
-  });
-  const pointTransactionUseCase = new PointTransactionUseCase({
-    db,
-    pointAccountRepo,
-    pointBalanceUseCase,
-    pointTransactionRepo,
-  });
-  const pointConversionUseCase = new PointConversionUseCase({
-    db,
+  },
+  deps => new PointAccountUseCase(deps),
+  { debugName: 'PointAccountUseCase' },
+);
+export const pointTransactionUseCase = ripple(
+  { db: Database, pointAccountRepo, pointBalanceUseCase, pointTransactionRepo },
+  deps => new PointTransactionUseCase(deps),
+  { debugName: 'PointTransactionUseCase' },
+);
+export const pointConversionUseCase = ripple(
+  {
+    db: Database,
     pointAccountRepo,
     pointBalanceUseCase,
     pointConversionRuleRepo,
     pointTypeUseCase,
-  });
-
-  return {
-    legacyPointMigrationRepo,
-    pointAccountRepo,
-    pointConversionRuleRepo,
-    pointTransactionRepo,
-    pointTypeRepo,
-    pointTypeUseCase,
-    pointAccountUseCase,
-    pointBalanceUseCase,
-    pointTransactionUseCase,
-    pointConversionUseCase,
-  };
-}
+  },
+  deps => new PointConversionUseCase(deps),
+  { debugName: 'PointConversionUseCase' },
+);

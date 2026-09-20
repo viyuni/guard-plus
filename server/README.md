@@ -18,6 +18,23 @@ This package contains the admin and user API apps, event ingestion runtime, back
 
 ## Development
 
+### Dependency injection
+
+Module `context.ts` files declare individual Repository and UseCase providers with
+`cyrenejs` `ripple`. Business classes keep ordinary constructor dependencies.
+Infrastructure and configuration tokens live in `src/context/tokens.ts`.
+
+`createContainer({ db, redis, env })`, `createEventContainer(...)`, and
+`createAppContext(...)` are asynchronous. Each call owns an isolated Cyrene runtime;
+providers share instances only within that runtime. The returned container exposes
+`repositories`, `useCases`, and `runtime`. HTTP contexts dispose the runtime on
+Elysia stop; scripts and tests must dispose it explicitly or use `await using`.
+Externally bound DB/Redis clients remain owned by the caller.
+
+Event and seed entrypoints use smaller graphs without HTTP authentication or image
+configuration. Add new providers to the owning module and compose them at the app
+boundary; routes consume decorated instances instead of creating UseCases.
+
 ```bash
 vpr @server/app#dev:admin
 vpr @server/app#dev:user

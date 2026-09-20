@@ -3,19 +3,22 @@ import type { Guard } from '@viyuni/bevent-relay/events';
 import { Worker } from 'bunqueue/client';
 
 import { createEventContainer } from '#context';
+import { db } from '#db';
 import { sharedEnv } from '#env/shared';
 import { publishBilibiliGuardEvent } from '#queues';
 import { BILIBILI_EVENT_QUEUE_NAME } from '#queues';
+import { redis } from '#redis';
 import { logger } from '#utils/logger';
-import { db } from '~/src/db';
 
 import { eventEnv } from './env';
 import { createEventServer } from './server';
 
 const {
+  runtime,
   useCases: { biliPasswordResetUseCase, biliRegisterUseCase, rewardUseCase },
-} = createEventContainer({
+} = await createEventContainer({
   db,
+  redis,
   env: eventEnv,
 });
 
@@ -87,7 +90,14 @@ listener.on('event', event => {
   }
 });
 
-createEventServer(listener, eventEnv.EVENT_PORT).compile().listen({}, logger.printUrls);
+createEventServer(listener, eventEnv.EVENT_PORT)
+  .onStop(async () => {
+    await listener.stop();
+    await _worker.close();
+    await runtime.dispose();
+  })
+  .compile()
+  .listen({}, logger.printUrls);
 
 await listener.start().then(() => {
   logger.info('Bilibili Event Listener started...');

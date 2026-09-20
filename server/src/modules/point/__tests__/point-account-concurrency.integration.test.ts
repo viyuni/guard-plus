@@ -62,7 +62,7 @@ describeWithDatabase('积分账户真实数据库并发保护', () => {
     const prefix = newBatch();
     const pointType = await seedPointType(`${prefix}_balance_point`);
     const user = await seedUser(`${prefix}_user`);
-    const { pointAccountUseCase } = createDeps();
+    const { pointAccountUseCase } = await createDeps();
 
     await grantPoints({
       adminId: `${prefix}_admin`,
@@ -98,7 +98,7 @@ describeWithDatabase('积分账户真实数据库并发保护', () => {
     const prefix = newBatch();
     const pointType = await seedPointType(`${prefix}_transaction_unique_point`);
     const user = await seedUser(`${prefix}_transaction_user`);
-    const { pointAccountUseCase } = createDeps();
+    const { pointAccountUseCase } = await createDeps();
 
     const results = await runConcurrent(5, () =>
       pointAccountUseCase.adjustBalance(`${prefix}_admin`, {
@@ -136,7 +136,7 @@ describeWithDatabase('积分账户真实数据库并发保护', () => {
     const pointType = await seedPointType(`${prefix}_mismatch_point`);
     const otherPointType = await seedPointType(`${prefix}_mismatch_other_point`);
     const user = await seedUser(`${prefix}_mismatch_user`);
-    const { pointAccountRepo, pointBalanceUseCase } = createDeps();
+    const { pointAccountRepo, pointBalanceUseCase } = await createDeps();
 
     await expectRejectsInstanceOf(
       db.transaction(async tx => {
@@ -163,7 +163,7 @@ describeWithDatabase('积分账户真实数据库并发保护', () => {
     const prefix = newBatch();
     const pointType = await seedPointType(`${prefix}_idempotency_conflict_point`);
     const user = await seedUser(`${prefix}_idempotency_conflict_user`);
-    const { pointAccountUseCase } = createDeps();
+    const { pointAccountUseCase } = await createDeps();
     const input = {
       userId: user.id,
       pointTypeId: pointType.id,
@@ -188,7 +188,7 @@ describeWithDatabase('积分账户真实数据库并发保护', () => {
     const prefix = newBatch();
     const pointType = await seedPointType(`${prefix}_reversal_point`);
     const user = await seedUser(`${prefix}_reversal_user`);
-    const { pointTransactionUseCase } = createDeps();
+    const { pointTransactionUseCase } = await createDeps();
     const grantResult = await grantPoints({
       adminId: `${prefix}_admin`,
       userId: user.id,

@@ -1,16 +1,24 @@
+import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
 import { adminEnv } from '#apps/admin/env';
 import { createAppContext } from '#context';
+import { Database } from '#context/tokens';
 import { db } from '#db';
+import { authUseCase } from '#modules/auth/context';
+import { pointAccountUseCase } from '#modules/point/context';
+import { rewardUseCase } from '#modules/reward/context';
+import { userUseCase } from '#modules/user/context';
+import { redis } from '#redis';
 
 import { AdminRepository } from './modules/admin/repository';
 import { AdminUseCase } from './modules/admin/usecase';
 import { AdminAuthUseCase } from './modules/auth/usecase';
 import { AdminUserUseCase } from './modules/user/usecase';
 
-export const { context, container: adminContainer } = createAppContext({
+export const { context, container: adminContainer } = await createAppContext({
   db,
+  redis,
   env: {
     ...adminEnv,
     API_ORIGIN: adminEnv.ADMIN_API_ORIGIN,
@@ -19,33 +27,48 @@ export const { context, container: adminContainer } = createAppContext({
   },
 });
 
-const {
-  useCases: { authUseCase, pointAccountUseCase, userUseCase, rewardUseCase },
-} = adminContainer;
-
-const adminRepo = new AdminRepository(db);
-
-const adminUseCase = new AdminUseCase({
-  adminRepo,
-  defaultAdmin: {
-    uid: adminEnv.SUPER_ADMIN_UID,
-    username: adminEnv.SUPER_ADMIN_USERNAME,
-    password: adminEnv.SUPER_ADMIN_PASSWORD,
-  },
+const adminRepo = ripple({ db: Database }, ({ db }) => new AdminRepository(db), {
+  debugName: 'AdminRepository',
 });
+const adminUseCaseProvider = ripple(
+  { adminRepo },
+  deps =>
+    new AdminUseCase({
+      ...deps,
+      defaultAdmin: {
+        uid: adminEnv.SUPER_ADMIN_UID,
+        username: adminEnv.SUPER_ADMIN_USERNAME,
+        password: adminEnv.SUPER_ADMIN_PASSWORD,
+      },
+    }),
+  { debugName: 'AdminUseCase' },
+);
+const adminAuthUseCaseProvider = ripple(
+  { db: Database, adminRepo, authUseCase },
+  deps => new AdminAuthUseCase(deps),
+  { debugName: 'AdminAuthUseCase' },
+);
+const adminUserUseCaseProvider = ripple(
+  { db: Database, pointAccountUseCase, userUseCase, rewardUseCase },
+  deps => new AdminUserUseCase(deps),
+  { debugName: 'AdminUserUseCase' },
+);
 
-const adminAuthUseCase = new AdminAuthUseCase({
-  db,
-  adminRepo,
-  authUseCase,
-});
-
-const adminUserUseCase = new AdminUserUseCase({
-  db,
-  pointAccountUseCase,
-  userUseCase,
-  rewardUseCase,
-});
+const { adminUseCase, adminAuthUseCase, adminUserUseCase } = await adminContainer.runtime
+  .resolve(
+    ripple(
+      {
+        adminUseCase: adminUseCaseProvider,
+        adminAuthUseCase: adminAuthUseCaseProvider,
+        adminUserUseCase: adminUserUseCaseProvider,
+      },
+      deps => deps,
+    ),
+  )
+  .catch(async error => {
+    await adminContainer.runtime.dispose();
+    throw error;
+  });
 
 /**
  * 真实运行时上下文。
@@ -72,5 +95,5 @@ export const appContext = new Elysia({
 
 // 初始化默认管理员
 appRuntimeContext.onStart(() => {
-  adminUseCase.initDefaultAdmin();
+  return adminUseCase.initDefaultAdmin();
 });

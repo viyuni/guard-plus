@@ -31,6 +31,10 @@ export class Mailer {
     });
   }
 
+  close() {
+    this.transporter.close();
+  }
+
   send(input: SendMailInput) {
     return this.transporter.sendMail({
       from: this.config.user,

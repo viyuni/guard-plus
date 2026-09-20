@@ -1,60 +1,43 @@
-import type { DbClient } from '#db';
+import { ripple } from 'cyrenejs';
+
+import { Database, BiliRoom, RewardLogger } from '#context/tokens';
 import { BiliEventRepository } from '#modules/bili-event';
-import type {
-  PointAccountRepository,
-  PointBalanceUseCase,
-  PointTransactionRepository,
-  PointTypeUseCase,
-} from '#modules/point';
-import type { UserUseCase } from '#modules/user';
-
-import { RewardRuleRepository } from './repository';
-import { RewardRuleUseCase, RewardUseCase } from './usecase';
-
-export function createRewardContext({
-  biliRoom,
-  db,
-  logger,
+import {
   pointAccountRepo,
   pointBalanceUseCase,
   pointTransactionRepo,
   pointTypeUseCase,
-  userUseCase,
-}: {
-  biliRoom?: number;
-  db: DbClient;
-  logger?: {
-    warn: (payload: Record<string, unknown>, message?: string) => void;
-  };
-  pointAccountRepo: PointAccountRepository;
-  pointBalanceUseCase: PointBalanceUseCase;
-  pointTransactionRepo: PointTransactionRepository;
-  pointTypeUseCase: PointTypeUseCase;
-  userUseCase: UserUseCase;
-}) {
-  const biliEventRepo = new BiliEventRepository(db);
-  const rewardRuleRepo = new RewardRuleRepository(db);
-  const rewardUseCase = new RewardUseCase({
-    biliRoom,
-    db,
+} from '#modules/point/context';
+import { userUseCase } from '#modules/user/context';
+
+import { RewardRuleRepository } from './repository';
+import { RewardRuleUseCase, RewardUseCase } from './usecase';
+
+export const biliEventRepo = ripple({ db: Database }, ({ db }) => new BiliEventRepository(db), {
+  debugName: 'BiliEventRepository',
+});
+export const rewardRuleRepo = ripple({ db: Database }, ({ db }) => new RewardRuleRepository(db), {
+  debugName: 'RewardRuleRepository',
+});
+
+export const rewardUseCase = ripple(
+  {
+    biliRoom: BiliRoom,
+    db: Database,
     pointAccountRepo,
     pointBalanceUseCase,
     pointTransactionRepo,
     pointTypeUseCase,
     biliEventRepo,
-    logger,
+    logger: RewardLogger,
     rewardRuleRepo,
     userUseCase,
-  });
-  const rewardRuleUseCase = new RewardRuleUseCase({
-    pointTypeUseCase,
-    rewardRuleRepo,
-  });
-
-  return {
-    biliEventRepo,
-    rewardRuleRepo,
-    rewardUseCase,
-    rewardRuleUseCase,
-  };
-}
+  },
+  deps => new RewardUseCase(deps),
+  { debugName: 'RewardUseCase' },
+);
+export const rewardRuleUseCase = ripple(
+  { pointTypeUseCase, rewardRuleRepo },
+  deps => new RewardRuleUseCase(deps),
+  { debugName: 'RewardRuleUseCase' },
+);

@@ -7,7 +7,6 @@ import {
 import Elysia from 'elysia';
 
 import { appContext } from '#apps/user/context';
-import { db } from '#db';
 import {
   ACCESS_TOKEN_COOKIE_NAME,
   ACCESS_TOKEN_COOKIE_OPTIONS,
@@ -22,10 +21,8 @@ import {
   REFRESH_TOKEN_COOKIE_OPTIONS,
   getAuthStateCookieOptions,
 } from '#modules/auth';
-import { logger } from '#utils/logger';
 
 import { userEnv } from '../../env';
-import { AuthUseCase } from './usecase';
 export * from './usecase';
 
 const authStateCookieOptions = getAuthStateCookieOptions(
@@ -71,28 +68,6 @@ export const auth = new Elysia({
   },
 })
   .use(appContext)
-  .derive(
-    ({
-      authUseCase,
-      biliPasswordResetUseCase,
-      biliRegisterUseCase,
-      pointAccountUseCase,
-      rewardUseCase,
-      userUseCase,
-    }) => ({
-      userAuthUseCase: new AuthUseCase({
-        authUseCase,
-        biliPasswordResetUseCase,
-        biliRegisterUseCase,
-        biliRoom: userEnv.BILI_ROOM,
-        db,
-        pointAccountUseCase,
-        rewardUseCase,
-        userUseCase,
-        logger: logger.scope('UserAuthUseCase'),
-      }),
-    }),
-  )
   .post(
     '/login',
     async ({ body, cookie, userAuthUseCase }) => {

@@ -25,7 +25,6 @@ async function buildApp(name: string) {
   await Bun.build({
     entrypoints: [r(`../src/apps/${name}/index.ts`)],
     minify: true,
-    bytecode: true,
     compile: {
       outfile: r(`../dist/${name}`),
     },

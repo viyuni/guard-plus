@@ -1,20 +1,21 @@
-import type { DbClient } from '#db';
+import { ripple } from 'cyrenejs';
+
+import { Database, DataSecret } from '#context/tokens';
 
 import { UserBasicInfoCrypto } from './domain';
 import { UserRepository } from './repository';
 import { UserUseCase } from './usecase';
 
-export function createUserContext({ db, dataSecret }: { db: DbClient; dataSecret: string }) {
-  const userBasicInfoCrypto = new UserBasicInfoCrypto(dataSecret);
-  const userRepo = new UserRepository(db);
-  const userUseCase = new UserUseCase({
-    userBasicInfoCrypto,
-    userRepo,
-  });
-
-  return {
-    userBasicInfoCrypto,
-    userRepo,
-    userUseCase,
-  };
-}
+export const userBasicInfoCrypto = ripple(
+  { dataSecret: DataSecret },
+  ({ dataSecret }) => new UserBasicInfoCrypto(dataSecret),
+  { debugName: 'UserBasicInfoCrypto' },
+);
+export const userRepo = ripple({ db: Database }, ({ db }) => new UserRepository(db), {
+  debugName: 'UserRepository',
+});
+export const userUseCase = ripple(
+  { userBasicInfoCrypto, userRepo },
+  deps => new UserUseCase(deps),
+  { debugName: 'UserUseCase' },
+);
