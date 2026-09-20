@@ -1,6 +1,8 @@
 import type { BiliEventPageQuery } from '@shared/schema/reward';
+import { type InferInput, ripple } from 'cyrenejs';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 
+import { Database } from '#context/tokens';
 import type { DbExecutor } from '#db';
 import { QueryPageBuilder } from '#db/helper';
 import {
@@ -11,198 +13,206 @@ import {
   type InsertBiliEvent,
 } from '#db/schema';
 
-export class BiliEventRepository {
-  constructor(private readonly db: DbExecutor) {}
-
-  async findByBiliEventId(biliEventId: string, db: DbExecutor = this.db) {
-    return await db.query.biliEvents.findFirst({
-      where: {
-        biliEventId,
+export const biliEventRepo = ripple(
+  {
+    db: Database,
+  },
+  ({ db }) => {
+    async function updateStatus(
+      biliEventId: string,
+      input: {
+        status: BiliEventStatus;
+        userId?: string | null;
+        rewardResultSnapshots?: BiliEventRewardResultSnapshot[];
+        lastErrorCode?: string | null;
+        lastErrorMessage?: string | null;
+        processedAt?: Date | null;
       },
-    });
-  }
+      executor: DbExecutor,
+    ) {
+      const [event] = await executor
+        .update(biliEvents)
+        .set(input)
+        .where(eq(biliEvents.biliEventId, biliEventId))
+        .returning();
 
-  async listReplayableBiliGuardByBiliUid(biliUid: string, db: DbExecutor = this.db) {
-    return await db
-      .select()
-      .from(biliEvents)
-      .where(
-        and(
-          eq(biliEvents.eventType, 'biliGuard'),
-          eq(biliEvents.biliUid, biliUid),
-          inArray(biliEvents.status, ['ignored', 'failed']),
-        ),
-      )
-      .orderBy(asc(biliEvents.occurredAt), asc(biliEvents.createdAt));
-  }
+      return event ?? null;
+    }
 
-  pageBiliGuard(query: BiliEventPageQuery, db: DbExecutor = this.db) {
-    return new QueryPageBuilder(db, biliEvents, db.query.biliEvents)
-      .page(query.page)
-      .pageSize(query.pageSize)
-      .where({
-        eventType: 'biliGuard',
-        status: query.status,
-        occurredAt: {
-          gte: query.startAt ?? undefined,
-          lte: query.endAt ?? undefined,
-        },
-        OR: query.keyword
-          ? [
-              {
-                biliEventId: {
-                  ilike: `%${query.keyword}%`,
-                },
-              },
-              {
-                biliUid: {
-                  ilike: `%${query.keyword}%`,
-                },
-              },
-            ]
-          : [],
-      })
-      .query((findMany, { where, limit, offset }) =>
-        findMany({
-          where,
-          limit,
-          offset,
-          with: {
-            user: {
-              columns: {
-                biliUid: true,
-                username: true,
-              },
+    return {
+      async findByBiliEventId(biliEventId: string, executor: DbExecutor = db) {
+        return await executor.query.biliEvents.findFirst({
+          where: {
+            biliEventId,
+          },
+        });
+      },
+
+      async listReplayableBiliGuardByBiliUid(biliUid: string, executor: DbExecutor = db) {
+        return await executor
+          .select()
+          .from(biliEvents)
+          .where(
+            and(
+              eq(biliEvents.eventType, 'biliGuard'),
+              eq(biliEvents.biliUid, biliUid),
+              inArray(biliEvents.status, ['ignored', 'failed']),
+            ),
+          )
+          .orderBy(asc(biliEvents.occurredAt), asc(biliEvents.createdAt));
+      },
+
+      pageBiliGuard(query: BiliEventPageQuery, executor: DbExecutor = db) {
+        return new QueryPageBuilder(executor, biliEvents, executor.query.biliEvents)
+          .page(query.page)
+          .pageSize(query.pageSize)
+          .where({
+            eventType: 'biliGuard',
+            status: query.status,
+            occurredAt: {
+              gte: query.startAt ?? undefined,
+              lte: query.endAt ?? undefined,
             },
+            OR: query.keyword
+              ? [
+                  {
+                    biliEventId: {
+                      ilike: `%${query.keyword}%`,
+                    },
+                  },
+                  {
+                    biliUid: {
+                      ilike: `%${query.keyword}%`,
+                    },
+                  },
+                ]
+              : [],
+          })
+          .query((findMany, { where, limit, offset }) =>
+            findMany({
+              where,
+              limit,
+              offset,
+              with: {
+                user: {
+                  columns: {
+                    biliUid: true,
+                    username: true,
+                  },
+                },
+              },
+              orderBy: {
+                createdAt: 'desc',
+                occurredAt: 'desc',
+              },
+            }),
+          )
+          .paginate();
+      },
+
+      async upsertProcessing(
+        input: Pick<InsertBiliEvent, 'biliEventId' | 'biliUid' | 'occurredAt' | 'eventSnapshot'> & {
+          rewardItemSnapshots: BiliEventRewardItemSnapshot[];
+        },
+        executor: DbExecutor = db,
+      ) {
+        const [event] = await executor
+          .insert(biliEvents)
+          .values({
+            ...input,
+            status: 'processing',
+            rewardResultSnapshots: [],
+          })
+          .onConflictDoNothing({
+            target: biliEvents.biliEventId,
+          })
+          .returning();
+
+        return event ?? null;
+      },
+
+      async markProcessing(biliEventId: string, executor: DbExecutor = db) {
+        return await updateStatus(
+          biliEventId,
+          {
+            status: 'processing',
+            lastErrorCode: null,
+            lastErrorMessage: null,
+            processedAt: null,
           },
-          orderBy: {
-            createdAt: 'desc',
-            occurredAt: 'desc',
+          executor,
+        );
+      },
+
+      async markIgnored(
+        biliEventId: string,
+        input: {
+          lastErrorCode: string;
+          lastErrorMessage: string;
+        },
+        executor: DbExecutor = db,
+      ) {
+        return await updateStatus(
+          biliEventId,
+          {
+            status: 'ignored',
+            userId: null,
+            rewardResultSnapshots: [],
+            lastErrorCode: input.lastErrorCode,
+            lastErrorMessage: input.lastErrorMessage,
+            processedAt: new Date(),
           },
-        }),
-      )
-      .paginate();
-  }
-
-  async upsertProcessing(
-    input: Pick<InsertBiliEvent, 'biliEventId' | 'biliUid' | 'occurredAt' | 'eventSnapshot'> & {
-      rewardItemSnapshots: BiliEventRewardItemSnapshot[];
-    },
-    db: DbExecutor = this.db,
-  ) {
-    const [event] = await db
-      .insert(biliEvents)
-      .values({
-        ...input,
-        status: 'processing',
-        rewardResultSnapshots: [],
-      })
-      .onConflictDoNothing({
-        target: biliEvents.biliEventId,
-      })
-      .returning();
-
-    return event ?? null;
-  }
-
-  async markProcessing(biliEventId: string, db: DbExecutor = this.db) {
-    return await this.updateStatus(
-      biliEventId,
-      {
-        status: 'processing',
-        lastErrorCode: null,
-        lastErrorMessage: null,
-        processedAt: null,
+          executor,
+        );
       },
-      db,
-    );
-  }
 
-  async markIgnored(
-    biliEventId: string,
-    input: {
-      lastErrorCode: string;
-      lastErrorMessage: string;
-    },
-    db: DbExecutor = this.db,
-  ) {
-    return await this.updateStatus(
-      biliEventId,
-      {
-        status: 'ignored',
-        userId: null,
-        rewardResultSnapshots: [],
-        lastErrorCode: input.lastErrorCode,
-        lastErrorMessage: input.lastErrorMessage,
-        processedAt: new Date(),
+      async markSucceeded(
+        biliEventId: string,
+        input: {
+          userId: string;
+          rewardResultSnapshots: BiliEventRewardResultSnapshot[];
+        },
+        executor: DbExecutor = db,
+      ) {
+        return await updateStatus(
+          biliEventId,
+          {
+            status: 'succeeded',
+            userId: input.userId,
+            rewardResultSnapshots: input.rewardResultSnapshots,
+            lastErrorCode: null,
+            lastErrorMessage: null,
+            processedAt: new Date(),
+          },
+          executor,
+        );
       },
-      db,
-    );
-  }
 
-  async markSucceeded(
-    biliEventId: string,
-    input: {
-      userId: string;
-      rewardResultSnapshots: BiliEventRewardResultSnapshot[];
-    },
-    db: DbExecutor = this.db,
-  ) {
-    return await this.updateStatus(
-      biliEventId,
-      {
-        status: 'succeeded',
-        userId: input.userId,
-        rewardResultSnapshots: input.rewardResultSnapshots,
-        lastErrorCode: null,
-        lastErrorMessage: null,
-        processedAt: new Date(),
+      async markFailed(
+        biliEventId: string,
+        input: {
+          lastErrorCode: string;
+          lastErrorMessage: string;
+        },
+        executor: DbExecutor = db,
+      ) {
+        const [event] = await executor
+          .update(biliEvents)
+          .set({
+            status: 'failed',
+            retryCount: sql`${biliEvents.retryCount} + 1`,
+            lastErrorCode: input.lastErrorCode,
+            lastErrorMessage: input.lastErrorMessage,
+            processedAt: new Date(),
+          })
+          .where(eq(biliEvents.biliEventId, biliEventId))
+          .returning();
+
+        return event ?? null;
       },
-      db,
-    );
-  }
+    };
+  },
+  { debugName: 'BiliEventRepository' },
+);
 
-  async markFailed(
-    biliEventId: string,
-    input: {
-      lastErrorCode: string;
-      lastErrorMessage: string;
-    },
-    db: DbExecutor = this.db,
-  ) {
-    const [event] = await db
-      .update(biliEvents)
-      .set({
-        status: 'failed',
-        retryCount: sql`${biliEvents.retryCount} + 1`,
-        lastErrorCode: input.lastErrorCode,
-        lastErrorMessage: input.lastErrorMessage,
-        processedAt: new Date(),
-      })
-      .where(eq(biliEvents.biliEventId, biliEventId))
-      .returning();
-
-    return event ?? null;
-  }
-
-  private async updateStatus(
-    biliEventId: string,
-    input: {
-      status: BiliEventStatus;
-      userId?: string | null;
-      rewardResultSnapshots?: BiliEventRewardResultSnapshot[];
-      lastErrorCode?: string | null;
-      lastErrorMessage?: string | null;
-      processedAt?: Date | null;
-    },
-    db: DbExecutor,
-  ) {
-    const [event] = await db
-      .update(biliEvents)
-      .set(input)
-      .where(eq(biliEvents.biliEventId, biliEventId))
-      .returning();
-
-    return event ?? null;
-  }
-}
+export type BiliEventRepository = InferInput<typeof biliEventRepo>;

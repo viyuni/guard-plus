@@ -3,112 +3,121 @@ import type {
   PointTypeIconUploadBody,
   UpdatePointTypeBody,
 } from '@shared/schema/point-type';
+import { type InferInput, ripple } from 'cyrenejs';
 
+import { PointImageUseCase } from '#context/tokens';
 import type { DbExecutor } from '#db';
-import type { ImageUseCase } from '#modules/image';
 
-import { PointTypeNameExistsError, PointTypePolicy } from '../domain';
-import type { PointTypeRepository } from '../repository';
+import {
+  PointTypeNameExistsError,
+  assertPointTypeAvailableExists,
+  assertPointTypeExists,
+  shouldEnablePointType,
+  shouldDisablePointType,
+} from '../domain';
+import { pointTypeRepo } from '../repository';
 
-export interface PointTypeUseCaseDeps {
-  pointTypeRepo: PointTypeRepository;
-  imageUseCase?: ImageUseCase;
-}
+export const pointTypeUseCase = ripple(
+  {
+    imageUseCase: PointImageUseCase,
+    pointTypeRepo,
+  },
+  ({ imageUseCase, pointTypeRepo }) => ({
+    async get(pointTypeId: string) {
+      const pointType = await pointTypeRepo.findById(pointTypeId);
 
-export class PointTypeUseCase {
-  constructor(private readonly deps: PointTypeUseCaseDeps) {}
+      assertPointTypeExists(pointType);
 
-  async get(pointTypeId: string) {
-    const pointType = await this.deps.pointTypeRepo.findById(pointTypeId);
+      return pointType;
+    },
 
-    PointTypePolicy.assertExists(pointType);
+    async getAvailableById(pointTypeId: string, db?: DbExecutor) {
+      const pointType = await pointTypeRepo.findById(pointTypeId, db);
 
-    return pointType;
-  }
+      assertPointTypeAvailableExists(pointType);
 
-  async getAvailableById(pointTypeId: string, db?: DbExecutor) {
-    const pointType = await this.deps.pointTypeRepo.findById(pointTypeId, db);
+      return pointType;
+    },
 
-    PointTypePolicy.assertAvailableExists(pointType);
-
-    return pointType;
-  }
-
-  async create(data: CreatePointTypeBody) {
-    const exists = await this.deps.pointTypeRepo.findByName(data.name);
-
-    if (exists) {
-      throw new PointTypeNameExistsError();
-    }
-
-    return this.deps.pointTypeRepo.create({ ...data, status: 'disabled' });
-  }
-
-  async update(pointTypeId: string, data: UpdatePointTypeBody) {
-    const pointType = await this.deps.pointTypeRepo.findById(pointTypeId);
-
-    PointTypePolicy.assertExists(pointType);
-
-    if (data.name && data.name !== pointType.name) {
-      const exists = await this.deps.pointTypeRepo.findByName(data.name);
+    async create(data: CreatePointTypeBody) {
+      const exists = await pointTypeRepo.findByName(data.name);
 
       if (exists) {
         throw new PointTypeNameExistsError();
       }
-    }
 
-    const updated = await this.deps.pointTypeRepo.update(pointTypeId, data);
+      return pointTypeRepo.create({ ...data, status: 'disabled' });
+    },
 
-    PointTypePolicy.assertExists(updated);
+    async update(pointTypeId: string, data: UpdatePointTypeBody) {
+      const pointType = await pointTypeRepo.findById(pointTypeId);
 
-    return updated;
-  }
+      assertPointTypeExists(pointType);
 
-  async updateIcon(pointTypeId: string, body: PointTypeIconUploadBody) {
-    const pointType = await this.deps.pointTypeRepo.findById(pointTypeId);
+      if (data.name && data.name !== pointType.name) {
+        const exists = await pointTypeRepo.findByName(data.name);
 
-    PointTypePolicy.assertExists(pointType);
+        if (exists) {
+          throw new PointTypeNameExistsError();
+        }
+      }
 
-    if (!this.deps.imageUseCase) {
-      throw new Error('ImageUseCase is required to update point type icon');
-    }
+      const updated = await pointTypeRepo.update(pointTypeId, data);
 
-    const { filename } = await this.deps.imageUseCase.save(body.icon);
+      assertPointTypeExists(updated);
 
-    const updated = await this.deps.pointTypeRepo.update(pointTypeId, {
-      icon: filename,
-    });
+      return updated;
+    },
 
-    PointTypePolicy.assertExists(updated);
+    async updateIcon(pointTypeId: string, body: PointTypeIconUploadBody) {
+      const pointType = await pointTypeRepo.findById(pointTypeId);
 
-    return updated;
-  }
+      assertPointTypeExists(pointType);
 
-  async enable(pointTypeId: string) {
-    const pointType = await this.deps.pointTypeRepo.findById(pointTypeId);
+      if (!imageUseCase) {
+        throw new Error('ImageUseCase is required to update point type icon');
+      }
 
-    PointTypePolicy.assertExists(pointType);
+      const { filename } = await imageUseCase.save(body.icon);
 
-    if (!PointTypePolicy.shouldEnable(pointType)) {
-      return pointType;
-    }
+      const updated = await pointTypeRepo.update(pointTypeId, {
+        icon: filename,
+      });
 
-    return this.deps.pointTypeRepo.updateStatus(pointTypeId, 'active');
-  }
+      assertPointTypeExists(updated);
 
-  async disable(pointTypeId: string) {
-    const pointType = await this.deps.pointTypeRepo.findById(pointTypeId);
+      return updated;
+    },
 
-    PointTypePolicy.assertExists(pointType);
+    async enable(pointTypeId: string) {
+      const pointType = await pointTypeRepo.findById(pointTypeId);
 
-    if (!PointTypePolicy.shouldDisable(pointType)) {
-      return pointType;
-    }
+      assertPointTypeExists(pointType);
 
-    return this.deps.pointTypeRepo.updateStatus(pointTypeId, 'disabled');
-  }
+      if (!shouldEnablePointType(pointType)) {
+        return pointType;
+      }
 
-  list() {
-    return this.deps.pointTypeRepo.list();
-  }
-}
+      return pointTypeRepo.updateStatus(pointTypeId, 'active');
+    },
+
+    async disable(pointTypeId: string) {
+      const pointType = await pointTypeRepo.findById(pointTypeId);
+
+      assertPointTypeExists(pointType);
+
+      if (!shouldDisablePointType(pointType)) {
+        return pointType;
+      }
+
+      return pointTypeRepo.updateStatus(pointTypeId, 'disabled');
+    },
+
+    list() {
+      return pointTypeRepo.list();
+    },
+  }),
+  { debugName: 'PointTypeUseCase' },
+);
+
+export type PointTypeUseCase = InferInput<typeof pointTypeUseCase>;

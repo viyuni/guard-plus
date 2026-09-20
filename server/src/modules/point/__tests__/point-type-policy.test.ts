@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test';
 
 import type { PointType } from '#db/schema';
 
-import { PointTypePolicy } from '../domain';
+import { shouldEnablePointType, shouldDisablePointType } from '../domain';
 
 function pointType(input: Partial<PointType> = {}): PointType {
   return {
@@ -20,9 +20,9 @@ function pointType(input: Partial<PointType> = {}): PointType {
 
 describe('积分类型策略', () => {
   it('判断启停操作是否需要写库', () => {
-    expect(PointTypePolicy.shouldEnable(pointType({ status: 'disabled' }))).toBe(true);
-    expect(PointTypePolicy.shouldEnable(pointType({ status: 'active' }))).toBe(false);
-    expect(PointTypePolicy.shouldDisable(pointType({ status: 'active' }))).toBe(true);
-    expect(PointTypePolicy.shouldDisable(pointType({ status: 'disabled' }))).toBe(false);
+    expect(shouldEnablePointType(pointType({ status: 'disabled' }))).toBe(true);
+    expect(shouldEnablePointType(pointType({ status: 'active' }))).toBe(false);
+    expect(shouldDisablePointType(pointType({ status: 'active' }))).toBe(true);
+    expect(shouldDisablePointType(pointType({ status: 'disabled' }))).toBe(false);
   });
 });

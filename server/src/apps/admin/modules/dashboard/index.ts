@@ -1,26 +1,35 @@
 import { DashboardOverviewQuerySchema } from '@shared/schema/dashboard';
+import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { appContext } from '#apps/admin/context';
+import { adminAuthGuard } from '#apps/admin/http';
+import { dashboardUseCase } from '#modules/dashboard';
 
-export const dashboard = new Elysia({
-  name: 'DashboardRoute',
-  prefix: '/dashboard',
-  detail: {
-    tags: ['Dashboard'],
+export const dashboardRoutes = ripple(
+  {
+    authGuard: adminAuthGuard,
+    dashboardUseCase,
   },
-})
-  .use(appContext)
-  .get(
-    '/overview',
-    ({ query, dashboardUseCase }) => {
-      return dashboardUseCase.overview(query);
-    },
-    {
-      query: DashboardOverviewQuerySchema,
-      requiredAdminAuth: true,
+  ({ authGuard, dashboardUseCase }) =>
+    new Elysia({
+      name: 'DashboardRoute',
+      prefix: '/dashboard',
       detail: {
-        description: 'Dashboard 概览数据',
+        tags: ['Dashboard'],
       },
-    },
-  );
+    })
+      .use(authGuard)
+      .get(
+        '/overview',
+        ({ query }) => {
+          return dashboardUseCase.overview(query);
+        },
+        {
+          query: DashboardOverviewQuerySchema,
+          requiredAdminAuth: true,
+          detail: {
+            description: 'Dashboard 概览数据',
+          },
+        },
+      ),
+);

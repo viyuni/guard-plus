@@ -1,11 +1,16 @@
-import { afterEach, describe, expect, it, mock, setSystemTime } from 'bun:test';
+import { afterEach, describe, expect, it, mock, setSystemTime, spyOn } from 'bun:test';
 
+import { Cyrene } from 'cyrenejs';
 import Elysia from 'elysia';
 import { decodeJwt } from 'jose';
 
+import { JwtSecret, Redis } from '#context/tokens';
+import type { RedisClient } from '#redis';
+
 import type { AuthTokenPair } from '../domain';
 import { createAuthGuard, getAuthStateCookieOptions } from '../index';
-import { AuthUseCase } from '../usecase';
+import { authSessionRepo } from '../repository';
+import { authUseCase } from '../usecase';
 
 afterEach(() => {
   setSystemTime();
@@ -22,13 +27,37 @@ function getSetCookieValue(response: Response, name: string) {
   return cookie.slice(prefix.length).split(';', 1)[0]!;
 }
 
-function createAuthUseCase() {
+const runtimes: Array<{ dispose: () => Promise<void> }> = [];
+
+afterEach(async () => {
+  await Promise.all(runtimes.splice(0).map(runtime => runtime.dispose()));
+});
+
+/**
+ * 用真实 provider 装配, 再把会话仓库替换为内存实现,
+ * 既覆盖 JWT 逻辑, 又验证依赖图正确接上。
+ */
+async function createAuthUseCase() {
   const sessions = new Map<string, { accountId: string; role: 'user' | 'admin' | 'superAdmin' }>();
   const refreshResults = new Map<string, AuthTokenPair>();
   const refreshLocks = new Set<string>();
 
-  const authSessionRepo = {
-    create: mock(async (accountId: string, role: 'user' | 'admin' | 'superAdmin') => {
+  const runtime = new Cyrene({
+    providers: { authSessionRepo, authUseCase },
+    bindings: [
+      // 会话仓库的方法会被下面整体替换, 这里只需要一个占位客户端。
+      { token: Redis, value: {} as RedisClient },
+      { token: JwtSecret, value: 'test-secret' },
+    ],
+  });
+
+  runtimes.push(runtime);
+
+  const container = await runtime.start();
+  const repo = container.authSessionRepo;
+
+  spyOn(repo, 'create').mockImplementation(
+    async (accountId: string, role: 'user' | 'admin' | 'superAdmin') => {
       const sessionId = `${role}-${accountId}-session`;
       sessions.set(`${role}:${sessionId}`, { accountId, role });
 
@@ -38,8 +67,11 @@ function createAuthUseCase() {
         sessionId,
         createdAt: new Date().toISOString(),
       };
-    }),
-    find: mock(async (role: 'user' | 'admin' | 'superAdmin', sessionId: string) => {
+    },
+  );
+
+  spyOn(repo, 'find').mockImplementation(
+    async (role: 'user' | 'admin' | 'superAdmin', sessionId: string) => {
       const session = sessions.get(`${role}:${sessionId}`);
 
       if (!session) {
@@ -51,22 +83,35 @@ function createAuthUseCase() {
         sessionId,
         createdAt: new Date().toISOString(),
       };
-    }),
-    delete: mock(async (role: 'user' | 'admin' | 'superAdmin', sessionId: string) => {
+    },
+  );
+
+  spyOn(repo, 'delete').mockImplementation(
+    async (role: 'user' | 'admin' | 'superAdmin', sessionId: string) => {
       sessions.delete(`${role}:${sessionId}`);
-    }),
-    extend: mock(async (role: 'user' | 'admin' | 'superAdmin', sessionId: string) => {
-      return sessions.has(`${role}:${sessionId}`);
-    }),
-    getRefreshResult: mock(async (role: 'user' | 'admin' | 'superAdmin', sessionId: string) => {
+    },
+  );
+
+  spyOn(repo, 'extend').mockImplementation(
+    async (role: 'user' | 'admin' | 'superAdmin', sessionId: string) => {
+      return sessions.has(`${role}:${sessionId}`) ? 1 : 0;
+    },
+  );
+
+  spyOn(repo, 'getRefreshResult').mockImplementation(
+    async (role: 'user' | 'admin' | 'superAdmin', sessionId: string) => {
       return refreshResults.get(`${role}:${sessionId}`) ?? null;
-    }),
-    saveRefreshResult: mock(
-      async (role: 'user' | 'admin' | 'superAdmin', sessionId: string, tokens: AuthTokenPair) => {
-        refreshResults.set(`${role}:${sessionId}`, tokens);
-      },
-    ),
-    acquireRefreshLock: mock(async (role: 'user' | 'admin' | 'superAdmin', sessionId: string) => {
+    },
+  );
+
+  spyOn(repo, 'saveRefreshResult').mockImplementation(
+    async (role: 'user' | 'admin' | 'superAdmin', sessionId: string, tokens: AuthTokenPair) => {
+      refreshResults.set(`${role}:${sessionId}`, tokens);
+    },
+  );
+
+  spyOn(repo, 'acquireRefreshLock').mockImplementation(
+    async (role: 'user' | 'admin' | 'superAdmin', sessionId: string) => {
       const key = `${role}:${sessionId}`;
 
       if (refreshLocks.has(key)) {
@@ -75,21 +120,24 @@ function createAuthUseCase() {
 
       refreshLocks.add(key);
       return true;
-    }),
-    releaseRefreshLock: mock(async (role: 'user' | 'admin' | 'superAdmin', sessionId: string) => {
+    },
+  );
+
+  spyOn(repo, 'releaseRefreshLock').mockImplementation(
+    async (role: 'user' | 'admin' | 'superAdmin', sessionId: string) => {
       refreshLocks.delete(`${role}:${sessionId}`);
-    }),
-  } as any;
+    },
+  );
 
   return {
-    authUseCase: new AuthUseCase('test-secret', authSessionRepo),
-    authSessionRepo,
+    authUseCase: container.authUseCase,
+    authSessionRepo: repo,
   };
 }
 
 describe('AuthUseCase', () => {
   it('签发和解析对象 JWT payload', async () => {
-    const { authUseCase } = createAuthUseCase();
+    const { authUseCase } = await createAuthUseCase();
 
     const { accessToken } = await authUseCase.createSessionTokenPair({
       id: 'admin-id',
@@ -106,7 +154,7 @@ describe('AuthUseCase', () => {
   });
 
   it('解析没有 role 的 user token', async () => {
-    const { authUseCase } = createAuthUseCase();
+    const { authUseCase } = await createAuthUseCase();
 
     const { accessToken } = await authUseCase.createSessionTokenPair({
       id: 'user-id',
@@ -122,7 +170,7 @@ describe('AuthUseCase', () => {
   });
 
   it('使用 refreshToken 刷新 TokenPair 并延长会话', async () => {
-    const { authUseCase, authSessionRepo } = createAuthUseCase();
+    const { authUseCase, authSessionRepo } = await createAuthUseCase();
 
     const { refreshToken } = await authUseCase.createSessionTokenPair({
       id: 'user-id',
@@ -144,7 +192,7 @@ describe('AuthUseCase', () => {
   });
 
   it('拒绝把 accessToken 当 refreshToken 使用', async () => {
-    const { authUseCase } = createAuthUseCase();
+    const { authUseCase } = await createAuthUseCase();
 
     const { accessToken } = await authUseCase.createSessionTokenPair({
       id: 'user-id',
@@ -155,7 +203,7 @@ describe('AuthUseCase', () => {
   });
 
   it('并发刷新时复用 Redis 锁内生成的 TokenPair', async () => {
-    const { authUseCase, authSessionRepo } = createAuthUseCase();
+    const { authUseCase, authSessionRepo } = await createAuthUseCase();
 
     const { refreshToken } = await authUseCase.createSessionTokenPair({
       id: 'user-id',
@@ -289,7 +337,7 @@ describe('requiredAuth token refresh', () => {
     const loginAt = new Date('2026-01-01T00:00:00.000Z');
     setSystemTime(loginAt);
 
-    const { authUseCase, authSessionRepo } = createAuthUseCase();
+    const { authUseCase, authSessionRepo } = await createAuthUseCase();
 
     const originalTokens = await authUseCase.createSessionTokenPair({
       id: 'user-id',

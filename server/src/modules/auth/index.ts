@@ -17,6 +17,7 @@ import type { AuthPayload } from './domain';
 import type { AuthUseCase } from './usecase';
 
 export * from './usecase';
+export * from './repository';
 export * from './constants';
 
 function setAuth(ctx: unknown, auth: AuthPayload) {

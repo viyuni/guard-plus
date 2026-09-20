@@ -6,37 +6,37 @@ export type AvailableProduct = Product & {
   status: 'active';
 };
 
-export class ProductPolicy {
-  static isAvailable(
-    product: Product | null | undefined,
-    now = new Date(),
-  ): product is AvailableProduct {
-    if (product?.status !== 'active') {
-      return false;
-    }
-
-    if (product.startAt && product.startAt > now) {
-      return false;
-    }
-
-    if (product.endAt && product.endAt <= now) {
-      return false;
-    }
-
-    return true;
+export function isProductAvailable(
+  product: Product | null | undefined,
+  now = new Date(),
+): product is AvailableProduct {
+  if (product?.status !== 'active') {
+    return false;
   }
 
-  static assertAvailable(product: Product | null | undefined): asserts product is AvailableProduct {
-    if (!ProductPolicy.isAvailable(product)) {
-      throw new ProductUnavailableError();
-    }
+  if (product.startAt && product.startAt > now) {
+    return false;
   }
 
-  static shouldActivate(product: Product) {
-    return product.status !== 'active';
+  if (product.endAt && product.endAt <= now) {
+    return false;
   }
 
-  static shouldDisable(product: Product) {
-    return product.status !== 'disabled';
+  return true;
+}
+
+export function assertProductAvailable(
+  product: Product | null | undefined,
+): asserts product is AvailableProduct {
+  if (!isProductAvailable(product)) {
+    throw new ProductUnavailableError();
   }
+}
+
+export function shouldActivateProduct(product: Product) {
+  return product.status !== 'active';
+}
+
+export function shouldDisableProduct(product: Product) {
+  return product.status !== 'disabled';
 }

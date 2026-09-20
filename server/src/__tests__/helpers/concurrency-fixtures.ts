@@ -86,7 +86,7 @@ export async function expectRejectsInstanceOf<T extends Error>(
 }
 
 export async function createDeps() {
-  const { repositories, useCases, runtime } = await createContainer({
+  const { runtime, ...providers } = await createContainer({
     db,
     redis,
     env: {
@@ -108,10 +108,7 @@ export async function createDeps() {
 
   runtimes.add(runtime);
 
-  return {
-    ...repositories,
-    ...useCases,
-  };
+  return providers;
 }
 
 export async function seedPointType(name: string) {

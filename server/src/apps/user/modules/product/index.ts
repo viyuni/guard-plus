@@ -1,38 +1,44 @@
 import { pageQuery } from '@shared/schema';
 import { ProductIdParamsSchema } from '@shared/schema/product';
+import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { appContext } from '#apps/user/context';
+import { productUseCase } from '#modules/product';
 
-export const product = new Elysia({
-  name: 'UserProductRoute',
-  prefix: '/products',
-  detail: {
-    tags: ['Product'],
+export const productRoutes = ripple(
+  {
+    productUseCase,
   },
-})
-  .use(appContext)
-  .get(
-    '/',
-    ({ query, productUseCase }) => {
-      return productUseCase.pageRedeem(query);
-    },
-    {
-      query: pageQuery,
+  ({ productUseCase }) =>
+    new Elysia({
+      name: 'UserProductRoute',
+      prefix: '/products',
       detail: {
-        description: '可兑换商品列表',
+        tags: ['Product'],
       },
-    },
-  )
-  .get(
-    '/:productId',
-    ({ params, productUseCase }) => {
-      return productUseCase.getRedeem(params.productId);
-    },
-    {
-      params: ProductIdParamsSchema,
-      detail: {
-        description: '可兑换商品详情',
-      },
-    },
-  );
+    })
+      .get(
+        '/',
+        ({ query }) => {
+          return productUseCase.pageRedeem(query);
+        },
+        {
+          query: pageQuery,
+          detail: {
+            description: '可兑换商品列表',
+          },
+        },
+      )
+      .get(
+        '/:productId',
+        ({ params }) => {
+          return productUseCase.getRedeem(params.productId);
+        },
+        {
+          params: ProductIdParamsSchema,
+          detail: {
+            description: '可兑换商品详情',
+          },
+        },
+      ),
+);

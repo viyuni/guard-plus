@@ -1,24 +1,33 @@
+import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { appContext } from '#apps/user/context';
+import { userAuthGuard } from '#apps/user/http';
+import { pointAccountUseCase } from '#modules/point';
 
-export const pointAccount = new Elysia({
-  name: 'PointAccountRoute',
-  prefix: '/pointAccounts',
-  detail: {
-    tags: ['PointAccount'],
+export const pointAccountRoutes = ripple(
+  {
+    authGuard: userAuthGuard,
+    pointAccountUseCase,
   },
-})
-  .use(appContext)
-  .get(
-    '/',
-    ({ auth: { id: userId }, pointAccountUseCase }) => {
-      return pointAccountUseCase.listMine(userId);
-    },
-    {
-      requiredAuth: true,
+  ({ authGuard, pointAccountUseCase }) =>
+    new Elysia({
+      name: 'PointAccountRoute',
+      prefix: '/pointAccounts',
       detail: {
-        description: '我的积分余额',
+        tags: ['PointAccount'],
       },
-    },
-  );
+    })
+      .use(authGuard)
+      .get(
+        '/',
+        ({ auth: { id: userId } }) => {
+          return pointAccountUseCase.listMine(userId);
+        },
+        {
+          requiredAuth: true,
+          detail: {
+            description: '我的积分余额',
+          },
+        },
+      ),
+);

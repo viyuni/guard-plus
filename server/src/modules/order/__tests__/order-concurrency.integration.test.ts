@@ -6,7 +6,12 @@ import { orders, pointTransactions, productStockMovements } from '#db/schema';
 import { OrderIdempotencyKey } from '#modules/order';
 import { PointIdempotencyKey } from '#modules/point';
 import { ProductUnavailableError, StockIdempotencyKey } from '#modules/product';
-import { countFulfilled, countRejected, runConcurrent } from '#test-helpers/concurrency';
+import {
+  countFulfilled,
+  countRejected,
+  firstFulfilled,
+  runConcurrent,
+} from '#test-helpers/concurrency';
 import {
   createDeps,
   db,
@@ -149,10 +154,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
       }),
     );
 
-    const fulfilledOrder = expectSeeded(
-      results.find(result => result.status === 'fulfilled')?.value,
-      'order create failed',
-    );
+    const fulfilledOrder = expectSeeded(firstFulfilled(results), 'order create failed');
 
     const currentProduct = await db.query.products.findFirst({ where: { id: product.id } });
 

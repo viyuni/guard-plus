@@ -1,11 +1,24 @@
-import { expect, it } from 'bun:test';
+import { afterEach, expect, it, spyOn } from 'bun:test';
 
+import { Cyrene } from 'cyrenejs';
 import { count, eq } from 'drizzle-orm';
 
-import { AdminUserUseCase } from '#apps/admin/modules/user/usecase';
-import { AuthUseCase as UserAuthUseCase } from '#apps/user/modules/auth/usecase';
+import { adminUserUseCase } from '#apps/admin/modules/user/usecase';
+import { userAuthUseCase } from '#apps/user/modules/auth/usecase';
+import {
+  BiliRoom,
+  Database,
+  DataSecret,
+  JwtSecret,
+  PointImageUseCase,
+  Redis,
+  RegisterCodeTtl,
+  RewardLogger,
+} from '#context/tokens';
 import { pointTransactions } from '#db/schema';
-import type { BiliRegisterUseCase } from '#modules/auth';
+import { biliRegisterUseCase } from '#modules/auth';
+import type { BiliRegisterChallenge } from '#modules/auth/domain';
+import { redis } from '#redis';
 import {
   createDeps,
   createBiliGuardEvent,
@@ -24,6 +37,38 @@ import { PointIdempotencyKey } from '../../point';
 import { type BiliGuardRewardEvent, RewardRuleNameExistsError } from '../domain';
 
 installConcurrencyTestHooks();
+
+const appRuntimes: Array<{ dispose: () => Promise<void> }> = [];
+
+afterEach(async () => {
+  await Promise.all(appRuntimes.splice(0).map(runtime => runtime.dispose()));
+});
+
+/**
+ * 用真实数据库装配 app 层 provider, 需要替换弹幕验证时再对已解析对象做 spyOn。
+ */
+async function createAppUseCases() {
+  const runtime = new Cyrene({
+    providers: { adminUserUseCase, userAuthUseCase },
+    bindings: [
+      { token: Database, value: db },
+      { token: Redis, value: redis },
+      { token: DataSecret, value: Bun.env.DATA_SECRET ?? 'test-data-secret' },
+      { token: JwtSecret, value: Bun.env.ADMIN_JWT_SECRET ?? 'test-admin-jwt-secret' },
+      { token: BiliRoom, value: 8315781 },
+      { token: RegisterCodeTtl, value: 300 },
+      { token: RewardLogger, value: undefined },
+      { token: PointImageUseCase, value: undefined },
+    ],
+  });
+
+  appRuntimes.push(runtime);
+
+  return {
+    container: await runtime.start(),
+    runtime,
+  };
+}
 
 describeWithDatabase('奖励发放真实数据库', () => {
   it('奖励规则创建会拒绝重复名称', async () => {
@@ -529,14 +574,18 @@ describeWithDatabase('奖励发放真实数据库', () => {
     const prefix = newBatch('reward_register');
     const pointType = await seedPointType(`${prefix}_point`);
     const biliUid = createBiliUid();
-    const { authUseCase, pointAccountUseCase, rewardUseCase, userUseCase } = await createDeps();
+    const { container, runtime } = await createAppUseCases();
+    const { pointAccountUseCase, rewardUseCase } = await createDeps();
     const biliRegisterCode = 'U-234567';
     const verifier = 'test-verifier';
 
-    const getBiliRegisterChallenge = async (code: string, actualVerifier: string | undefined) =>
+    const getBiliRegisterChallenge = async (
+      code: string | undefined,
+      actualVerifier: string | undefined,
+    ): Promise<BiliRegisterChallenge | null> =>
       code === biliRegisterCode && actualVerifier === verifier
         ? {
-            status: 'matched' as const,
+            status: 'matched',
             code,
             verifierHash: 'test-verifier-hash',
             expectedBiliUid: biliUid,
@@ -546,18 +595,16 @@ describeWithDatabase('奖励发放真实数据库', () => {
           }
         : null;
 
-    const userAuthUseCase = new UserAuthUseCase({
-      authUseCase,
-      biliRegisterUseCase: {
-        consumeChallenge: getBiliRegisterChallenge,
-        getOwnedChallenge: getBiliRegisterChallenge,
-      } as unknown as BiliRegisterUseCase,
-      biliRoom: 8315781,
-      db,
-      pointAccountUseCase,
-      rewardUseCase,
-      userUseCase,
-    });
+    const registerUseCase = await runtime.resolve(biliRegisterUseCase);
+
+    spyOn(registerUseCase, 'getOwnedChallenge').mockImplementation(async (code, actualVerifier) =>
+      getBiliRegisterChallenge(code, actualVerifier),
+    );
+    spyOn(registerUseCase, 'consumeChallenge').mockImplementation(async (code, actualVerifier) =>
+      getBiliRegisterChallenge(code, actualVerifier),
+    );
+
+    const userAuthUseCase = container.userAuthUseCase;
 
     const rule = await createRewardRule(prefix, pointType.id, {
       points: 8,
@@ -628,14 +675,10 @@ describeWithDatabase('奖励发放真实数据库', () => {
     const prefix = newBatch('admin_create_user');
     const pointType = await seedPointType(`${prefix}_point`);
     const biliUid = createBiliUid();
-    const { pointAccountUseCase, rewardUseCase, userUseCase } = await createDeps();
+    const { container } = await createAppUseCases();
+    const { pointAccountUseCase, rewardUseCase } = await createDeps();
 
-    const adminUserUseCase = new AdminUserUseCase({
-      db,
-      pointAccountUseCase,
-      rewardUseCase,
-      userUseCase,
-    });
+    const adminUserUseCase = container.adminUserUseCase;
 
     const rule = await createRewardRule(prefix, pointType.id, { points: 9 });
     const event = createBiliGuardEvent(prefix, Number(biliUid), { totalNormalized: 3 });

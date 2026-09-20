@@ -1,7 +1,9 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test';
 
+import { Cyrene } from 'cyrenejs';
 import { eq, inArray, like } from 'drizzle-orm';
 
+import { Database } from '#context/tokens';
 import type { DbClient } from '#db';
 import { admins } from '#db/schema';
 import { getTestDatabase } from '#test-helpers/test-database';
@@ -9,8 +11,9 @@ import { InvalidCredentialsError } from '#utils';
 import { PasswordUtil } from '#utils';
 
 import { AdminNotFoundError, AdminSuperAdminCannotBeBannedError } from '../domain/errors';
-import { AdminRepository } from '../repository';
-import { AdminUseCase } from '../usecase';
+import { adminRepo } from '../repository';
+import type { AdminUseCase } from '../usecase';
+import { adminUseCase } from '../usecase';
 
 const testDatabaseUrl = Bun.env.TEST_DATABASE_URL;
 const describeWithDatabase = testDatabaseUrl ? describe : describe.skip;
@@ -22,6 +25,8 @@ const testDefaultAdmin = {
 };
 
 let db: DbClient;
+let useCase: AdminUseCase;
+const runtimes: Array<{ dispose: () => Promise<void> }> = [];
 const batches = new Set<string>();
 
 function newBatch() {
@@ -31,10 +36,7 @@ function newBatch() {
 }
 
 function createUseCase() {
-  return new AdminUseCase({
-    adminRepo: new AdminRepository(db),
-    defaultAdmin: testDefaultAdmin,
-  });
+  return useCase;
 }
 
 async function seedAdmin(input: {
@@ -102,6 +104,15 @@ beforeEach(async () => {
   }
 
   await clearAdmins();
+
+  const runtime = new Cyrene({
+    providers: { adminRepo, adminUseCase },
+    bindings: [{ token: Database, value: db }],
+  });
+
+  runtimes.push(runtime);
+
+  useCase = (await runtime.start()).adminUseCase;
 });
 
 afterEach(async () => {
@@ -115,6 +126,7 @@ afterEach(async () => {
     }
   } finally {
     batches.clear();
+    await Promise.all(runtimes.splice(0).map(runtime => runtime.dispose()));
   }
 });
 
@@ -249,7 +261,7 @@ describeWithDatabase('AdminUseCase 真实数据库', () => {
 
     const useCase = createUseCase();
 
-    await useCase.initDefaultAdmin();
+    await useCase.initDefaultAdmin(testDefaultAdmin);
 
     const row = await db.query.admins.findFirst({
       where: {
@@ -274,7 +286,7 @@ describeWithDatabase('AdminUseCase 真实数据库', () => {
       });
     }
 
-    await useCase.initDefaultAdmin();
+    await useCase.initDefaultAdmin(testDefaultAdmin);
 
     const rows = await db
       .select({ id: admins.id })

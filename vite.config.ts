@@ -63,6 +63,10 @@ export default defineConfig({
   lint: {
     jsPlugins: [
       {
+        name: 'guard-plus',
+        specifier: './tools/oxlint-plugin/index.js',
+      },
+      {
         name: 'vite-plus',
         specifier: 'vite-plus/oxlint-plugin',
       },
@@ -72,6 +76,7 @@ export default defineConfig({
       },
     ],
     rules: {
+      'guard-plus/ripple-deps-each-on-own-line': 'error',
       'constructor-super': 'warn',
       'for-direction': 'warn',
       'no-async-promise-executor': 'warn',

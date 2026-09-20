@@ -1,49 +1,58 @@
 import { CreateOrderSchema, OrderPageQuerySchema } from '@shared/schema/order';
+import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { appContext } from '#apps/user/context';
+import { userAuthGuard } from '#apps/user/http';
+import { orderUseCase } from '#modules/order';
 
-export const order = new Elysia({
-  name: 'UserOrderRoute',
-  prefix: '/orders',
-  detail: {
-    tags: ['Order'],
+export const orderRoutes = ripple(
+  {
+    authGuard: userAuthGuard,
+    orderUseCase,
   },
-})
-  .use(appContext)
-  .get(
-    '/',
-    ({ query, auth: { id: userId }, orderUseCase }) => {
-      return orderUseCase.pageMine({
-        ...query,
-        userId,
-      });
-    },
-    {
-      query: OrderPageQuerySchema,
-      requiredAuth: true,
+  ({ authGuard, orderUseCase }) =>
+    new Elysia({
+      name: 'UserOrderRoute',
+      prefix: '/orders',
       detail: {
-        description: '我的订单列表',
+        tags: ['Order'],
       },
-    },
-  )
-  .post(
-    '/',
-    async ({ body, auth: { id: userId }, orderUseCase }) => {
-      const {
-        order: { orderNo, productDeliveryContentSnapshot },
-      } = await orderUseCase.create(userId, body);
+    })
+      .use(authGuard)
+      .get(
+        '/',
+        ({ query, auth: { id: userId } }) => {
+          return orderUseCase.pageMine({
+            ...query,
+            userId,
+          });
+        },
+        {
+          query: OrderPageQuerySchema,
+          requiredAuth: true,
+          detail: {
+            description: '我的订单列表',
+          },
+        },
+      )
+      .post(
+        '/',
+        async ({ body, auth: { id: userId } }) => {
+          const {
+            order: { orderNo, productDeliveryContentSnapshot },
+          } = await orderUseCase.create(userId, body);
 
-      return {
-        orderNo,
-        detail: productDeliveryContentSnapshot,
-      };
-    },
-    {
-      body: CreateOrderSchema,
-      requiredAuth: true,
-      detail: {
-        description: '兑换商品',
-      },
-    },
-  );
+          return {
+            orderNo,
+            detail: productDeliveryContentSnapshot,
+          };
+        },
+        {
+          body: CreateOrderSchema,
+          requiredAuth: true,
+          detail: {
+            description: '兑换商品',
+          },
+        },
+      ),
+);

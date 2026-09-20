@@ -1,41 +1,50 @@
 import { UserConvertPointSchema } from '@shared/schema/point-conversion';
+import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { appContext } from '#apps/user/context';
+import { userAuthGuard } from '#apps/user/http';
+import { pointConversionUseCase } from '#modules/point';
 
-export const pointConversion = new Elysia({
-  name: 'PointConversionRoute',
-  prefix: '/pointConversions',
-  detail: {
-    tags: ['PointConversion'],
+export const pointConversionRoutes = ripple(
+  {
+    authGuard: userAuthGuard,
+    pointConversionUseCase,
   },
-})
-  .use(appContext)
-  .get(
-    '/',
-    ({ pointConversionUseCase }) => {
-      return pointConversionUseCase.listVisible();
-    },
-    {
-      requiredAuth: true,
+  ({ authGuard, pointConversionUseCase }) =>
+    new Elysia({
+      name: 'PointConversionRoute',
+      prefix: '/pointConversions',
       detail: {
-        description: '积分转换规则列表',
+        tags: ['PointConversion'],
       },
-    },
-  )
-  .post(
-    '/convert',
-    ({ auth: { id: userId }, body, pointConversionUseCase }) => {
-      return pointConversionUseCase.convert({
-        ...body,
-        userId,
-      });
-    },
-    {
-      body: UserConvertPointSchema,
-      requiredAuth: true,
-      detail: {
-        description: '执行积分转换',
-      },
-    },
-  );
+    })
+      .use(authGuard)
+      .get(
+        '/',
+        () => {
+          return pointConversionUseCase.listVisible();
+        },
+        {
+          requiredAuth: true,
+          detail: {
+            description: '积分转换规则列表',
+          },
+        },
+      )
+      .post(
+        '/convert',
+        ({ auth: { id: userId }, body }) => {
+          return pointConversionUseCase.convert({
+            ...body,
+            userId,
+          });
+        },
+        {
+          body: UserConvertPointSchema,
+          requiredAuth: true,
+          detail: {
+            description: '执行积分转换',
+          },
+        },
+      ),
+);

@@ -1,16 +1,22 @@
+import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { appContext } from '../../context';
-import { rewardBiliGuardRoute } from './reward-bili-guard.route';
-import { rewardRuleRoute } from './reward-rule.route';
+import { rewardBiliGuardRoutes } from './reward-bili-guard.route';
+import { rewardRuleRoutes } from './reward-rule.route';
 
-export const reward = new Elysia({
-  name: 'RewardRoute',
-  prefix: '/rewards',
-  detail: {
-    tags: ['Reward'],
+export const rewardRoutes = ripple(
+  {
+    rewardBiliGuardRoutes,
+    rewardRuleRoutes,
   },
-})
-  .use(appContext)
-  .use(rewardBiliGuardRoute)
-  .use(rewardRuleRoute);
+  routes =>
+    new Elysia({
+      name: 'RewardRoute',
+      prefix: '/rewards',
+      detail: {
+        tags: ['Reward'],
+      },
+    })
+      .use(routes.rewardBiliGuardRoutes)
+      .use(routes.rewardRuleRoutes),
+);

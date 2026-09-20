@@ -1,13 +1,18 @@
 import { Worker } from 'bunqueue/client';
+import { ripple } from 'cyrenejs';
 
 import { NOTIFY_QUEUE_NAME, type NewOrderEmailInput } from '#queues';
 
 import type { EmailUseCase } from '../usecase';
+import { emailUseCase } from '../usecase';
 
-export interface NotifyWorkerDeps {
+interface NotifyWorkerDeps {
   emailUseCase: EmailUseCase;
 }
 
+/**
+ * 持有 bunqueue Worker 这一外部资源, 由容器按依赖顺序释放。
+ */
 export class NotifyWorker {
   private readonly worker: Worker<NewOrderEmailInput>;
 
@@ -26,3 +31,14 @@ export class NotifyWorker {
     return this.worker;
   }
 }
+
+export const notifyWorker = ripple(
+  {
+    emailUseCase,
+  },
+  deps => new NotifyWorker(deps),
+  {
+    debugName: 'NotifyWorker',
+    dispose: worker => worker.instance.close(),
+  },
+);

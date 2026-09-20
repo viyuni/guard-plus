@@ -1,17 +1,10 @@
 import type { AdminLoginBody } from '@shared/schema/admin';
+import { type InferInput, ripple } from 'cyrenejs';
 
-import { AdminPolicy } from '#apps/admin/modules/admin/domain';
-import type { AdminRepository } from '#apps/admin/modules/admin/repository';
-import type { DbExecutor } from '#db';
-import type { AuthUseCase } from '#modules/auth';
-import { InvalidCredentialsError } from '#utils';
-import { PasswordUtil } from '#utils';
-
-export interface AdminAuthUseCaseDeps {
-  db: DbExecutor;
-  adminRepo: AdminRepository;
-  authUseCase: AuthUseCase;
-}
+import { isAdminAvailable } from '#apps/admin/modules/admin/domain';
+import { adminRepo } from '#apps/admin/modules/admin/repository';
+import { authUseCase } from '#modules/auth';
+import { InvalidCredentialsError, PasswordUtil } from '#utils';
 
 export interface AdminLoginUser {
   id: string;
@@ -29,43 +22,50 @@ export interface AdminLoginResult {
   user: AdminLoginUser;
 }
 
-export class AdminAuthUseCase {
-  constructor(private readonly deps: AdminAuthUseCaseDeps) {}
+export const adminAuthUseCase = ripple(
+  {
+    adminRepo,
+    authUseCase,
+  },
+  ({ adminRepo, authUseCase }) => ({
+    async login(body: AdminLoginBody): Promise<AdminLoginResult> {
+      const user = await adminRepo.findByUid(body.uid);
 
-  async login(body: AdminLoginBody): Promise<AdminLoginResult> {
-    const user = await this.deps.adminRepo.findByUid(body.uid);
+      if (!user) {
+        throw new InvalidCredentialsError();
+      }
 
-    if (!user) {
-      throw new InvalidCredentialsError();
-    }
+      if (!isAdminAvailable(user)) {
+        throw new InvalidCredentialsError();
+      }
 
-    if (!AdminPolicy.isAvailable(user)) {
-      throw new InvalidCredentialsError();
-    }
+      const isValidPassword = await PasswordUtil.verify(body.password, user.passwordHash);
 
-    const isValidPassword = await PasswordUtil.verify(body.password, user.passwordHash);
+      if (!isValidPassword) {
+        throw new InvalidCredentialsError();
+      }
 
-    if (!isValidPassword) {
-      throw new InvalidCredentialsError();
-    }
+      const loggedIn = await adminRepo.updateLastLoginAt(user.id);
+      const { id, uid, username, role, lastLoginAt } = loggedIn ?? user;
 
-    const loggedIn = await this.deps.adminRepo.updateLastLoginAt(user.id);
-    const { id, uid, username, role, lastLoginAt } = loggedIn ?? user;
+      const tokens = await authUseCase.createSessionTokenPair({
+        id: user.id,
+        role: user.role,
+      });
 
-    const tokens = await this.deps.authUseCase.createSessionTokenPair({
-      id: user.id,
-      role: user.role,
-    });
+      return {
+        ...tokens,
+        user: {
+          id,
+          uid,
+          username,
+          role,
+          lastLoginAt,
+        },
+      };
+    },
+  }),
+  { debugName: 'AdminAuthUseCase' },
+);
 
-    return {
-      ...tokens,
-      user: {
-        id,
-        uid,
-        username,
-        role,
-        lastLoginAt,
-      },
-    };
-  }
-}
+export type AdminAuthUseCase = InferInput<typeof adminAuthUseCase>;

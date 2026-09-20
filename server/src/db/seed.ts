@@ -7,7 +7,7 @@ import { Database, DataSecret, BiliRoom, PointImageUseCase, RewardLogger } from 
 
 import { createDatabase, db } from '.';
 import type { BiliGuardRewardEvent } from '../modules/reward';
-import { rewardUseCase } from '../modules/reward/context';
+import { rewardUseCase } from '../modules/reward';
 import {
   admins,
   pointTypes,

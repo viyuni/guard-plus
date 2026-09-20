@@ -3,56 +3,63 @@ import {
   BiliEventPageQuerySchema,
   CreateManualBiliGuardEventSchema,
 } from '@shared/schema/reward';
+import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { appContext } from '../../context';
+import { adminAuthGuard } from '#apps/admin/http';
+import { rewardUseCase } from '#modules/reward';
 
-export const rewardBiliGuardRoute = new Elysia({
-  name: 'RewardBiliGuardRoute',
-  prefix: '/biliGuard',
-  detail: {
-    tags: ['RewardBiliGuard'],
+export const rewardBiliGuardRoutes = ripple(
+  {
+    authGuard: adminAuthGuard,
+    rewardUseCase,
   },
-})
-  .use(appContext)
-  .get(
-    '/',
-    ({ query, rewardUseCase }) => {
-      return rewardUseCase.pageBiliGuardEvents(query);
-    },
-    {
-      query: BiliEventPageQuerySchema,
-      requiredAdminAuth: true,
+  ({ authGuard, rewardUseCase }) =>
+    new Elysia({
+      name: 'RewardBiliGuardRoute',
+      prefix: '/biliGuard',
       detail: {
-        description: '大航海事件列表',
+        tags: ['RewardBiliGuard'],
       },
-    },
-  )
-
-  .post(
-    '/manual',
-    ({ body, rewardUseCase }) => {
-      return rewardUseCase.createManualBiliGuardEvent(body);
-    },
-    {
-      body: CreateManualBiliGuardEventSchema,
-      requiredAdminAuth: true,
-      detail: {
-        description: '手动创建大航海事件并发放奖励',
-      },
-    },
-  )
-
-  .post(
-    '/:biliEventId/replay',
-    ({ params, rewardUseCase }) => {
-      return rewardUseCase.replayRewardBiliGuard(params.biliEventId);
-    },
-    {
-      params: BiliEventIdParamsSchema,
-      requiredAdminAuth: true,
-      detail: {
-        description: '按事件快照回放大航海奖励',
-      },
-    },
-  );
+    })
+      .use(authGuard)
+      .get(
+        '/',
+        ({ query }) => {
+          return rewardUseCase.pageBiliGuardEvents(query);
+        },
+        {
+          query: BiliEventPageQuerySchema,
+          requiredAdminAuth: true,
+          detail: {
+            description: '大航海事件列表',
+          },
+        },
+      )
+      .post(
+        '/manual',
+        ({ body }) => {
+          return rewardUseCase.createManualBiliGuardEvent(body);
+        },
+        {
+          body: CreateManualBiliGuardEventSchema,
+          requiredAdminAuth: true,
+          detail: {
+            description: '手动创建大航海事件并发放奖励',
+          },
+        },
+      )
+      .post(
+        '/:biliEventId/replay',
+        ({ params }) => {
+          return rewardUseCase.replayRewardBiliGuard(params.biliEventId);
+        },
+        {
+          params: BiliEventIdParamsSchema,
+          requiredAdminAuth: true,
+          detail: {
+            description: '按事件快照回放大航海奖励',
+          },
+        },
+      ),
+);

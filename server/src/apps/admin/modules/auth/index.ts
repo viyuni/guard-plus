@@ -1,17 +1,20 @@
 import { AdminLoginSchema } from '@shared/schema/admin';
+import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { appContext } from '#apps/admin/context';
 import { adminEnv } from '#apps/admin/env';
 import {
-  AUTH_STATE_COOKIE_NAME,
-  AUTH_STATE_COOKIE_VALUE,
   ACCESS_TOKEN_COOKIE_NAME,
   ACCESS_TOKEN_COOKIE_OPTIONS,
+  AUTH_STATE_COOKIE_NAME,
+  AUTH_STATE_COOKIE_VALUE,
   REFRESH_TOKEN_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_OPTIONS,
+  authUseCase,
   getAuthStateCookieOptions,
 } from '#modules/auth';
+
+import { adminAuthUseCase } from './usecase';
 
 export * from './usecase';
 
@@ -20,66 +23,72 @@ const authStateCookieOptions = getAuthStateCookieOptions(
   adminEnv.ADMIN_WEB_ORIGINS,
 );
 
-export const auth = new Elysia({
-  name: 'AuthRoute',
-  prefix: '/auth',
-  detail: {
-    tags: ['Auth'],
+export const adminAuthRoutes = ripple(
+  {
+    adminAuthUseCase,
+    authUseCase,
   },
-})
-  .use(appContext)
-  .post(
-    '/login',
-    async ({ body, cookie, adminAuthUseCase }) => {
-      const { user, accessToken, refreshToken } = await adminAuthUseCase.login(body);
-
-      cookie[ACCESS_TOKEN_COOKIE_NAME]!.set({
-        ...ACCESS_TOKEN_COOKIE_OPTIONS,
-        value: accessToken,
-      });
-
-      cookie[REFRESH_TOKEN_COOKIE_NAME]!.set({
-        ...REFRESH_TOKEN_COOKIE_OPTIONS,
-        value: refreshToken,
-      });
-      cookie[AUTH_STATE_COOKIE_NAME]!.set({
-        ...authStateCookieOptions,
-        value: AUTH_STATE_COOKIE_VALUE,
-      });
-
-      return user;
-    },
-    {
-      body: AdminLoginSchema,
+  ({ adminAuthUseCase, authUseCase }) =>
+    new Elysia({
+      name: 'AuthRoute',
+      prefix: '/auth',
       detail: {
-        description: '管理员登录',
+        tags: ['Auth'],
       },
-    },
-  )
-  .post(
-    '/logout',
-    async ({ cookie, authUseCase }) => {
-      const accessToken = cookie[ACCESS_TOKEN_COOKIE_NAME]?.value;
+    })
+      .post(
+        '/login',
+        async ({ body, cookie }) => {
+          const { user, accessToken, refreshToken } = await adminAuthUseCase.login(body);
 
-      if (accessToken && typeof accessToken === 'string') {
-        await authUseCase.revokeByAccessToken(accessToken);
-      }
+          cookie[ACCESS_TOKEN_COOKIE_NAME]!.set({
+            ...ACCESS_TOKEN_COOKIE_OPTIONS,
+            value: accessToken,
+          });
 
-      cookie[ACCESS_TOKEN_COOKIE_NAME]!.remove();
-      cookie[REFRESH_TOKEN_COOKIE_NAME]!.remove();
-      cookie[AUTH_STATE_COOKIE_NAME]!.set({
-        ...authStateCookieOptions,
-        maxAge: 0,
-        value: '',
-      });
+          cookie[REFRESH_TOKEN_COOKIE_NAME]!.set({
+            ...REFRESH_TOKEN_COOKIE_OPTIONS,
+            value: refreshToken,
+          });
+          cookie[AUTH_STATE_COOKIE_NAME]!.set({
+            ...authStateCookieOptions,
+            value: AUTH_STATE_COOKIE_VALUE,
+          });
 
-      return {
-        success: true,
-      };
-    },
-    {
-      detail: {
-        description: '管理员退出登录',
-      },
-    },
-  );
+          return user;
+        },
+        {
+          body: AdminLoginSchema,
+          detail: {
+            description: '管理员登录',
+          },
+        },
+      )
+      .post(
+        '/logout',
+        async ({ cookie }) => {
+          const accessToken = cookie[ACCESS_TOKEN_COOKIE_NAME]?.value;
+
+          if (accessToken && typeof accessToken === 'string') {
+            await authUseCase.revokeByAccessToken(accessToken);
+          }
+
+          cookie[ACCESS_TOKEN_COOKIE_NAME]!.remove();
+          cookie[REFRESH_TOKEN_COOKIE_NAME]!.remove();
+          cookie[AUTH_STATE_COOKIE_NAME]!.set({
+            ...authStateCookieOptions,
+            maxAge: 0,
+            value: '',
+          });
+
+          return {
+            success: true,
+          };
+        },
+        {
+          detail: {
+            description: '管理员退出登录',
+          },
+        },
+      ),
+);

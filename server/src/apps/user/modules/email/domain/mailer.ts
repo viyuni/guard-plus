@@ -1,9 +1,10 @@
+import { ripple } from 'cyrenejs';
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 
-import type { SmtpEnv } from '#env/smtp';
+import { smtpEnv, type SmtpEnv } from '#env/smtp';
 
-export interface SmtpConfig {
+interface SmtpConfigOptions {
   host: string;
   port: number;
   user: string;
@@ -19,7 +20,7 @@ export interface SendMailInput {
 export class Mailer {
   private readonly transporter: Transporter;
 
-  constructor(private readonly config: SmtpConfig) {
+  constructor(private readonly config: SmtpConfigOptions) {
     this.transporter = nodemailer.createTransport({
       host: config.host,
       port: config.port,
@@ -57,3 +58,11 @@ export function createMailer(config: SmtpEnv) {
     pass: config.SMTP_PASS,
   });
 }
+
+/**
+ * SMTP 未配置时 mailer 为 undefined, 由 UseCase 决定是否降级。
+ */
+export const mailer = ripple({}, () => createMailer(smtpEnv), {
+  debugName: 'Mailer',
+  dispose: value => value?.close(),
+});

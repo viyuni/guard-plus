@@ -10,14 +10,6 @@ import { version } from '~/package.json' with { type: 'json' };
 
 import { appRuntimeContext } from './context';
 import { adminEnv } from './env';
-import { admin } from './modules/admin';
-import { auth } from './modules/auth';
-import { dashboard } from './modules/dashboard';
-import { order } from './modules/order';
-import { point } from './modules/point';
-import { product } from './modules/product';
-import { reward } from './modules/reward';
-import { user } from './modules/user';
 
 export const app = new Elysia({
   name: 'AdminServer',
@@ -35,14 +27,6 @@ export const app = new Elysia({
   )
   .use(appRuntimeContext)
   .use(errorHandler)
-  .use(auth)
-  .use(dashboard)
-  .use(admin)
-  .use(point)
-  .use(reward)
-  .use(product)
-  .use(order)
-  .use(user)
   .use(health)
   .use(image({ assets: imageEnv.IMAGE_SAVE_PATH }))
   .get('/', () => 'Viyuni Guard plus server running... :)');

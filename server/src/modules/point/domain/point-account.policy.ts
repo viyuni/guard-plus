@@ -6,26 +6,24 @@ import {
   PointBalanceInsufficientError,
 } from './errors';
 
-export class PointAccountPolicy {
-  static assertCanIncrease(account: PointAccount) {
-    if (account.status === 'banned') {
-      throw new PointAccountBannedError();
-    }
+export function assertPointAccountCanIncrease(account: PointAccount) {
+  if (account.status === 'banned') {
+    throw new PointAccountBannedError();
+  }
+}
+
+export function assertPointAccountCanConsume(account: PointAccount) {
+  if (account.status === 'suspended') {
+    throw new PointAccountSuspendedError();
   }
 
-  static assertCanConsume(account: PointAccount) {
-    if (account.status === 'suspended') {
-      throw new PointAccountSuspendedError();
-    }
-
-    if (account.status === 'banned') {
-      throw new PointAccountBannedError();
-    }
+  if (account.status === 'banned') {
+    throw new PointAccountBannedError();
   }
+}
 
-  static assertSufficientBalance(account: PointAccount, amount: number) {
-    if (account.balance < amount) {
-      throw new PointBalanceInsufficientError();
-    }
+export function assertSufficientPointBalance(account: PointAccount, amount: number) {
+  if (account.balance < amount) {
+    throw new PointBalanceInsufficientError();
   }
 }

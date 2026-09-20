@@ -5,7 +5,9 @@ import type { PointTransaction } from '#db/schema';
 import {
   POINT_CHANGE_SOURCE_TYPE,
   PointTransactionAlreadyReversedError,
-  PointTransactionPolicy,
+  assertPointTransactionCanReverse,
+  reversalPointTransactionDelta,
+  resolvePointTransactionTitle,
 } from '../domain';
 
 function transaction(input: Partial<PointTransaction> = {}): PointTransaction {
@@ -33,40 +35,40 @@ function transaction(input: Partial<PointTransaction> = {}): PointTransaction {
 
 describe('积分流水策略', () => {
   it('阻止重复冲正', () => {
-    expect(() => PointTransactionPolicy.assertCanReverse(transaction(), null)).not.toThrow();
+    expect(() => assertPointTransactionCanReverse(transaction(), null)).not.toThrow();
     expect(() =>
-      PointTransactionPolicy.assertCanReverse(
+      assertPointTransactionCanReverse(
         transaction({ reversalOfTransactionId: crypto.randomUUID() }),
         null,
       ),
     ).toThrow(PointTransactionAlreadyReversedError);
     expect(() =>
-      PointTransactionPolicy.assertCanReverse(transaction(), transaction({ type: 'reversal' })),
+      assertPointTransactionCanReverse(transaction(), transaction({ type: 'reversal' })),
     ).toThrow(PointTransactionAlreadyReversedError);
   });
 
   it('计算冲正反向 delta', () => {
-    expect(PointTransactionPolicy.reversalDelta(transaction({ delta: -7 }))).toBe(7);
-    expect(PointTransactionPolicy.reversalDelta(transaction({ delta: 7 }))).toBe(-7);
+    expect(reversalPointTransactionDelta(transaction({ delta: -7 }))).toBe(7);
+    expect(reversalPointTransactionDelta(transaction({ delta: 7 }))).toBe(-7);
   });
 
   it('根据来源和类型生成展示标题', () => {
     expect(
-      PointTransactionPolicy.resolveTitle({
+      resolvePointTransactionTitle({
         type: 'consume',
         delta: -1,
         sourceType: POINT_CHANGE_SOURCE_TYPE.OrderConsume,
       }),
     ).toBe('兑换商品');
     expect(
-      PointTransactionPolicy.resolveTitle({
+      resolvePointTransactionTitle({
         type: 'adjust',
         delta: -1,
         sourceType: POINT_CHANGE_SOURCE_TYPE.AdminAdjustment,
       }),
     ).toBe('管理员扣减');
     expect(
-      PointTransactionPolicy.resolveTitle({
+      resolvePointTransactionTitle({
         type: 'grant',
         delta: 1,
         sourceType: null,

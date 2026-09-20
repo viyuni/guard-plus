@@ -1,14 +1,15 @@
-import { expect, it, mock } from 'bun:test';
+import { afterEach, expect, it, spyOn } from 'bun:test';
 
 import type { DbClient } from '#db';
-import type { AuthUseCase as SharedAuthUseCase, BiliRegisterUseCase } from '#modules/auth';
+import { biliPasswordResetUseCase, biliRegisterUseCase } from '#modules/auth';
 import type { BiliRegisterChallenge } from '#modules/auth/domain';
-import type { PointAccountUseCase } from '#modules/point';
-import type { RewardUseCase } from '#modules/reward';
-import type { UserUseCase } from '#modules/user';
+import { pointAccountUseCase } from '#modules/point';
+import { rewardUseCase } from '#modules/reward';
+import { userUseCase } from '#modules/user';
+import { createTestRuntime } from '#test-helpers/test-runtime';
 import { BadRequestError } from '#utils';
 
-import { AuthUseCase } from '../usecase';
+import { userAuthUseCase } from '../usecase';
 
 const input = {
   biliUid: '123456',
@@ -21,7 +22,13 @@ const credential = {
   verifier: 'verifier',
 };
 
-function createUseCase(
+const runtimes: Array<{ dispose: () => Promise<void> }> = [];
+
+afterEach(async () => {
+  await Promise.all(runtimes.splice(0).map(runtime => runtime.dispose()));
+});
+
+async function createUseCase(
   challenge: BiliRegisterChallenge | null,
   options: {
     consumeError?: Error;
@@ -32,51 +39,43 @@ function createUseCase(
 ) {
   const tx = {};
 
-  const create = mock(async () => ({
-    id: 'user-id',
-    biliUid: input.biliUid,
-    username: input.username,
-  }));
+  const runtime = createTestRuntime(
+    { userAuthUseCase },
+    {
+      database: {
+        transaction: async (callback: (actualTx: unknown) => unknown) => callback(tx),
+      } as unknown as DbClient,
+    },
+  );
 
-  const replayRewardBiliGuardByUserId = mock(async () => {
+  runtimes.push(runtime);
+
+  const container = await runtime.start();
+
+  const create = spyOn(await runtime.resolve(userUseCase), 'create').mockImplementation(
+    async () =>
+      ({
+        id: 'user-id',
+        biliUid: input.biliUid,
+        username: input.username,
+      }) as never,
+  );
+
+  const replayRewardBiliGuardByUserId = spyOn(
+    await runtime.resolve(rewardUseCase),
+    'replayRewardBiliGuardByUserId',
+  ).mockImplementation(async () => {
     if (options.rewardError) {
       throw options.rewardError;
     }
 
-    return {
-      total: 0,
-      succeeded: 0,
-      failed: 0,
-    };
+    return undefined as never;
   });
 
-  const getOwnedChallenge = mock(async () => challenge);
-
-  const consumeChallenge = mock(async () => {
-    if (options.consumeError) {
-      throw options.consumeError;
-    }
-
-    return challenge;
-  });
-
-  const passwordResetChallenge = Object.hasOwn(options, 'passwordResetChallenge')
-    ? options.passwordResetChallenge!
-    : challenge;
-
-  const getPasswordResetChallenge = mock(async () => passwordResetChallenge);
-  const consumePasswordResetChallenge = mock(async () => passwordResetChallenge);
-
-  const getAvailableByBiliUid = mock(async () => ({
-    id: 'user-id',
-    biliUid: input.biliUid,
-    username: input.username,
-    status: 'active' as const,
-  }));
-
-  const setPassword = mock(async () => {});
-
-  const replayLegacyMigrations = mock(async () => {
+  const replayLegacyMigrations = spyOn(
+    await runtime.resolve(pointAccountUseCase),
+    'replayLegacyMigrations',
+  ).mockImplementation(async () => {
     if (options.migrationError) {
       throw options.migrationError;
     }
@@ -84,27 +83,48 @@ function createUseCase(
     return [];
   });
 
-  const warn = mock(() => {});
+  const registerUseCase = await runtime.resolve(biliRegisterUseCase);
+  const resetUseCase = await runtime.resolve(biliPasswordResetUseCase);
 
-  const useCase = new AuthUseCase({
-    authUseCase: {} as SharedAuthUseCase,
-    biliPasswordResetUseCase: {
-      consumeChallenge: consumePasswordResetChallenge,
-      getOwnedChallenge: getPasswordResetChallenge,
-    } as unknown as BiliRegisterUseCase,
-    biliRegisterUseCase: {
-      consumeChallenge,
-      getOwnedChallenge,
-    } as unknown as BiliRegisterUseCase,
-    biliRoom: 8315781,
-    db: {
-      transaction: async (callback: (actualTx: unknown) => unknown) => callback(tx),
-    } as unknown as DbClient,
-    pointAccountUseCase: { replayLegacyMigrations } as unknown as PointAccountUseCase,
-    rewardUseCase: { replayRewardBiliGuardByUserId } as unknown as RewardUseCase,
-    userUseCase: { create, getAvailableByBiliUid, setPassword } as unknown as UserUseCase,
-    logger: { warn },
-  });
+  const getOwnedChallenge = spyOn(registerUseCase, 'getOwnedChallenge').mockImplementation(
+    async () => challenge,
+  );
+
+  const consumeChallenge = spyOn(registerUseCase, 'consumeChallenge').mockImplementation(
+    async () => {
+      if (options.consumeError) {
+        throw options.consumeError;
+      }
+
+      return challenge;
+    },
+  );
+
+  const passwordResetChallenge = Object.hasOwn(options, 'passwordResetChallenge')
+    ? options.passwordResetChallenge!
+    : challenge;
+
+  const getPasswordResetChallenge = spyOn(resetUseCase, 'getOwnedChallenge').mockImplementation(
+    async () => passwordResetChallenge,
+  );
+
+  const consumePasswordResetChallenge = spyOn(resetUseCase, 'consumeChallenge').mockImplementation(
+    async () => passwordResetChallenge,
+  );
+
+  const accountUseCase = await runtime.resolve(userUseCase);
+
+  const getAvailableByBiliUid = spyOn(accountUseCase, 'getAvailableByBiliUid').mockImplementation(
+    async () =>
+      ({
+        id: 'user-id',
+        biliUid: input.biliUid,
+        username: input.username,
+        status: 'active' as const,
+      }) as never,
+  );
+
+  const setPassword = spyOn(accountUseCase, 'setPassword').mockImplementation(async () => {});
 
   return {
     consumeChallenge,
@@ -117,8 +137,7 @@ function createUseCase(
     replayLegacyMigrations,
     tx,
     setPassword,
-    useCase,
-    warn,
+    useCase: container.userAuthUseCase,
   };
 }
 
@@ -138,7 +157,7 @@ function matchedChallenge(
 }
 
 it('验证码状态只在 verifier、code 和待验证 UID 全部匹配时返回身份', async () => {
-  const { getOwnedChallenge, useCase } = createUseCase(matchedChallenge());
+  const { getOwnedChallenge, useCase } = await createUseCase(matchedChallenge());
 
   await expect(
     useCase.getBiliRegisterCodeStatus(input.biliUid, credential.code, credential.verifier),
@@ -157,7 +176,7 @@ it('验证码状态只在 verifier、code 和待验证 UID 全部匹配时返回
 });
 
 it('验证码状态拒绝错误的 verifier 或 code', async () => {
-  const { useCase } = createUseCase(null);
+  const { useCase } = await createUseCase(null);
 
   await expect(
     useCase.getBiliRegisterCodeStatus(input.biliUid, credential.code, 'wrong-verifier'),
@@ -165,7 +184,7 @@ it('验证码状态拒绝错误的 verifier 或 code', async () => {
 });
 
 it('验证码状态拒绝与待验证 UID 不同的弹幕 UID', async () => {
-  const { useCase } = createUseCase(matchedChallenge('654321', input.biliUid));
+  const { useCase } = await createUseCase(matchedChallenge('654321', input.biliUid));
 
   await expect(
     useCase.getBiliRegisterCodeStatus(input.biliUid, credential.code, credential.verifier),
@@ -173,7 +192,7 @@ it('验证码状态拒绝与待验证 UID 不同的弹幕 UID', async () => {
 });
 
 it('用户注册会拒绝失效的 UID 归属验证', async () => {
-  const { consumeChallenge, create, getOwnedChallenge, useCase } = createUseCase(null);
+  const { consumeChallenge, create, getOwnedChallenge, useCase } = await createUseCase(null);
 
   await expect(useCase.register(input, credential)).rejects.toBeInstanceOf(BadRequestError);
   expect(getOwnedChallenge).toHaveBeenCalledWith(
@@ -191,7 +210,7 @@ it('用户注册会拒绝已经消费的 UID 归属验证', async () => {
     status: 'consumed' as const,
   };
 
-  const { consumeChallenge, create, useCase } = createUseCase(challenge);
+  const { consumeChallenge, create, useCase } = await createUseCase(challenge);
 
   await expect(useCase.register(input, credential)).rejects.toBeInstanceOf(BadRequestError);
   expect(consumeChallenge).not.toHaveBeenCalled();
@@ -200,7 +219,7 @@ it('用户注册会拒绝已经消费的 UID 归属验证', async () => {
 
 it('用户注册会拒绝缺少服务端验证凭据的请求', async () => {
   const { consumeChallenge, create, getOwnedChallenge, useCase } =
-    createUseCase(matchedChallenge());
+    await createUseCase(matchedChallenge());
 
   await expect(useCase.register(input, undefined)).rejects.toBeInstanceOf(BadRequestError);
   expect(getOwnedChallenge).not.toHaveBeenCalled();
@@ -209,7 +228,7 @@ it('用户注册会拒绝缺少服务端验证凭据的请求', async () => {
 });
 
 it('用户注册会拒绝与验证结果不一致的 UID', async () => {
-  const { consumeChallenge, create, useCase } = createUseCase(matchedChallenge('654321'));
+  const { consumeChallenge, create, useCase } = await createUseCase(matchedChallenge('654321'));
 
   await expect(useCase.register(input, credential)).rejects.toBeInstanceOf(BadRequestError);
   expect(consumeChallenge).not.toHaveBeenCalled();
@@ -225,7 +244,7 @@ it('用户注册验证 UID 后会创建用户并回放迁移积分及奖励', as
     replayRewardBiliGuardByUserId,
     tx,
     useCase,
-  } = createUseCase(matchedChallenge());
+  } = await createUseCase(matchedChallenge());
 
   await expect(useCase.register(input, credential)).resolves.toMatchObject({
     id: 'user-id',
@@ -260,7 +279,7 @@ it('用户注册验证 UID 后会创建用户并回放迁移积分及奖励', as
 it('用户注册事务失败时不会消费已完成的 UID 验证', async () => {
   const migrationError = new Error('migration failed');
 
-  const { consumeChallenge, replayRewardBiliGuardByUserId, useCase } = createUseCase(
+  const { consumeChallenge, replayRewardBiliGuardByUserId, useCase } = await createUseCase(
     matchedChallenge(),
     { migrationError },
   );
@@ -274,7 +293,7 @@ it('用户创建成功后验证消费或奖励回放失败不会让注册失败'
   const consumeError = new Error('redis failed');
   const rewardError = new Error('reward failed');
 
-  const { useCase, warn } = createUseCase(matchedChallenge(), {
+  const { useCase } = await createUseCase(matchedChallenge(), {
     consumeError,
     rewardError,
   });
@@ -283,7 +302,6 @@ it('用户创建成功后验证消费或奖励回放失败不会让注册失败'
     id: 'user-id',
     biliUid: input.biliUid,
   });
-  expect(warn).toHaveBeenCalledTimes(2);
 });
 
 it('忘记密码只接受独立的密码重置验证并设置新密码', async () => {
@@ -296,7 +314,7 @@ it('忘记密码只接受独立的密码重置验证并设置新密码', async (
     getPasswordResetChallenge,
     setPassword,
     useCase,
-  } = createUseCase(challenge, { passwordResetChallenge: challenge });
+  } = await createUseCase(challenge, { passwordResetChallenge: challenge });
 
   await expect(
     useCase.resetPassword({ biliUid: input.biliUid, newPassword: 'new_password_1' }, credential),
@@ -318,7 +336,7 @@ it('忘记密码只接受独立的密码重置验证并设置新密码', async (
 });
 
 it('忘记密码拒绝缺少或失效的密码重置验证', async () => {
-  const { setPassword, useCase } = createUseCase(matchedChallenge(), {
+  const { setPassword, useCase } = await createUseCase(matchedChallenge(), {
     passwordResetChallenge: null,
   });
 
@@ -334,7 +352,7 @@ it('忘记密码拒绝缺少或失效的密码重置验证', async () => {
 it('忘记密码在验证凭证无法原子消费时不会设置密码', async () => {
   const challenge = matchedChallenge();
 
-  const { consumePasswordResetChallenge, setPassword, useCase } = createUseCase(challenge, {
+  const { consumePasswordResetChallenge, setPassword, useCase } = await createUseCase(challenge, {
     passwordResetChallenge: challenge,
   });
 

@@ -1,87 +1,99 @@
+import { type InferInput, ripple } from 'cyrenejs';
 import ejs from 'ejs';
 
+import { smtpEnv } from '#env/smtp';
 import type { NewOrderEmailInput } from '#queues';
 import { BadRequestError } from '#utils';
 
-import type { Mailer } from '../domain';
+import { mailer } from '../domain';
 import newOrderTemplate from '../domain/new-order.template.ejs' with { type: 'text' };
 
-export interface EmailUseCaseDeps {
-  mailer?: Mailer;
-  notifyEmails?: string[];
+function formatDateTime(input: Date | string) {
+  const date = input instanceof Date ? input : new Date(input);
+
+  if (Number.isNaN(date.getTime())) {
+    return String(input);
+  }
+
+  return new Intl.DateTimeFormat('zh-CN', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    hour12: false,
+  }).format(date);
 }
 
-export class EmailUseCase {
-  constructor(private readonly deps: EmailUseCaseDeps) {}
+function formatDeliveryType(input: string) {
+  const names: Record<string, string> = {
+    automatic: '自动发放',
+    manual: '人工履约',
+  };
 
-  renderTemplate(template: string, data: Record<string, unknown>) {
-    return ejs.render(template, data);
-  }
+  return names[input] ?? input;
+}
 
-  async renderNewOrderEmail(input: NewOrderEmailInput) {
-    return this.renderTemplate(newOrderTemplate, {
-      ...input,
-      createdAt: this.formatDateTime(input.createdAt),
-      deliveryType: this.formatDeliveryType(input.deliveryType),
-      status: this.formatOrderStatus(input.status),
-      userRemark: input.userRemark || '无',
-    });
-  }
+function formatOrderStatus(input: string) {
+  const names: Record<string, string> = {
+    pending: '待完成',
+    completed: '已完成',
+    refunded: '已退款',
+  };
 
-  async sendNewOrderEmail(input: NewOrderEmailInput) {
-    if (!this.deps.notifyEmails?.length) {
-      return {
-        recipients: [],
-      };
+  return names[input] ?? input;
+}
+
+export const emailUseCase = ripple(
+  {
+    mailer,
+  },
+  ({ mailer }) => {
+    // 通知收件人来自 SMTP 配置。
+    const notifyEmails = smtpEnv.NOTIFY_EMAILS;
+
+    function renderTemplate(template: string, data: Record<string, unknown>) {
+      return ejs.render(template, data);
     }
 
-    if (!this.deps.mailer) {
-      throw new BadRequestError('SMTP 未配置，无法发送邮件');
+    function renderNewOrderEmail(input: NewOrderEmailInput) {
+      return renderTemplate(newOrderTemplate, {
+        ...input,
+        createdAt: formatDateTime(input.createdAt),
+        deliveryType: formatDeliveryType(input.deliveryType),
+        status: formatOrderStatus(input.status),
+        userRemark: input.userRemark || '无',
+      });
     }
-
-    const html = await this.renderNewOrderEmail(input);
-
-    await this.deps.mailer.send({
-      to: this.deps.notifyEmails,
-      subject: `新订单通知：${input.productName}`,
-      html,
-    });
 
     return {
-      recipients: this.deps.notifyEmails,
+      renderTemplate,
+
+      renderNewOrderEmail,
+
+      async sendNewOrderEmail(input: NewOrderEmailInput) {
+        if (!notifyEmails?.length) {
+          return {
+            recipients: [],
+          };
+        }
+
+        if (!mailer) {
+          throw new BadRequestError('SMTP 未配置，无法发送邮件');
+        }
+
+        const html = renderNewOrderEmail(input);
+
+        await mailer.send({
+          to: notifyEmails,
+          subject: `新订单通知：${input.productName}`,
+          html,
+        });
+
+        return {
+          recipients: notifyEmails,
+        };
+      },
     };
-  }
+  },
+  { debugName: 'EmailUseCase' },
+);
 
-  private formatDateTime(input: Date | string) {
-    const date = input instanceof Date ? input : new Date(input);
-
-    if (Number.isNaN(date.getTime())) {
-      return String(input);
-    }
-
-    return new Intl.DateTimeFormat('zh-CN', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-      hour12: false,
-    }).format(date);
-  }
-
-  private formatDeliveryType(input: string) {
-    const names: Record<string, string> = {
-      automatic: '自动发放',
-      manual: '人工履约',
-    };
-
-    return names[input] ?? input;
-  }
-
-  private formatOrderStatus(input: string) {
-    const names: Record<string, string> = {
-      pending: '待完成',
-      completed: '已完成',
-      refunded: '已退款',
-    };
-
-    return names[input] ?? input;
-  }
-}
+export type EmailUseCase = InferInput<typeof emailUseCase>;

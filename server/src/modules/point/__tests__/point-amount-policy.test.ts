@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 
 import type { PointConversionRule } from '#db/schema';
-import { PointAmountPolicy, PointConversionRulePolicy } from '#modules/point';
+import { assertPositivePointAmount, calculatePointConversionToAmount } from '#modules/point';
 
 function conversionRule(input: Partial<PointConversionRule> = {}): PointConversionRule {
   return {
@@ -27,17 +27,15 @@ function conversionRule(input: Partial<PointConversionRule> = {}): PointConversi
 
 describe('积分数量策略', () => {
   it('拒绝超出 PostgreSQL integer 范围的积分数量', () => {
-    expect(() => PointAmountPolicy.assertPositiveInteger(2_147_483_647)).not.toThrow();
-    expect(() => PointAmountPolicy.assertPositiveInteger(2_147_483_648)).toThrow(
-      '积分数量超出整数范围',
-    );
+    expect(() => assertPositivePointAmount(2_147_483_647)).not.toThrow();
+    expect(() => assertPositivePointAmount(2_147_483_648)).toThrow('积分数量超出整数范围');
   });
 
   it('拒绝转换后超出 PostgreSQL integer 范围的目标积分数量', () => {
     const rule = conversionRule({ toAmount: 2 });
 
-    expect(() => PointConversionRulePolicy.calculateToAmount(rule, 1_073_741_823)).not.toThrow();
-    expect(() => PointConversionRulePolicy.calculateToAmount(rule, 1_073_741_824)).toThrow(
+    expect(() => calculatePointConversionToAmount(rule, 1_073_741_823)).not.toThrow();
+    expect(() => calculatePointConversionToAmount(rule, 1_073_741_824)).toThrow(
       '积分数量超出整数范围',
     );
   });

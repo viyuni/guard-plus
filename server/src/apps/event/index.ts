@@ -2,7 +2,6 @@ import { createListener } from '@viyuni/bevent-relay';
 import type { Guard } from '@viyuni/bevent-relay/events';
 import { Worker } from 'bunqueue/client';
 
-import { createEventContainer } from '#context';
 import { db } from '#db';
 import { sharedEnv } from '#env/shared';
 import { publishBilibiliGuardEvent } from '#queues';
@@ -10,17 +9,16 @@ import { BILIBILI_EVENT_QUEUE_NAME } from '#queues';
 import { redis } from '#redis';
 import { logger } from '#utils/logger';
 
+import { createEventContainer } from './context';
 import { eventEnv } from './env';
 import { createEventServer } from './server';
 
-const {
-  runtime,
-  useCases: { biliPasswordResetUseCase, biliRegisterUseCase, rewardUseCase },
-} = await createEventContainer({
-  db,
-  redis,
-  env: eventEnv,
-});
+const { runtime, biliPasswordResetUseCase, biliRegisterUseCase, rewardUseCase } =
+  await createEventContainer({
+    db,
+    redis,
+    env: eventEnv,
+  });
 
 const _worker = new Worker<Guard>(
   BILIBILI_EVENT_QUEUE_NAME,

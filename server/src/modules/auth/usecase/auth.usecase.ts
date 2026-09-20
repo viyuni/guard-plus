@@ -1,11 +1,13 @@
+import { type InferInput, ripple } from 'cyrenejs';
 import { SignJWT, jwtVerify } from 'jose';
 import { nanoid } from 'nanoid';
 
+import { JwtSecret } from '#context/tokens';
 import { UnauthorizedError } from '#utils';
 
 import { ACCESS_TOKEN_EXPIRES_IN_SECONDS, REFRESH_TOKEN_EXPIRES_IN_SECONDS } from '../constants';
 import type { AuthPayload, AuthRole, AuthTokenPair } from '../domain';
-import type { AuthSessionRedisRepository } from '../repository';
+import { authSessionRepo } from '../repository';
 
 type AuthTokenType = 'access' | 'refresh';
 type AuthIdentity = Omit<AuthPayload, 'sid'>;
@@ -19,204 +21,218 @@ function getTokenExpiresInSeconds(type: AuthTokenType) {
   return type === 'access' ? ACCESS_TOKEN_EXPIRES_IN_SECONDS : REFRESH_TOKEN_EXPIRES_IN_SECONDS;
 }
 
-export class AuthUseCase {
-  private encodedSecret: Uint8Array<ArrayBuffer>;
+export const authUseCase = ripple(
+  {
+    authSessionRepo,
+    jwtSecret: JwtSecret,
+  },
+  ({ authSessionRepo, jwtSecret }) => {
+    const encodedSecret = new TextEncoder().encode(jwtSecret);
 
-  constructor(
-    private secret: string,
-    private readonly authSessionRepo: AuthSessionRedisRepository,
-  ) {
-    this.encodedSecret = new TextEncoder().encode(this.secret);
-  }
+    function normalizeRole(role: AuthPayload['role']): AuthRole {
+      return role ?? 'user';
+    }
 
-  private async signToken(payload: AuthPayload, type: AuthTokenType) {
-    const expiresInSeconds = getTokenExpiresInSeconds(type);
+    async function signToken(payload: AuthPayload, type: AuthTokenType) {
+      const expiresInSeconds = getTokenExpiresInSeconds(type);
 
-    return new SignJWT({
-      id: payload.id,
-      role: payload.role,
-      sid: payload.sid,
-      type,
-    })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt()
-      .setExpirationTime(`${expiresInSeconds}s`)
-      .sign(this.encodedSecret);
-  }
-
-  async signAccessToken(payload: AuthPayload) {
-    return this.signToken(payload, 'access');
-  }
-
-  async signRefreshToken(payload: AuthPayload) {
-    return this.signToken(payload, 'refresh');
-  }
-
-  async signTokenPair(payload: AuthPayload): Promise<AuthTokenPair> {
-    const now = Date.now();
-
-    const [accessToken, refreshToken] = await Promise.all([
-      this.signAccessToken(payload),
-      this.signRefreshToken(payload),
-    ]);
-
-    return {
-      accessToken,
-      accessTokenExpiresAt: now + ACCESS_TOKEN_EXPIRES_IN_SECONDS * 1000,
-      refreshToken,
-      refreshTokenExpiresAt: now + REFRESH_TOKEN_EXPIRES_IN_SECONDS * 1000,
-    };
-  }
-
-  async createSessionTokenPair(identity: AuthIdentity) {
-    const role = this.normalizeRole(identity.role);
-    const session = await this.authSessionRepo.create(identity.id, role);
-
-    return this.signTokenPair({
-      ...identity,
-      role,
-      sid: session.sessionId,
-    });
-  }
-
-  private async verifyToken(token: string, expectedType: AuthTokenType) {
-    try {
-      const { payload } = await jwtVerify<AuthPayload & { type?: AuthTokenType }>(
-        token,
-        this.encodedSecret,
-      );
-
-      if (typeof payload.id !== 'string') {
-        throw new UnauthorizedError();
-      }
-
-      if (typeof payload.sid !== 'string') {
-        throw new UnauthorizedError();
-      }
-
-      if (payload.type !== expectedType) {
-        throw new UnauthorizedError();
-      }
-
-      // 确保角色是字符串
-      if (payload.role !== undefined && typeof payload.role !== 'string') {
-        throw new UnauthorizedError();
-      }
-
-      const role = this.normalizeRole(payload.role);
-      const session = await this.authSessionRepo.find(role, payload.sid);
-
-      if (!session || session.accountId !== payload.id) {
-        throw new UnauthorizedError();
-      }
-
-      return {
+      return new SignJWT({
         id: payload.id,
-        role,
+        role: payload.role,
         sid: payload.sid,
-      };
-    } catch {
-      throw new UnauthorizedError();
-    }
-  }
-
-  private normalizeRole(role: AuthPayload['role']): AuthRole {
-    return role ?? 'user';
-  }
-
-  async verifyAccessToken(token: string) {
-    return this.verifyToken(token, 'access');
-  }
-
-  async verifyRefreshToken(token: string) {
-    return this.verifyToken(token, 'refresh');
-  }
-
-  async refreshTokenPair(refreshToken: string) {
-    const payload = await this.verifyRefreshToken(refreshToken);
-    const extended = await this.authSessionRepo.extend(payload.role, payload.sid);
-
-    if (!extended) {
-      throw new UnauthorizedError();
+        type,
+      })
+        .setProtectedHeader({ alg: 'HS256' })
+        .setIssuedAt()
+        .setExpirationTime(`${expiresInSeconds}s`)
+        .sign(encodedSecret);
     }
 
-    return this.signTokenPair(payload);
-  }
-
-  async refreshTokenPairWithLock(refreshToken: string) {
-    const payload = await this.verifyRefreshToken(refreshToken);
-    const cached = await this.authSessionRepo.getRefreshResult(payload.role, payload.sid);
-
-    if (cached) {
-      return {
-        payload,
-        ...cached,
-      };
+    async function signAccessToken(payload: AuthPayload) {
+      return signToken(payload, 'access');
     }
 
-    const lockValue = nanoid();
+    async function signRefreshToken(payload: AuthPayload) {
+      return signToken(payload, 'refresh');
+    }
 
-    const locked = await this.authSessionRepo.acquireRefreshLock(
-      payload.role,
-      payload.sid,
-      lockValue,
-      REFRESH_LOCK_TTL_MS,
-    );
+    async function signTokenPair(payload: AuthPayload): Promise<AuthTokenPair> {
+      const now = Date.now();
 
-    if (!locked) {
-      const tokens = await this.waitForRefreshResult(payload.role, payload.sid);
+      const [accessToken, refreshToken] = await Promise.all([
+        signAccessToken(payload),
+        signRefreshToken(payload),
+      ]);
 
       return {
-        payload,
-        ...tokens,
+        accessToken,
+        accessTokenExpiresAt: now + ACCESS_TOKEN_EXPIRES_IN_SECONDS * 1000,
+        refreshToken,
+        refreshTokenExpiresAt: now + REFRESH_TOKEN_EXPIRES_IN_SECONDS * 1000,
       };
     }
 
-    try {
-      const extended = await this.authSessionRepo.extend(payload.role, payload.sid);
+    async function verifyToken(token: string, expectedType: AuthTokenType) {
+      try {
+        const { payload } = await jwtVerify<AuthPayload & { type?: AuthTokenType }>(
+          token,
+          encodedSecret,
+        );
+
+        if (typeof payload.id !== 'string') {
+          throw new UnauthorizedError();
+        }
+
+        if (typeof payload.sid !== 'string') {
+          throw new UnauthorizedError();
+        }
+
+        if (payload.type !== expectedType) {
+          throw new UnauthorizedError();
+        }
+
+        // 确保角色是字符串
+        if (payload.role !== undefined && typeof payload.role !== 'string') {
+          throw new UnauthorizedError();
+        }
+
+        const role = normalizeRole(payload.role);
+        const session = await authSessionRepo.find(role, payload.sid);
+
+        if (!session || session.accountId !== payload.id) {
+          throw new UnauthorizedError();
+        }
+
+        return {
+          id: payload.id,
+          role,
+          sid: payload.sid,
+        };
+      } catch {
+        throw new UnauthorizedError();
+      }
+    }
+
+    async function waitForRefreshResult(role: AuthRole, sessionId: string) {
+      for (let i = 0; i < REFRESH_RESULT_POLL_ATTEMPTS; i++) {
+        await Bun.sleep(REFRESH_RESULT_POLL_INTERVAL_MS);
+
+        const tokens = await authSessionRepo.getRefreshResult(role, sessionId);
+
+        if (tokens) {
+          return tokens;
+        }
+      }
+
+      throw new UnauthorizedError('登录状态正在刷新，请重试');
+    }
+
+    async function refreshTokenPair(refreshToken: string) {
+      const payload = await verifyToken(refreshToken, 'refresh');
+      const extended = await authSessionRepo.extend(payload.role, payload.sid);
 
       if (!extended) {
         throw new UnauthorizedError();
       }
 
-      const tokens = await this.signTokenPair(payload);
-      await this.authSessionRepo.saveRefreshResult(
-        payload.role,
-        payload.sid,
-        tokens,
-        REFRESH_RESULT_TTL_SECONDS,
-      );
-
-      return {
-        payload,
-        ...tokens,
-      };
-    } finally {
-      await this.authSessionRepo.releaseRefreshLock(payload.role, payload.sid, lockValue);
-    }
-  }
-
-  private async waitForRefreshResult(role: AuthRole, sessionId: string) {
-    for (let i = 0; i < REFRESH_RESULT_POLL_ATTEMPTS; i++) {
-      await Bun.sleep(REFRESH_RESULT_POLL_INTERVAL_MS);
-
-      const tokens = await this.authSessionRepo.getRefreshResult(role, sessionId);
-
-      if (tokens) {
-        return tokens;
-      }
+      return signTokenPair(payload);
     }
 
-    throw new UnauthorizedError('登录状态正在刷新，请重试');
-  }
+    async function revoke(payload: AuthPayload) {
+      await authSessionRepo.delete(normalizeRole(payload.role), payload.sid);
+    }
 
-  async revoke(payload: AuthPayload) {
-    await this.authSessionRepo.delete(this.normalizeRole(payload.role), payload.sid);
-  }
+    return {
+      signAccessToken,
+      signRefreshToken,
+      signTokenPair,
 
-  async revokeByAccessToken(accessToken: string) {
-    const payload = await this.verifyAccessToken(accessToken);
+      async createSessionTokenPair(identity: AuthIdentity) {
+        const role = normalizeRole(identity.role);
+        const session = await authSessionRepo.create(identity.id, role);
 
-    await this.revoke(payload);
-  }
-}
+        return signTokenPair({
+          ...identity,
+          role,
+          sid: session.sessionId,
+        });
+      },
+
+      verifyAccessToken(token: string) {
+        return verifyToken(token, 'access');
+      },
+
+      verifyRefreshToken(token: string) {
+        return verifyToken(token, 'refresh');
+      },
+
+      refreshTokenPair,
+
+      async refreshTokenPairWithLock(refreshToken: string) {
+        const payload = await verifyToken(refreshToken, 'refresh');
+        const cached = await authSessionRepo.getRefreshResult(payload.role, payload.sid);
+
+        if (cached) {
+          return {
+            payload,
+            ...cached,
+          };
+        }
+
+        const lockValue = nanoid();
+
+        const locked = await authSessionRepo.acquireRefreshLock(
+          payload.role,
+          payload.sid,
+          lockValue,
+          REFRESH_LOCK_TTL_MS,
+        );
+
+        if (!locked) {
+          const tokens = await waitForRefreshResult(payload.role, payload.sid);
+
+          return {
+            payload,
+            ...tokens,
+          };
+        }
+
+        try {
+          const extended = await authSessionRepo.extend(payload.role, payload.sid);
+
+          if (!extended) {
+            throw new UnauthorizedError();
+          }
+
+          const tokens = await signTokenPair(payload);
+          await authSessionRepo.saveRefreshResult(
+            payload.role,
+            payload.sid,
+            tokens,
+            REFRESH_RESULT_TTL_SECONDS,
+          );
+
+          return {
+            payload,
+            ...tokens,
+          };
+        } finally {
+          await authSessionRepo.releaseRefreshLock(payload.role, payload.sid, lockValue);
+        }
+      },
+
+      async revoke(payload: AuthPayload) {
+        await revoke(payload);
+      },
+
+      async revokeByAccessToken(accessToken: string) {
+        const payload = await verifyToken(accessToken, 'access');
+
+        await revoke(payload);
+      },
+    };
+  },
+  { debugName: 'AuthUseCase' },
+);
+
+export type AuthUseCase = InferInput<typeof authUseCase>;

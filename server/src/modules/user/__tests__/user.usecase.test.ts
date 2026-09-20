@@ -1,10 +1,20 @@
-import { expect, it, mock } from 'bun:test';
+import { afterAll, expect, it, spyOn } from 'bun:test';
 
+import { Cyrene } from 'cyrenejs';
+
+import { Database, DataSecret } from '#context/tokens';
+import type { DbClient } from '#db';
+import type { UserRepository } from '#modules/user';
+import { userRepo, userUseCase } from '#modules/user';
 import { InvalidCredentialsError, PasswordUtil } from '#utils';
 
-import type { UserBasicInfoCrypto } from '../domain';
-import type { UserRepository } from '../repository';
-import { UserUseCase } from '../usecase';
+type UserRow = NonNullable<Awaited<ReturnType<UserRepository['findById']>>>;
+
+const runtimes: Array<{ dispose: () => Promise<void> }> = [];
+
+afterAll(async () => {
+  await Promise.all(runtimes.map(runtime => runtime.dispose()));
+});
 
 async function createFixture() {
   const passwordHash = await PasswordUtil.hash('old_password');
@@ -13,23 +23,33 @@ async function createFixture() {
     id: 'authenticated-user-id',
     biliUid: '123456',
     username: 'tester',
-    status: 'active' as const,
+    status: 'active',
     passwordHash,
-  };
+  } as unknown as UserRow;
 
-  const findById = mock(async () => user);
-
-  const updatePassword = mock(async (_userId: string, nextPasswordHash: string) => ({
-    ...user,
-    passwordHash: nextPasswordHash,
-  }));
-
-  const useCase = new UserUseCase({
-    userBasicInfoCrypto: {} as UserBasicInfoCrypto,
-    userRepo: { findById, updatePassword } as unknown as UserRepository,
+  const runtime = new Cyrene({
+    providers: { userRepo, userUseCase },
+    bindings: [
+      // 只验证依赖装配与业务分支, 不连接数据库。
+      { token: Database, value: {} as DbClient },
+      { token: DataSecret, value: 'test-data-secret' },
+    ],
   });
 
-  return { findById, updatePassword, useCase };
+  runtimes.push(runtime);
+
+  const container = await runtime.start();
+
+  const findById = spyOn(container.userRepo, 'findById').mockResolvedValue(user);
+
+  const updatePassword = spyOn(container.userRepo, 'updatePassword').mockImplementation(
+    async (_userId: string, nextPasswordHash: string) => ({
+      ...user,
+      passwordHash: nextPasswordHash,
+    }),
+  );
+
+  return { findById, updatePassword, useCase: container.userUseCase };
 }
 
 it('修改密码使用鉴权用户 ID 并校验旧密码', async () => {

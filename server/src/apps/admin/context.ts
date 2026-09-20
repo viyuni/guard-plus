@@ -1,20 +1,23 @@
 import { ripple } from 'cyrenejs';
-import Elysia from 'elysia';
 
 import { adminEnv } from '#apps/admin/env';
 import { createAppContext } from '#context';
-import { Database } from '#context/tokens';
+import { providersOf } from '#context/providers';
 import { db } from '#db';
-import { authUseCase } from '#modules/auth/context';
-import { pointAccountUseCase } from '#modules/point/context';
-import { rewardUseCase } from '#modules/reward/context';
-import { userUseCase } from '#modules/user/context';
 import { redis } from '#redis';
 
-import { AdminRepository } from './modules/admin/repository';
-import { AdminUseCase } from './modules/admin/usecase';
-import { AdminAuthUseCase } from './modules/auth/usecase';
-import { AdminUserUseCase } from './modules/user/usecase';
+import { adminRoutes } from './modules/admin';
+import * as adminRepository from './modules/admin/repository';
+import * as adminUseCase from './modules/admin/usecase';
+import { adminAuthRoutes } from './modules/auth';
+import * as adminAuthUseCase from './modules/auth/usecase';
+import { dashboardRoutes } from './modules/dashboard';
+import { adminOrderRoutes } from './modules/order';
+import { pointRoutes } from './modules/point';
+import { adminProductRoutes } from './modules/product';
+import { rewardRoutes } from './modules/reward';
+import { adminUserRoutes } from './modules/user';
+import * as adminUserUseCase from './modules/user/usecase';
 
 export const { context, container: adminContainer } = await createAppContext({
   db,
@@ -27,43 +30,27 @@ export const { context, container: adminContainer } = await createAppContext({
   },
 });
 
-const adminRepo = ripple({ db: Database }, ({ db }) => new AdminRepository(db), {
-  debugName: 'AdminRepository',
-});
-
-const adminUseCaseProvider = ripple(
-  { adminRepo },
-  deps =>
-    new AdminUseCase({
-      ...deps,
-      defaultAdmin: {
-        uid: adminEnv.SUPER_ADMIN_UID,
-        username: adminEnv.SUPER_ADMIN_USERNAME,
-        password: adminEnv.SUPER_ADMIN_PASSWORD,
-      },
-    }),
-  { debugName: 'AdminUseCase' },
-);
-
-const adminAuthUseCaseProvider = ripple(
-  { db: Database, adminRepo, authUseCase },
-  deps => new AdminAuthUseCase(deps),
-  { debugName: 'AdminAuthUseCase' },
-);
-
-const adminUserUseCaseProvider = ripple(
-  { db: Database, pointAccountUseCase, userUseCase, rewardUseCase },
-  deps => new AdminUserUseCase(deps),
-  { debugName: 'AdminUserUseCase' },
-);
-
-const { adminUseCase, adminAuthUseCase, adminUserUseCase } = await adminContainer.runtime
+/**
+ * app 局部 provider：用例从命名空间派生，路由插件显式列出。
+ *
+ * 路由插件自身通过闭包拿到依赖，不再往 Elysia context 上挂任何业务对象。
+ */
+const appProviders = await adminContainer.runtime
   .resolve(
     ripple(
       {
-        adminUseCase: adminUseCaseProvider,
-        adminAuthUseCase: adminAuthUseCaseProvider,
-        adminUserUseCase: adminUserUseCaseProvider,
+        ...providersOf(adminRepository),
+        ...providersOf(adminUseCase),
+        ...providersOf(adminAuthUseCase),
+        ...providersOf(adminUserUseCase),
+        adminAuthRoutes,
+        adminOrderRoutes,
+        adminProductRoutes,
+        adminRoutes,
+        adminUserRoutes,
+        dashboardRoutes,
+        pointRoutes,
+        rewardRoutes,
       },
       deps => deps,
     ),
@@ -78,25 +65,21 @@ const { adminUseCase, adminAuthUseCase, adminUserUseCase } = await adminContaine
  *
  * 只能在根 app 挂载一次。
  */
-export const appRuntimeContext = context.decorate({
-  adminAuthUseCase,
-  adminUseCase,
-  adminUserUseCase,
-});
-
-/**
- * 业务模块上下文。
- *
- * 仅用于业务模块获得 appRuntimeContext 的类型提示。
- * 运行时为空。
- *
- * 根 app 必须先 `.use(appRuntimeContext)`，再 `.use(业务模块)`。
- */
-export const appContext = new Elysia({
-  name: 'AdminAppContextTypeOnly',
-}) as unknown as typeof appRuntimeContext;
+export const appRuntimeContext = context
+  .use(appProviders.adminAuthRoutes)
+  .use(appProviders.dashboardRoutes)
+  .use(appProviders.adminRoutes)
+  .use(appProviders.pointRoutes)
+  .use(appProviders.rewardRoutes)
+  .use(appProviders.adminProductRoutes)
+  .use(appProviders.adminOrderRoutes)
+  .use(appProviders.adminUserRoutes);
 
 // 初始化默认管理员
 appRuntimeContext.onStart(() => {
-  return adminUseCase.initDefaultAdmin();
+  return appProviders.adminUseCase.initDefaultAdmin({
+    password: adminEnv.SUPER_ADMIN_PASSWORD,
+    uid: adminEnv.SUPER_ADMIN_UID,
+    username: adminEnv.SUPER_ADMIN_USERNAME,
+  });
 });
