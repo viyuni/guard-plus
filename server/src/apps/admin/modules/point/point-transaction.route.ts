@@ -3,15 +3,15 @@ import { TransactionPageQuerySchema } from '@shared/schema/point-transaction';
 import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { adminAuthGuard } from '#apps/admin/http';
-import { pointTransactionUseCase } from '#modules/point';
+import { AdminAuthGuard } from '#apps/admin/http';
+import { PointTransactionUseCase } from '#modules/point';
 
-export const pointTransactionRoutes = ripple(
+export const PointTransactionRoutes = ripple(
   {
-    authGuard: adminAuthGuard,
-    pointTransactionUseCase,
+    AdminAuthGuard,
+    PointTransactionUseCase,
   },
-  ({ authGuard, pointTransactionUseCase }) =>
+  ({ AdminAuthGuard, PointTransactionUseCase }) =>
     new Elysia({
       name: 'PointTransactionRoute',
       prefix: '/transactions',
@@ -19,11 +19,11 @@ export const pointTransactionRoutes = ripple(
         tags: ['PointTransaction'],
       },
     })
-      .use(authGuard)
+      .use(AdminAuthGuard)
       .get(
         '/',
         ({ query }) => {
-          return pointTransactionUseCase.pageManage(query);
+          return PointTransactionUseCase.pageManage(query);
         },
         {
           query: TransactionPageQuerySchema,
@@ -36,7 +36,7 @@ export const pointTransactionRoutes = ripple(
       .patch(
         '/reversal',
         ({ auth: { id: adminId }, body }) => {
-          return pointTransactionUseCase.reversal(adminId, body);
+          return PointTransactionUseCase.reversal(adminId, body);
         },
         {
           body: ReversalTransactionSchema,

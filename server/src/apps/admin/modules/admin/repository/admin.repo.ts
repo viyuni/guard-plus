@@ -7,13 +7,13 @@ import { QueryPageBuilder } from '#db/helper';
 import { admins, type InsertAdmin, type UpdateAdmin } from '#db/schema';
 import { BadRequestError, BaseErrors } from '#utils';
 
-export const adminRepo = ripple(
+export const AdminRepo = ripple(
   {
-    db: Database,
+    Database,
   },
-  ({ db }) => ({
+  ({ Database }) => ({
     async findById(adminId: string) {
-      return db.query.admins.findFirst({
+      return Database.query.admins.findFirst({
         where: {
           id: adminId,
         },
@@ -21,7 +21,7 @@ export const adminRepo = ripple(
     },
 
     async findByUid(uid: string) {
-      return await db.query.admins.findFirst({
+      return await Database.query.admins.findFirst({
         where: {
           uid,
         },
@@ -29,7 +29,7 @@ export const adminRepo = ripple(
     },
 
     async findByUsername(username: string) {
-      return await db.query.admins.findFirst({
+      return await Database.query.admins.findFirst({
         where: {
           username,
         },
@@ -37,7 +37,7 @@ export const adminRepo = ripple(
     },
 
     async create(input: InsertAdmin) {
-      const [admin] = await db.insert(admins).values(input).returning();
+      const [admin] = await Database.insert(admins).values(input).returning();
 
       if (!admin) {
         throw new BaseErrors.BadRequestError('管理员创建失败');
@@ -47,8 +47,7 @@ export const adminRepo = ripple(
     },
 
     async updateLastLoginAt(adminId: string, lastLoginAt = new Date()) {
-      const [admin] = await db
-        .update(admins)
+      const [admin] = await Database.update(admins)
         .set({ lastLoginAt })
         .where(and(eq(admins.id, adminId)))
         .returning();
@@ -57,23 +56,25 @@ export const adminRepo = ripple(
     },
 
     async update(adminId: string, input: UpdateAdmin) {
-      const [admin] = await db.update(admins).set(input).where(eq(admins.id, adminId)).returning({
-        id: admins.id,
-        uid: admins.uid,
-        username: admins.username,
-        status: admins.status,
-        role: admins.role,
-        remark: admins.remark,
-        createdAt: admins.createdAt,
-        updatedAt: admins.updatedAt,
-      });
+      const [admin] = await Database.update(admins)
+        .set(input)
+        .where(eq(admins.id, adminId))
+        .returning({
+          id: admins.id,
+          uid: admins.uid,
+          username: admins.username,
+          status: admins.status,
+          role: admins.role,
+          remark: admins.remark,
+          createdAt: admins.createdAt,
+          updatedAt: admins.updatedAt,
+        });
 
       return admin;
     },
 
     async updatePassword(adminId: string, passwordHash: string) {
-      const [admin] = await db
-        .update(admins)
+      const [admin] = await Database.update(admins)
         .set({ passwordHash })
         .where(eq(admins.id, adminId))
         .returning({
@@ -88,8 +89,7 @@ export const adminRepo = ripple(
     },
 
     async ban(adminId: string) {
-      const [admin] = await db
-        .update(admins)
+      const [admin] = await Database.update(admins)
         .set({ status: 'banned' })
         .where(and(eq(admins.id, adminId), eq(admins.role, 'admin'), eq(admins.status, 'active')))
         .returning({
@@ -102,8 +102,7 @@ export const adminRepo = ripple(
     },
 
     async restore(adminId: string) {
-      const [admin] = await db
-        .update(admins)
+      const [admin] = await Database.update(admins)
         .set({ status: 'active' })
         .where(and(eq(admins.id, adminId), eq(admins.role, 'admin'), eq(admins.status, 'banned')))
         .returning({
@@ -116,7 +115,7 @@ export const adminRepo = ripple(
     },
 
     page(query: AdminPageQuery) {
-      return new QueryPageBuilder(db, admins, db.query.admins)
+      return new QueryPageBuilder(Database, admins, Database.query.admins)
         .query((findMany, { limit, offset }) =>
           findMany({
             limit,
@@ -145,4 +144,4 @@ export const adminRepo = ripple(
   { debugName: 'AdminRepository' },
 );
 
-export type AdminRepository = InferInput<typeof adminRepo>;
+export type AdminRepository = InferInput<typeof AdminRepo>;

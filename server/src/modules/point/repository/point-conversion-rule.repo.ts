@@ -10,15 +10,15 @@ import {
   type UpdatePointConversionRule,
 } from '#db/schema';
 
-export const pointConversionRuleRepo = ripple(
+export const PointConversionRuleRepo = ripple(
   {
-    db: Database,
+    Database,
   },
-  ({ db }) => {
+  ({ Database }) => {
     async function update(
       pointConversionRuleId: string,
       data: UpdatePointConversionRule,
-      executor: DbExecutor = db,
+      executor: DbExecutor = Database,
     ) {
       const [row] = await executor
         .update(pointConversionRules)
@@ -35,7 +35,7 @@ export const pointConversionRuleRepo = ripple(
     }
 
     return {
-      async findById(pointConversionRuleId: string, executor: DbExecutor = db) {
+      async findById(pointConversionRuleId: string, executor: DbExecutor = Database) {
         const [row] = await executor
           .select()
           .from(pointConversionRules)
@@ -50,7 +50,7 @@ export const pointConversionRuleRepo = ripple(
         return row ?? null;
       },
 
-      async findByName(name: string, executor: DbExecutor = db) {
+      async findByName(name: string, executor: DbExecutor = Database) {
         const [row] = await executor
           .select()
           .from(pointConversionRules)
@@ -62,7 +62,7 @@ export const pointConversionRuleRepo = ripple(
 
       async findByPointTypePair(
         input: { fromPointTypeId: string; toPointTypeId: string },
-        executor: DbExecutor = db,
+        executor: DbExecutor = Database,
       ) {
         const [row] = await executor
           .select()
@@ -79,26 +79,26 @@ export const pointConversionRuleRepo = ripple(
         return row ?? null;
       },
 
-      async create(input: InsertPointConversionRule, executor: DbExecutor = db) {
+      async create(input: InsertPointConversionRule, executor: DbExecutor = Database) {
         const [row] = await executor.insert(pointConversionRules).values(input).returning();
         return row ?? null;
       },
 
       update,
 
-      async enabled(pointConversionRuleId: string, executor: DbExecutor = db) {
+      async enabled(pointConversionRuleId: string, executor: DbExecutor = Database) {
         return update(pointConversionRuleId, { enabled: true }, executor);
       },
 
-      async disabled(pointConversionRuleId: string, executor: DbExecutor = db) {
+      async disabled(pointConversionRuleId: string, executor: DbExecutor = Database) {
         return update(pointConversionRuleId, { enabled: false }, executor);
       },
 
-      async delete(pointConversionRuleId: string, executor: DbExecutor = db) {
+      async delete(pointConversionRuleId: string, executor: DbExecutor = Database) {
         return update(pointConversionRuleId, { deletedAt: new Date() }, executor);
       },
 
-      listManage(executor: DbExecutor = db) {
+      listManage(executor: DbExecutor = Database) {
         return executor.query.pointConversionRules.findMany({
           where: {
             deletedAt: {
@@ -115,7 +115,7 @@ export const pointConversionRuleRepo = ripple(
         });
       },
 
-      listVisible(executor: DbExecutor = db) {
+      listVisible(executor: DbExecutor = Database) {
         const now = new Date();
 
         return executor.query.pointConversionRules.findMany({
@@ -169,4 +169,4 @@ export const pointConversionRuleRepo = ripple(
   { debugName: 'PointConversionRuleRepository' },
 );
 
-export type PointConversionRuleRepository = InferInput<typeof pointConversionRuleRepo>;
+export type PointConversionRuleRepository = InferInput<typeof PointConversionRuleRepo>;

@@ -2,7 +2,7 @@ import { type InferInput, ripple } from 'cyrenejs';
 
 import type { DbTransaction } from '#db';
 import type { PointAccount, PointTransaction } from '#db/schema';
-import { userUseCase } from '#modules/user';
+import { UserUseCase } from '#modules/user';
 
 import {
   type ChangeBalanceInput,
@@ -15,17 +15,17 @@ import {
   PointTransactionIdempotencyConflictError,
   assertPointTransactionDeltaMatchesType,
 } from '../domain';
-import { pointAccountRepo, pointTransactionRepo } from '../repository';
-import { pointTypeUseCase } from './point-type.usecase';
+import { PointAccountRepo, PointTransactionRepo } from '../repository';
+import { PointTypeUseCase } from './point-type.usecase';
 
-export const pointBalanceUseCase = ripple(
+export const PointBalanceUseCase = ripple(
   {
-    pointAccountRepo,
-    pointTransactionRepo,
-    pointTypeUseCase,
-    userUseCase,
+    PointAccountRepo,
+    PointTransactionRepo,
+    PointTypeUseCase,
+    UserUseCase,
   },
-  ({ pointAccountRepo, pointTransactionRepo, pointTypeUseCase, userUseCase }) => {
+  ({ PointAccountRepo, PointTransactionRepo, PointTypeUseCase, UserUseCase }) => {
     function assertAccountMatchesInput(account: PointAccount, input: ChangeBalanceInput) {
       if (account.userId !== input.userId || account.pointTypeId !== input.pointTypeId) {
         throw new PointAccountMismatchError();
@@ -62,7 +62,7 @@ export const pointBalanceUseCase = ripple(
         assertPointTransactionDeltaMatchesType(input.type, input.delta);
         assertAccountMatchesInput(lockedAccount, input);
 
-        const existingTransaction = await pointTransactionRepo.findByAccountAndIdempotencyKey(
+        const existingTransaction = await PointTransactionRepo.findByAccountAndIdempotencyKey(
           {
             accountId: lockedAccount.id,
             idempotencyKey: input.idempotencyKey,
@@ -81,10 +81,10 @@ export const pointBalanceUseCase = ripple(
         }
 
         // 获取积分类型, 用于存快照
-        const pointType = await pointTypeUseCase.getAvailableById(input.pointTypeId, tx);
+        const pointType = await PointTypeUseCase.getAvailableById(input.pointTypeId, tx);
 
         // 获取用户
-        const user = await userUseCase.getAvailableById(input.userId, tx);
+        const user = await UserUseCase.getAvailableById(input.userId, tx);
 
         let updatedAccount: PointAccount;
 
@@ -92,7 +92,7 @@ export const pointBalanceUseCase = ripple(
           // 添加积分
           assertPointAccountCanIncrease(lockedAccount);
 
-          updatedAccount = await pointAccountRepo.increaseBalance(tx, {
+          updatedAccount = await PointAccountRepo.increaseBalance(tx, {
             accountId: lockedAccount.id,
             amount: input.delta,
           });
@@ -103,14 +103,14 @@ export const pointBalanceUseCase = ripple(
           assertPointAccountCanConsume(lockedAccount);
           assertSufficientPointBalance(lockedAccount, amount);
 
-          updatedAccount = await pointAccountRepo.decreaseBalance(tx, {
+          updatedAccount = await PointAccountRepo.decreaseBalance(tx, {
             accountId: lockedAccount.id,
             amount,
           });
         }
 
         // 创建积分流水
-        const transaction = await pointTransactionRepo.create(tx, {
+        const transaction = await PointTransactionRepo.create(tx, {
           userId: user.id,
           pointAccountId: lockedAccount.id,
           pointTypeId: input.pointTypeId,
@@ -144,4 +144,4 @@ export const pointBalanceUseCase = ripple(
   { debugName: 'PointBalanceUseCase' },
 );
 
-export type PointBalanceUseCase = InferInput<typeof pointBalanceUseCase>;
+export type PointBalanceUseCase = InferInput<typeof PointBalanceUseCase>;

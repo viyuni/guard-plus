@@ -6,7 +6,7 @@ import { customAlphabet } from 'nanoid';
 import { RegisterCodeTtl } from '#env/bili';
 
 import type { BiliRegisterChallenge } from '../domain';
-import { biliPasswordResetRepo, biliRegisterRepo } from '../repository';
+import { BiliPasswordResetRepo, BiliRegisterRepo } from '../repository';
 import type { BiliRegisterRedisRepository } from '../repository';
 
 /** 新用户注册验证码前缀 */
@@ -127,22 +127,32 @@ function createBiliRegisterUseCase({
   };
 }
 
-export const biliRegisterUseCase = ripple(
+export const BiliRegisterUseCase = ripple(
   {
-    biliRegisterRepo,
-    ttlSeconds: RegisterCodeTtl,
+    BiliRegisterRepo,
+    RegisterCodeTtl,
   },
-  deps => createBiliRegisterUseCase({ ...deps, codePrefix: BILI_REGISTER_CODE_PREFIX }),
+  deps =>
+    createBiliRegisterUseCase({
+      biliRegisterRepo: deps.BiliRegisterRepo,
+      codePrefix: BILI_REGISTER_CODE_PREFIX,
+      ttlSeconds: deps.RegisterCodeTtl,
+    }),
   { debugName: 'BiliRegisterUseCase' },
 );
 
-export const biliPasswordResetUseCase = ripple(
+export const BiliPasswordResetUseCase = ripple(
   {
-    biliRegisterRepo: biliPasswordResetRepo,
-    ttlSeconds: RegisterCodeTtl,
+    BiliPasswordResetRepo,
+    RegisterCodeTtl,
   },
-  deps => createBiliRegisterUseCase({ ...deps, codePrefix: BILI_PASSWORD_RESET_CODE_PREFIX }),
+  deps =>
+    createBiliRegisterUseCase({
+      biliRegisterRepo: deps.BiliPasswordResetRepo,
+      codePrefix: BILI_PASSWORD_RESET_CODE_PREFIX,
+      ttlSeconds: deps.RegisterCodeTtl,
+    }),
   { debugName: 'BiliPasswordResetUseCase' },
 );
 
-export type BiliRegisterUseCase = InferInput<typeof biliRegisterUseCase>;
+export type BiliRegisterUseCase = InferInput<typeof BiliRegisterUseCase>;

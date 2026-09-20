@@ -9,8 +9,8 @@ import { createAppContext, createContainer } from '#context';
 import type { CreateSharedContextOptions } from '#context';
 import { createDatabase } from '#db/client';
 import type { AppConfig, EventConfig } from '#env/config';
-import { pointTypeRepo, pointTypeUseCase } from '#modules/point';
-import { userRepo } from '#modules/user';
+import { PointTypeRepo, PointTypeUseCase } from '#modules/point';
+import { UserRepo } from '#modules/user';
 
 // 只验证依赖组装，不连接数据库或 Redis。
 const db = createDatabase('postgres://test:test@localhost:1/di_test');
@@ -43,17 +43,17 @@ describe('Cyrene application contexts', () => {
     await using firstRuntime = first.runtime;
     await using _secondRuntime = second.runtime;
 
-    expect(await firstRuntime.resolve(userRepo)).toBe(first.userRepo);
-    expect(await firstRuntime.resolve(pointTypeUseCase)).toBe(first.pointTypeUseCase);
-    expect(first.userRepo).not.toBe(second.userRepo);
-    expect(first.pointTypeUseCase).not.toBe(second.pointTypeUseCase);
+    expect(await firstRuntime.resolve(UserRepo)).toBe(first.UserRepo);
+    expect(await firstRuntime.resolve(PointTypeUseCase)).toBe(first.PointTypeUseCase);
+    expect(first.UserRepo).not.toBe(second.UserRepo);
+    expect(first.PointTypeUseCase).not.toBe(second.PointTypeUseCase);
 
-    const findById = spyOn(first.pointTypeRepo, 'findById').mockResolvedValue(null);
+    const findById = spyOn(first.PointTypeRepo, 'findById').mockResolvedValue(null);
 
     try {
-      await expect(first.pointTypeUseCase.get('missing')).rejects.toThrow();
+      await expect(first.PointTypeUseCase.get('missing')).rejects.toThrow();
       expect(findById).toHaveBeenCalledWith('missing');
-      expect(await firstRuntime.resolve(pointTypeRepo)).toBe(first.pointTypeRepo);
+      expect(await firstRuntime.resolve(PointTypeRepo)).toBe(first.PointTypeRepo);
     } finally {
       findById.mockRestore();
     }
@@ -75,7 +75,7 @@ describe('Cyrene application contexts', () => {
     expect(names).not.toContain('JwtSecret');
     expect(names).not.toContain('ImageUseCase');
     expect(names).not.toContain('ProductUseCase');
-    expect(container.biliRegisterUseCase).not.toBe(container.biliPasswordResetUseCase);
+    expect(container.BiliRegisterUseCase).not.toBe(container.BiliPasswordResetUseCase);
   });
 
   test('disposes the runtime when Elysia stops without closing borrowed infrastructure', async () => {
@@ -86,7 +86,7 @@ describe('Cyrene application contexts', () => {
 
     try {
       await app.stop();
-      await expect(container.runtime.resolve(userRepo)).rejects.toBeInstanceOf(DisposedError);
+      await expect(container.runtime.resolve(UserRepo)).rejects.toBeInstanceOf(DisposedError);
       expect(closeDb).not.toHaveBeenCalled();
       expect(closeRedis).not.toHaveBeenCalled();
     } finally {

@@ -15,18 +15,18 @@ import type {
 } from '#db/schema';
 import { BiliRoom } from '#env/bili';
 import {
-  biliEventRepo,
+  BiliEventRepo,
   BiliEventNotFoundError,
   BiliEventPersistFailedError,
 } from '#modules/bili-event';
 import {
-  pointAccountRepo,
-  pointBalanceUseCase,
-  pointTransactionRepo,
-  pointTypeUseCase,
+  PointAccountRepo,
+  PointBalanceUseCase,
+  PointTransactionRepo,
+  PointTypeUseCase,
 } from '#modules/point';
 import { POINT_CHANGE_SOURCE_TYPE, PointIdempotencyKey } from '#modules/point';
-import { userUseCase, UserNotFoundError } from '#modules/user';
+import { UserUseCase, UserNotFoundError } from '#modules/user';
 
 import {
   calculateBiliGuardPoints,
@@ -37,7 +37,7 @@ import {
   type BiliGuardRewardEvent,
   type RewardGrantPlanItem,
 } from '../domain';
-import { rewardRuleRepo } from '../repository';
+import { RewardRuleRepo } from '../repository';
 
 /**
  * 手动大航海事件时长表。
@@ -106,40 +106,40 @@ function getManualBiliGuardMeta(guardType: CreateManualBiliGuardEventBody['guard
   return metas[guardType];
 }
 
-export const rewardUseCase = ripple(
+export const RewardUseCase = ripple(
   {
-    biliEventRepo,
-    biliRoom: BiliRoom,
-    db: Database,
-    logger: RewardLogger,
-    pointAccountRepo,
-    pointBalanceUseCase,
-    pointTransactionRepo,
-    pointTypeUseCase,
-    rewardRuleRepo,
-    userUseCase,
+    BiliEventRepo,
+    BiliRoom,
+    Database,
+    RewardLogger,
+    PointAccountRepo,
+    PointBalanceUseCase,
+    PointTransactionRepo,
+    PointTypeUseCase,
+    RewardRuleRepo,
+    UserUseCase,
   },
   ({
-    biliEventRepo,
-    biliRoom,
-    db,
-    logger,
-    pointAccountRepo,
-    pointBalanceUseCase,
-    pointTransactionRepo,
-    pointTypeUseCase,
-    rewardRuleRepo,
-    userUseCase,
+    BiliEventRepo,
+    BiliRoom,
+    Database,
+    RewardLogger,
+    PointAccountRepo,
+    PointBalanceUseCase,
+    PointTransactionRepo,
+    PointTypeUseCase,
+    RewardRuleRepo,
+    UserUseCase,
   }) => {
-    async function previewBiliGuard(event: BiliGuardRewardEvent, executor = db) {
+    async function previewBiliGuard(event: BiliGuardRewardEvent, executor = Database) {
       const eventTime = getBiliGuardEventTime(event);
-      const rules = await rewardRuleRepo.listCandidates(eventTime, executor);
+      const rules = await RewardRuleRepo.listCandidates(eventTime, executor);
       const matchedRules = rules.filter(rule => matchesBiliGuard(rule, event));
       const effectiveRules = pickEffectiveRules(matchedRules);
       const items: RewardGrantPlanItem[] = [];
 
       for (const rule of effectiveRules) {
-        const pointType = await pointTypeUseCase.getAvailableById(rule.pointTypeId, executor);
+        const pointType = await PointTypeUseCase.getAvailableById(rule.pointTypeId, executor);
 
         items.push({
           ruleSnapshot: rule,
@@ -156,7 +156,7 @@ export const rewardUseCase = ripple(
       event: BiliGuardRewardEvent,
       rewardItems: BiliEventRewardItemSnapshot[],
     ) {
-      const biliEvent = await biliEventRepo.upsertProcessing({
+      const biliEvent = await BiliEventRepo.upsertProcessing({
         biliEventId: event.id,
         biliUid: String(event.uid),
         occurredAt: getBiliGuardEventTime(event),
@@ -168,7 +168,7 @@ export const rewardUseCase = ripple(
     }
 
     async function markBiliGuardRewardProcessing(biliEventId: string) {
-      const biliEvent = await biliEventRepo.markProcessing(biliEventId);
+      const biliEvent = await BiliEventRepo.markProcessing(biliEventId);
 
       if (!biliEvent) {
         throw new BiliEventPersistFailedError('B站事件处理中状态保存失败');
@@ -181,7 +181,7 @@ export const rewardUseCase = ripple(
       user: User,
       rewardResultSnapshots: BiliEventRewardResultSnapshot[],
     ) {
-      const biliEvent = await biliEventRepo.markSucceeded(
+      const biliEvent = await BiliEventRepo.markSucceeded(
         event.id,
         {
           userId: user.id,
@@ -196,7 +196,7 @@ export const rewardUseCase = ripple(
     }
 
     async function ignoreBiliGuardReward(event: BiliGuardRewardEvent, error: UserNotFoundError) {
-      const biliEvent = await biliEventRepo.markIgnored(event.id, {
+      const biliEvent = await BiliEventRepo.markIgnored(event.id, {
         lastErrorCode: error.code,
         lastErrorMessage: error.message,
       });
@@ -214,7 +214,7 @@ export const rewardUseCase = ripple(
     }
 
     async function markBiliGuardRewardFailed(event: BiliGuardRewardEvent, error: unknown) {
-      const biliEvent = await biliEventRepo.markFailed(event.id, getErrorSnapshot(error));
+      const biliEvent = await BiliEventRepo.markFailed(event.id, getErrorSnapshot(error));
 
       if (!biliEvent) {
         throw new BiliEventPersistFailedError('B站事件失败状态保存失败');
@@ -229,7 +229,7 @@ export const rewardUseCase = ripple(
     ) {
       const rule = item.ruleSnapshot;
 
-      const account = await pointAccountRepo.ensureAccountAndLock(tx, {
+      const account = await PointAccountRepo.ensureAccountAndLock(tx, {
         userId: user.id,
         pointTypeId: item.pointTypeId,
       });
@@ -240,7 +240,7 @@ export const rewardUseCase = ripple(
       });
 
       // 查下看是否已经发放过奖励
-      const existingTransaction = await pointTransactionRepo.findByAccountAndIdempotencyKey(
+      const existingTransaction = await PointTransactionRepo.findByAccountAndIdempotencyKey(
         {
           accountId: account.id,
           idempotencyKey,
@@ -268,7 +268,7 @@ export const rewardUseCase = ripple(
       }
 
       // 发放匹配的积分
-      const result = await pointBalanceUseCase.changeBalance(tx, account, {
+      const result = await PointBalanceUseCase.changeBalance(tx, account, {
         type: 'grant',
         userId: user.id,
         pointTypeId: item.pointTypeId,
@@ -306,8 +306,8 @@ export const rewardUseCase = ripple(
       rewardItems: BiliEventRewardItemSnapshot[],
     ) {
       try {
-        return await db.transaction(async tx => {
-          const user = await userUseCase.getAvailableByBiliUid(String(event.uid), tx);
+        return await Database.transaction(async tx => {
+          const user = await UserUseCase.getAvailableByBiliUid(String(event.uid), tx);
           const results = [];
           const rewardResultSnapshots: BiliEventRewardResultSnapshot[] = [];
 
@@ -368,7 +368,7 @@ export const rewardUseCase = ripple(
           ? `${uname} 开通了${guard.name}`
           : `${uname} 开通了${guard.name}${displayTotal}${unit}`;
 
-      const roomId = biliRoom ?? 0;
+      const roomId = BiliRoom ?? 0;
       const id = `${sendTime}:${guardStartTime}:${roomId}:${input.uid}:${input.guardType}:${price}`;
 
       return {
@@ -401,7 +401,7 @@ export const rewardUseCase = ripple(
     }
 
     async function replayRewardBiliGuard(biliEventId: string) {
-      const biliEvent = await biliEventRepo.findByBiliEventId(biliEventId);
+      const biliEvent = await BiliEventRepo.findByBiliEventId(biliEventId);
 
       if (!biliEvent) {
         throw new BiliEventNotFoundError();
@@ -417,7 +417,7 @@ export const rewardUseCase = ripple(
 
     return {
       pageBiliGuardEvents(query: BiliEventPageQuery) {
-        return biliEventRepo.pageBiliGuard(query);
+        return BiliEventRepo.pageBiliGuard(query);
       },
 
       previewBiliGuard,
@@ -431,8 +431,8 @@ export const rewardUseCase = ripple(
       replayRewardBiliGuard,
 
       async replayRewardBiliGuardByUserId(userId: string) {
-        const user = await userUseCase.getAvailableById(userId);
-        const biliEvents = await biliEventRepo.listReplayableBiliGuardByBiliUid(user.biliUid);
+        const user = await UserUseCase.getAvailableById(userId);
+        const biliEvents = await BiliEventRepo.listReplayableBiliGuardByBiliUid(user.biliUid);
         const results = [];
 
         for (const biliEvent of biliEvents) {
@@ -445,7 +445,7 @@ export const rewardUseCase = ripple(
           } catch (error) {
             const errorSnapshot = getErrorSnapshot(error);
 
-            logger?.warn(
+            RewardLogger?.warn(
               {
                 userId: user.id,
                 biliUid: user.biliUid,
@@ -476,4 +476,4 @@ export const rewardUseCase = ripple(
   { debugName: 'RewardUseCase' },
 );
 
-export type RewardUseCase = InferInput<typeof rewardUseCase>;
+export type RewardUseCase = InferInput<typeof RewardUseCase>;

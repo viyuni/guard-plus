@@ -107,25 +107,25 @@ export async function createDeps() {
 }
 
 export async function seedPointType(name: string) {
-  const { pointTypeUseCase } = await createDeps();
+  const { PointTypeUseCase } = await createDeps();
 
   const pointType = expectSeeded(
-    await pointTypeUseCase.create({
+    await PointTypeUseCase.create({
       name,
     }),
     'seed point type failed',
   );
 
-  return expectSeeded(await pointTypeUseCase.enable(pointType.id), 'seed point type failed');
+  return expectSeeded(await PointTypeUseCase.enable(pointType.id), 'seed point type failed');
 }
 
 export async function seedUser(name: string, biliUid?: `${number}`) {
   const userBiliUid =
     biliUid ?? (`${Date.now()}${Math.floor(Math.random() * 100_000_000)}` as const);
 
-  const { userUseCase } = await createDeps();
+  const { UserUseCase } = await createDeps();
 
-  const created = await userUseCase.create({
+  const created = await UserUseCase.create({
     biliUid: userBiliUid,
     username: name,
     password: 'test_password',
@@ -144,16 +144,16 @@ export async function seedProduct(input: {
   startAt?: Date;
   stock: number;
 }) {
-  const { productUseCase } = await createDeps();
+  const { ProductUseCase } = await createDeps();
 
   const product = expectSeeded(
-    await productUseCase.create({
+    await ProductUseCase.create({
       ...input,
     }),
     'seed product failed',
   );
 
-  return expectSeeded(await productUseCase.active(product.id), 'seed product failed');
+  return expectSeeded(await ProductUseCase.active(product.id), 'seed product failed');
 }
 
 export async function seedConversionFixture(
@@ -163,9 +163,9 @@ export async function seedConversionFixture(
   const fromPointType = await seedPointType(`${prefix}_from_point`);
   const toPointType = await seedPointType(`${prefix}_to_point`);
   const user = await seedUser(`${prefix}_conversion_user`);
-  const { pointConversionUseCase } = await createDeps();
+  const { PointConversionUseCase } = await createDeps();
 
-  const rule = await pointConversionUseCase.create({
+  const rule = await PointConversionUseCase.create({
     name: `${prefix}_conversion_rule`,
     fromPointTypeId: fromPointType.id,
     toPointTypeId: toPointType.id,
@@ -188,9 +188,9 @@ export async function createConversionRule(
   toPointTypeId: string,
   overrides: Partial<CreatePointConversionRuleBody> = {},
 ) {
-  const { pointConversionUseCase } = await createDeps();
+  const { PointConversionUseCase } = await createDeps();
 
-  const rule = await pointConversionUseCase.create({
+  const rule = await PointConversionUseCase.create({
     name: `${prefix}_conversion_rule`,
     fromPointTypeId,
     toPointTypeId,
@@ -207,9 +207,9 @@ export async function createRewardRule(
   pointTypeId: string,
   overrides: Partial<CreateRewardRuleBody> = {},
 ) {
-  const { rewardRuleUseCase } = await createDeps();
+  const { RewardRuleUseCase } = await createDeps();
 
-  const rule = await rewardRuleUseCase.create({
+  const rule = await RewardRuleUseCase.create({
     name: `${prefix}_reward_rule_${crypto.randomUUID().slice(0, 8)}`,
     conditions: {
       type: 'biliGuard',
@@ -231,9 +231,9 @@ export async function grantPoints(input: {
   delta: number;
   nonce: string;
 }) {
-  const { pointAccountUseCase } = await createDeps();
+  const { PointAccountUseCase } = await createDeps();
 
-  return pointAccountUseCase.adjustBalance(input.adminId, {
+  return PointAccountUseCase.adjustBalance(input.adminId, {
     userId: input.userId,
     pointTypeId: input.pointTypeId,
     delta: input.delta,

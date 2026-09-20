@@ -8,13 +8,13 @@ import { ImageSavePath } from '#env/image';
 
 import { InvalidImageSizeError } from '../domain';
 
-export const imageUseCase = ripple(
+export const ImageUseCase = ripple(
   {
-    imageSavePath: ImageSavePath,
+    ImageSavePath,
   },
-  ({ imageSavePath }) => {
+  ({ ImageSavePath }) => {
     async function ensureImageDir() {
-      await mkdir(imageSavePath, { recursive: true });
+      await mkdir(ImageSavePath, { recursive: true });
     }
 
     async function exists(filePath: string) {
@@ -44,7 +44,7 @@ export const imageUseCase = ripple(
         const hashPrefix = hash.slice(0, 32);
 
         const filename = `${hashPrefix}.webp`;
-        const filePath = path.join(imageSavePath, filename);
+        const filePath = path.join(ImageSavePath, filename);
 
         const resizeImage = image.resize(512, 512, {
           fit: 'inside',
@@ -74,4 +74,4 @@ export const imageUseCase = ripple(
   { debugName: 'ImageUseCase' },
 );
 
-export type ImageUseCase = InferInput<typeof imageUseCase>;
+export type ImageUseCase = InferInput<typeof ImageUseCase>;

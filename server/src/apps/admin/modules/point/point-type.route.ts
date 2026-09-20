@@ -7,15 +7,15 @@ import {
 import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { adminAuthGuard } from '#apps/admin/http';
-import { pointTypeUseCase } from '#modules/point';
+import { AdminAuthGuard } from '#apps/admin/http';
+import { PointTypeUseCase } from '#modules/point';
 
-export const pointTypeRoutes = ripple(
+export const PointTypeRoutes = ripple(
   {
-    authGuard: adminAuthGuard,
-    pointTypeUseCase,
+    AdminAuthGuard,
+    PointTypeUseCase,
   },
-  ({ authGuard, pointTypeUseCase }) =>
+  ({ AdminAuthGuard, PointTypeUseCase }) =>
     new Elysia({
       name: 'PointTypeRoute',
       prefix: '/types',
@@ -23,11 +23,11 @@ export const pointTypeRoutes = ripple(
         tags: ['PointType'],
       },
     })
-      .use(authGuard)
+      .use(AdminAuthGuard)
       .get(
         '/',
         () => {
-          return pointTypeUseCase.list();
+          return PointTypeUseCase.list();
         },
         {
           requiredAdminAuth: true,
@@ -40,7 +40,7 @@ export const pointTypeRoutes = ripple(
       .get(
         '/:pointTypeId',
         ({ params }) => {
-          return pointTypeUseCase.get(params.pointTypeId);
+          return PointTypeUseCase.get(params.pointTypeId);
         },
         {
           params: PointTypeIdParamsSchema,
@@ -53,7 +53,7 @@ export const pointTypeRoutes = ripple(
       .post(
         '/',
         ({ body }) => {
-          return pointTypeUseCase.create(body);
+          return PointTypeUseCase.create(body);
         },
         {
           body: CreatePointTypeSchema,
@@ -66,7 +66,7 @@ export const pointTypeRoutes = ripple(
       .put(
         '/:pointTypeId',
         ({ body, params }) => {
-          return pointTypeUseCase.update(params.pointTypeId, body);
+          return PointTypeUseCase.update(params.pointTypeId, body);
         },
         {
           body: UpdatePointTypeSchema,
@@ -80,7 +80,7 @@ export const pointTypeRoutes = ripple(
       .put(
         '/:pointTypeId/icon',
         ({ body, params }) => {
-          return pointTypeUseCase.updateIcon(params.pointTypeId, body);
+          return PointTypeUseCase.updateIcon(params.pointTypeId, body);
         },
         {
           body: PointTypeIconUploadSchema,
@@ -99,7 +99,7 @@ export const pointTypeRoutes = ripple(
       .patch(
         '/:pointTypeId/enable',
         ({ params }) => {
-          return pointTypeUseCase.enable(params.pointTypeId);
+          return PointTypeUseCase.enable(params.pointTypeId);
         },
         {
           params: PointTypeIdParamsSchema,
@@ -112,7 +112,7 @@ export const pointTypeRoutes = ripple(
       .patch(
         '/:pointTypeId/disable',
         ({ params }) => {
-          return pointTypeUseCase.disable(params.pointTypeId);
+          return PointTypeUseCase.disable(params.pointTypeId);
         },
         {
           params: PointTypeIdParamsSchema,

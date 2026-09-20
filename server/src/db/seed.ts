@@ -9,7 +9,7 @@ import { DataSecret } from '#env/shared';
 
 import { createDatabase, db } from '.';
 import type { BiliGuardRewardEvent } from '../modules/reward';
-import { rewardUseCase } from '../modules/reward';
+import { RewardUseCase } from '../modules/reward';
 import {
   admins,
   pointTypes,
@@ -443,7 +443,7 @@ async function seedBiliGuardRewardEvents(targetDb: typeof db) {
   await seedPointConversionRules(targetDb, pointTypeMap);
 
   await using runtime = new Cyrene({
-    providers: { rewardUseCase },
+    providers: { RewardUseCase },
     bindings: [
       { token: Database, value: targetDb },
       { token: DataSecret, value: Bun.env.DATA_SECRET ?? 'seed-data-secret-seed-data-secret' },
@@ -455,7 +455,7 @@ async function seedBiliGuardRewardEvents(targetDb: typeof db) {
   const reward = await runtime.start();
 
   for (const event of seedBiliGuardEvents) {
-    await reward.rewardUseCase.rewardBiliGuard(event);
+    await reward.RewardUseCase.rewardBiliGuard(event);
   }
 }
 

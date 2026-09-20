@@ -7,42 +7,42 @@ import { type InferInput, ripple } from 'cyrenejs';
 
 import { Database } from '#context/tokens';
 import type { DbTransaction } from '#db';
-import { userUseCase } from '#modules/user';
+import { UserUseCase } from '#modules/user';
 import { BadRequestError } from '#utils';
 
 import { POINT_CHANGE_SOURCE_TYPE, PointIdempotencyKey } from '../domain';
-import { legacyPointMigrationRepo, pointAccountRepo } from '../repository';
-import { pointBalanceUseCase } from './point-balance.usecase';
-import { pointTypeUseCase } from './point-type.usecase';
+import { LegacyPointMigrationRepo, PointAccountRepo } from '../repository';
+import { PointBalanceUseCase } from './point-balance.usecase';
+import { PointTypeUseCase } from './point-type.usecase';
 
-export const pointAccountUseCase = ripple(
+export const PointAccountUseCase = ripple(
   {
-    db: Database,
-    legacyPointMigrationRepo,
-    pointAccountRepo,
-    pointBalanceUseCase,
-    pointTypeUseCase,
-    userUseCase,
+    Database,
+    LegacyPointMigrationRepo,
+    PointAccountRepo,
+    PointBalanceUseCase,
+    PointTypeUseCase,
+    UserUseCase,
   },
   ({
-    db,
-    legacyPointMigrationRepo,
-    pointAccountRepo,
-    pointBalanceUseCase,
-    pointTypeUseCase,
-    userUseCase,
+    Database,
+    LegacyPointMigrationRepo,
+    PointAccountRepo,
+    PointBalanceUseCase,
+    PointTypeUseCase,
+    UserUseCase,
   }) => {
     async function replayLegacyMigrationRecord(
       tx: DbTransaction,
       user: { id: string; biliUid: string },
       migration: { id: string; pointTypeId: string; points: number },
     ) {
-      const account = await pointAccountRepo.ensureAccountAndLock(tx, {
+      const account = await PointAccountRepo.ensureAccountAndLock(tx, {
         userId: user.id,
         pointTypeId: migration.pointTypeId,
       });
 
-      const result = await pointBalanceUseCase.changeBalance(tx, account, {
+      const result = await PointBalanceUseCase.changeBalance(tx, account, {
         type: 'grant',
         userId: user.id,
         pointTypeId: migration.pointTypeId,
@@ -54,7 +54,7 @@ export const pointAccountUseCase = ripple(
         metadata: { biliUid: user.biliUid, migrationId: migration.id },
       });
 
-      const replayed = await legacyPointMigrationRepo.markReplayed(tx, migration.id, user.id);
+      const replayed = await LegacyPointMigrationRepo.markReplayed(tx, migration.id, user.id);
 
       if (!replayed) {
         throw new BadRequestError('旧平台积分迁移状态更新失败');
@@ -65,16 +65,16 @@ export const pointAccountUseCase = ripple(
 
     return {
       listMine(userId: string) {
-        return pointAccountRepo.listMine(userId);
+        return PointAccountRepo.listMine(userId);
       },
 
       pageLegacyMigrations(query: LegacyPointMigrationPageQuery) {
-        return legacyPointMigrationRepo.page(query);
+        return LegacyPointMigrationRepo.page(query);
       },
 
       async createLegacyMigration(data: CreateLegacyPointMigrationBody) {
-        await pointTypeUseCase.getAvailableById(data.pointTypeId);
-        const migration = await legacyPointMigrationRepo.create(data);
+        await PointTypeUseCase.getAvailableById(data.pointTypeId);
+        const migration = await LegacyPointMigrationRepo.create(data);
 
         if (!migration) {
           throw new BadRequestError('旧平台积分迁移记录创建失败');
@@ -84,7 +84,7 @@ export const pointAccountUseCase = ripple(
       },
 
       async deleteLegacyMigration(migrationId: string) {
-        const migration = await legacyPointMigrationRepo.deletePending(migrationId);
+        const migration = await LegacyPointMigrationRepo.deletePending(migrationId);
 
         if (!migration) {
           throw new BadRequestError('迁移记录不存在或已完成回放，无法删除');
@@ -94,8 +94,8 @@ export const pointAccountUseCase = ripple(
       },
 
       async replayLegacyMigration(migrationId: string) {
-        return db.transaction(async tx => {
-          const migration = await legacyPointMigrationRepo.findPendingByIdForUpdate(
+        return Database.transaction(async tx => {
+          const migration = await LegacyPointMigrationRepo.findPendingByIdForUpdate(
             tx,
             migrationId,
           );
@@ -104,13 +104,13 @@ export const pointAccountUseCase = ripple(
             throw new BadRequestError('迁移记录不存在或已完成回放');
           }
 
-          const user = await userUseCase.getAvailableByBiliUid(migration.biliUid, tx);
+          const user = await UserUseCase.getAvailableByBiliUid(migration.biliUid, tx);
           return replayLegacyMigrationRecord(tx, user, migration);
         });
       },
 
       async replayLegacyMigrations(tx: DbTransaction, user: { id: string; biliUid: string }) {
-        const migrations = await legacyPointMigrationRepo.listPendingForUpdate(tx, user.biliUid);
+        const migrations = await LegacyPointMigrationRepo.listPendingForUpdate(tx, user.biliUid);
 
         const results = [];
 
@@ -122,11 +122,11 @@ export const pointAccountUseCase = ripple(
       },
 
       async adjustBalance(adminId: string, data: AdjustBalanceBody) {
-        return db.transaction(async tx => {
+        return Database.transaction(async tx => {
           // 确保账户存在并锁行
-          const account = await pointAccountRepo.ensureAccountAndLock(tx, data);
+          const account = await PointAccountRepo.ensureAccountAndLock(tx, data);
 
-          return pointBalanceUseCase.changeBalance(tx, account, {
+          return PointBalanceUseCase.changeBalance(tx, account, {
             type: 'adjust',
             userId: account.userId,
             pointTypeId: account.pointTypeId,
@@ -147,4 +147,4 @@ export const pointAccountUseCase = ripple(
   { debugName: 'PointAccountUseCase' },
 );
 
-export type PointAccountUseCase = InferInput<typeof pointAccountUseCase>;
+export type PointAccountUseCase = InferInput<typeof PointAccountUseCase>;

@@ -33,10 +33,10 @@ describeWithDatabase('订单真实数据库并发保护', () => {
     const prefix = newBatch('order_product_reviewing');
     const pointType = await seedPointType(`${prefix}_point`);
     const user = await seedUser(`${prefix}_user`);
-    const { orderUseCase, productUseCase } = await createDeps();
+    const { OrderUseCase, ProductUseCase } = await createDeps();
 
     const product = expectSeeded(
-      await productUseCase.create({
+      await ProductUseCase.create({
         name: `${prefix}_product`,
         pointTypeId: pointType.id,
         price: 1,
@@ -55,7 +55,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
     });
 
     await expectRejectsInstanceOf(
-      orderUseCase.create(user.id, {
+      OrderUseCase.create(user.id, {
         productId: product.id,
         nonce: `${prefix}_nonce`,
       }),
@@ -90,7 +90,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
       stock: 3,
     });
 
-    const { orderUseCase } = await createDeps();
+    const { OrderUseCase } = await createDeps();
 
     await grantPoints({
       adminId: `${prefix}_admin`,
@@ -101,7 +101,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
     });
 
     const results = await runConcurrent(10, index =>
-      orderUseCase.create(user.id, {
+      OrderUseCase.create(user.id, {
         productId: product.id,
         nonce: `${prefix}_${index}`,
       }),
@@ -137,7 +137,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
       stock: 5,
     });
 
-    const { orderUseCase } = await createDeps();
+    const { OrderUseCase } = await createDeps();
 
     await grantPoints({
       adminId: `${prefix}_admin`,
@@ -148,7 +148,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
     });
 
     const results = await runConcurrent(5, () =>
-      orderUseCase.create(user.id, {
+      OrderUseCase.create(user.id, {
         productId: product.id,
         nonce: `${prefix}_same_nonce`,
       }),
@@ -207,7 +207,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
     const prefix = newBatch('order_product_time_range');
     const pointType = await seedPointType(`${prefix}_point`);
     const user = await seedUser(`${prefix}_user`);
-    const { orderUseCase } = await createDeps();
+    const { OrderUseCase } = await createDeps();
 
     await grantPoints({
       adminId: `${prefix}_admin`,
@@ -234,14 +234,14 @@ describeWithDatabase('订单真实数据库并发保护', () => {
     });
 
     await expectRejectsInstanceOf(
-      orderUseCase.create(user.id, {
+      OrderUseCase.create(user.id, {
         productId: futureProduct.id,
         nonce: `${prefix}_future_nonce`,
       }),
       ProductUnavailableError,
     );
     await expectRejectsInstanceOf(
-      orderUseCase.create(user.id, {
+      OrderUseCase.create(user.id, {
         productId: expiredProduct.id,
         nonce: `${prefix}_expired_nonce`,
       }),
@@ -268,7 +268,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
       stock: 1,
     });
 
-    const { orderUseCase } = await createDeps();
+    const { OrderUseCase } = await createDeps();
 
     await grantPoints({
       adminId: `${prefix}_admin`,
@@ -278,13 +278,13 @@ describeWithDatabase('订单真实数据库并发保护', () => {
       nonce: `${prefix}_grant_points`,
     });
 
-    const created = await orderUseCase.create(user.id, {
+    const created = await OrderUseCase.create(user.id, {
       productId: product.id,
       nonce: `${prefix}_create`,
     });
 
     const results = await runConcurrent(2, () =>
-      orderUseCase.refund(created.order.id, {
+      OrderUseCase.refund(created.order.id, {
         reason: '并发退款测试',
       }),
     );
@@ -337,7 +337,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
       stock: 1,
     });
 
-    const { orderUseCase } = await createDeps();
+    const { OrderUseCase } = await createDeps();
 
     await grantPoints({
       adminId: `${prefix}_admin`,
@@ -347,14 +347,14 @@ describeWithDatabase('订单真实数据库并发保护', () => {
       nonce: `${prefix}_grant_points`,
     });
 
-    const created = await orderUseCase.create(user.id, {
+    const created = await OrderUseCase.create(user.id, {
       productId: product.id,
       nonce: `${prefix}_create`,
     });
 
     const results = await Promise.allSettled([
-      orderUseCase.complete(created.order.id),
-      orderUseCase.refund(created.order.id, {
+      OrderUseCase.complete(created.order.id),
+      OrderUseCase.refund(created.order.id, {
         reason: '完成退款竞态测试',
       }),
     ]);

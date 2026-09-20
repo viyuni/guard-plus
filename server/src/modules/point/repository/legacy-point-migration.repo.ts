@@ -23,18 +23,22 @@ function resolveReplayedAtFilter(
   return undefined;
 }
 
-export const legacyPointMigrationRepo = ripple(
+export const LegacyPointMigrationRepo = ripple(
   {
-    db: Database,
+    Database,
   },
-  ({ db }) => ({
-    async create(input: InsertLegacyPointMigration, executor: DbExecutor = db) {
+  ({ Database }) => ({
+    async create(input: InsertLegacyPointMigration, executor: DbExecutor = Database) {
       const [row] = await executor.insert(legacyPointMigrations).values(input).returning();
       return row ?? null;
     },
 
     page(query: LegacyPointMigrationPageQuery) {
-      return new QueryPageBuilder(db, legacyPointMigrations, db.query.legacyPointMigrations)
+      return new QueryPageBuilder(
+        Database,
+        legacyPointMigrations,
+        Database.query.legacyPointMigrations,
+      )
         .where({
           biliUid: query.biliUid,
           pointTypeId: query.pointTypeId,
@@ -89,7 +93,7 @@ export const legacyPointMigrationRepo = ripple(
       return row ?? null;
     },
 
-    async deletePending(migrationId: string, executor: DbExecutor = db) {
+    async deletePending(migrationId: string, executor: DbExecutor = Database) {
       const [row] = await executor
         .delete(legacyPointMigrations)
         .where(
@@ -103,4 +107,4 @@ export const legacyPointMigrationRepo = ripple(
   { debugName: 'LegacyPointMigrationRepository' },
 );
 
-export type LegacyPointMigrationRepository = InferInput<typeof legacyPointMigrationRepo>;
+export type LegacyPointMigrationRepository = InferInput<typeof LegacyPointMigrationRepo>;

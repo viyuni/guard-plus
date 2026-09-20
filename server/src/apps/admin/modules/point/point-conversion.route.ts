@@ -7,15 +7,15 @@ import {
 import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { adminAuthGuard } from '#apps/admin/http';
-import { pointConversionUseCase } from '#modules/point';
+import { AdminAuthGuard } from '#apps/admin/http';
+import { PointConversionUseCase } from '#modules/point';
 
-export const pointConversionRoutes = ripple(
+export const PointConversionRoutes = ripple(
   {
-    authGuard: adminAuthGuard,
-    pointConversionUseCase,
+    AdminAuthGuard,
+    PointConversionUseCase,
   },
-  ({ authGuard, pointConversionUseCase }) =>
+  ({ AdminAuthGuard, PointConversionUseCase }) =>
     new Elysia({
       name: 'PointConversionRoute',
       prefix: '/conversions',
@@ -23,11 +23,11 @@ export const pointConversionRoutes = ripple(
         tags: ['PointConversion'],
       },
     })
-      .use(authGuard)
+      .use(AdminAuthGuard)
       .get(
         '/',
         () => {
-          return pointConversionUseCase.listManage();
+          return PointConversionUseCase.listManage();
         },
         {
           requiredAdminAuth: true,
@@ -39,7 +39,7 @@ export const pointConversionRoutes = ripple(
       .post(
         '/',
         ({ body }) => {
-          return pointConversionUseCase.create(body);
+          return PointConversionUseCase.create(body);
         },
         {
           body: CreatePointConversionRuleSchema,
@@ -52,7 +52,7 @@ export const pointConversionRoutes = ripple(
       .put(
         '/:pointConversionRuleId',
         ({ body, params }) => {
-          return pointConversionUseCase.update(params.pointConversionRuleId, body);
+          return PointConversionUseCase.update(params.pointConversionRuleId, body);
         },
         {
           body: UpdatePointConversionRuleSchema,
@@ -66,7 +66,7 @@ export const pointConversionRoutes = ripple(
       .patch(
         '/:pointConversionRuleId/enable',
         ({ params }) => {
-          return pointConversionUseCase.enable(params.pointConversionRuleId);
+          return PointConversionUseCase.enable(params.pointConversionRuleId);
         },
         {
           params: PointConversionRuleIdParamsSchema,
@@ -79,7 +79,7 @@ export const pointConversionRoutes = ripple(
       .patch(
         '/:pointConversionRuleId/disable',
         ({ params }) => {
-          return pointConversionUseCase.disable(params.pointConversionRuleId);
+          return PointConversionUseCase.disable(params.pointConversionRuleId);
         },
         {
           params: PointConversionRuleIdParamsSchema,
@@ -92,7 +92,7 @@ export const pointConversionRoutes = ripple(
       .delete(
         '/:pointConversionRuleId',
         ({ params }) => {
-          return pointConversionUseCase.remove(params.pointConversionRuleId);
+          return PointConversionUseCase.remove(params.pointConversionRuleId);
         },
         {
           params: PointConversionRuleIdParamsSchema,
@@ -105,7 +105,7 @@ export const pointConversionRoutes = ripple(
       .post(
         '/convert',
         ({ body }) => {
-          return pointConversionUseCase.convert(body);
+          return PointConversionUseCase.convert(body);
         },
         {
           body: ConvertPointSchema,

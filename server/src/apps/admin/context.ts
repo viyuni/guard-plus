@@ -6,17 +6,17 @@ import { providersOf } from '#context/providers';
 import { db } from '#db';
 import { redis } from '#redis';
 
-import { adminRoutes } from './modules/admin';
+import { AdminRoutes } from './modules/admin';
 import * as adminRepository from './modules/admin/repository';
 import * as adminUseCase from './modules/admin/usecase';
-import { adminAuthRoutes } from './modules/auth';
+import { AdminAuthRoutes } from './modules/auth';
 import * as adminAuthUseCase from './modules/auth/usecase';
-import { dashboardRoutes } from './modules/dashboard';
-import { adminOrderRoutes } from './modules/order';
-import { pointRoutes } from './modules/point';
-import { adminProductRoutes } from './modules/product';
-import { rewardRoutes } from './modules/reward';
-import { adminUserRoutes } from './modules/user';
+import { DashboardRoutes } from './modules/dashboard';
+import { AdminOrderRoutes } from './modules/order';
+import { PointRoutes } from './modules/point';
+import { AdminProductRoutes } from './modules/product';
+import { RewardRoutes } from './modules/reward';
+import { AdminUserRoutes } from './modules/user';
 import * as adminUserUseCase from './modules/user/usecase';
 
 export const { context, container: adminContainer } = await createAppContext({
@@ -38,14 +38,14 @@ const appProviders = await adminContainer.runtime
         ...providersOf(adminUseCase),
         ...providersOf(adminAuthUseCase),
         ...providersOf(adminUserUseCase),
-        adminAuthRoutes,
-        adminOrderRoutes,
-        adminProductRoutes,
-        adminRoutes,
-        adminUserRoutes,
-        dashboardRoutes,
-        pointRoutes,
-        rewardRoutes,
+        AdminAuthRoutes,
+        AdminOrderRoutes,
+        AdminProductRoutes,
+        AdminRoutes,
+        AdminUserRoutes,
+        DashboardRoutes,
+        PointRoutes,
+        RewardRoutes,
       },
       deps => deps,
     ),
@@ -61,18 +61,18 @@ const appProviders = await adminContainer.runtime
  * 只能在根 app 挂载一次。
  */
 export const appRuntimeContext = context
-  .use(appProviders.adminAuthRoutes)
-  .use(appProviders.dashboardRoutes)
-  .use(appProviders.adminRoutes)
-  .use(appProviders.pointRoutes)
-  .use(appProviders.rewardRoutes)
-  .use(appProviders.adminProductRoutes)
-  .use(appProviders.adminOrderRoutes)
-  .use(appProviders.adminUserRoutes);
+  .use(appProviders.AdminAuthRoutes)
+  .use(appProviders.DashboardRoutes)
+  .use(appProviders.AdminRoutes)
+  .use(appProviders.PointRoutes)
+  .use(appProviders.RewardRoutes)
+  .use(appProviders.AdminProductRoutes)
+  .use(appProviders.AdminOrderRoutes)
+  .use(appProviders.AdminUserRoutes);
 
 // 初始化默认管理员
 appRuntimeContext.onStart(() => {
-  return appProviders.adminUseCase.initDefaultAdmin({
+  return appProviders.AdminUseCase.initDefaultAdmin({
     password: adminEnv.SUPER_ADMIN_PASSWORD,
     uid: adminEnv.SUPER_ADMIN_UID,
     username: adminEnv.SUPER_ADMIN_USERNAME,

@@ -10,7 +10,7 @@ export interface SendMailInput {
   html: string;
 }
 
-export class Mailer {
+export class SmtpMailer {
   private readonly transporter: Transporter;
 
   constructor(private readonly config: SmtpConfig) {
@@ -40,17 +40,17 @@ export class Mailer {
 }
 
 export function createMailer(config: SmtpConfig | undefined) {
-  return config ? new Mailer(config) : undefined;
+  return config ? new SmtpMailer(config) : undefined;
 }
 
 /**
  * SMTP 未配置时 mailer 为 undefined, 由 UseCase 决定是否降级。
  */
-export const mailer = ripple(
+export const Mailer = ripple(
   {
-    smtpConfig: SmtpConfig,
+    SmtpConfig,
   },
-  ({ smtpConfig }) => createMailer(smtpConfig),
+  ({ SmtpConfig }) => createMailer(SmtpConfig),
   {
     debugName: 'Mailer',
     dispose: value => value?.close(),

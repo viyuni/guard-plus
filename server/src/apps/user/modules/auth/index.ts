@@ -20,11 +20,11 @@ import {
   BILI_PASSWORD_RESET_VERIFIER_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_OPTIONS,
-  authUseCase,
+  AuthUseCase,
   getAuthStateCookieOptions,
 } from '#modules/auth';
 
-import { userAuthUseCase } from './usecase';
+import { UserAuthUseCase } from './usecase';
 
 export * from './usecase';
 
@@ -58,15 +58,15 @@ function removeBiliPasswordResetCookies(
   cookie[BILI_PASSWORD_RESET_VERIFIER_COOKIE_NAME]?.remove();
 }
 
-export const authRoutes = ripple(
+export const AuthRoutes = ripple(
   {
-    apiOrigin: ApiOrigin,
-    authUseCase,
-    userAuthUseCase,
-    webOrigins: WebOrigins,
+    ApiOrigin,
+    AuthUseCase,
+    UserAuthUseCase,
+    WebOrigins,
   },
-  ({ apiOrigin, authUseCase, userAuthUseCase, webOrigins }) => {
-    const authStateCookieOptions = getAuthStateCookieOptions(apiOrigin, webOrigins);
+  ({ ApiOrigin, AuthUseCase, UserAuthUseCase, WebOrigins }) => {
+    const authStateCookieOptions = getAuthStateCookieOptions(ApiOrigin, WebOrigins);
 
     return new Elysia({
       name: 'AuthRoute',
@@ -78,7 +78,7 @@ export const authRoutes = ripple(
       .post(
         '/login',
         async ({ body, cookie }) => {
-          const { user, accessToken, refreshToken } = await userAuthUseCase.login(body);
+          const { user, accessToken, refreshToken } = await UserAuthUseCase.login(body);
 
           cookie[ACCESS_TOKEN_COOKIE_NAME]!.set({
             ...ACCESS_TOKEN_COOKIE_OPTIONS,
@@ -108,7 +108,7 @@ export const authRoutes = ripple(
           const accessToken = cookie[ACCESS_TOKEN_COOKIE_NAME]?.value;
 
           if (accessToken && typeof accessToken === 'string') {
-            await authUseCase.revokeByAccessToken(accessToken);
+            await AuthUseCase.revokeByAccessToken(accessToken);
           }
 
           cookie[ACCESS_TOKEN_COOKIE_NAME]!.remove();
@@ -134,7 +134,7 @@ export const authRoutes = ripple(
         async ({ body, cookie, set }) => {
           set.headers['Cache-Control'] = 'private, no-store';
 
-          const user = await userAuthUseCase.register(body, getBiliRegisterCredential(cookie));
+          const user = await UserAuthUseCase.register(body, getBiliRegisterCredential(cookie));
 
           removeBiliRegisterCookies(cookie);
 
@@ -152,7 +152,7 @@ export const authRoutes = ripple(
         async ({ body, cookie, set }) => {
           set.headers['Cache-Control'] = 'private, no-store';
 
-          const { verifier, ...result } = await userAuthUseCase.createBiliRegisterCode(
+          const { verifier, ...result } = await UserAuthUseCase.createBiliRegisterCode(
             body.biliUid,
           );
 
@@ -181,7 +181,7 @@ export const authRoutes = ripple(
 
           const credential = getBiliRegisterCredential(cookie);
 
-          return userAuthUseCase.getBiliRegisterCodeStatus(
+          return UserAuthUseCase.getBiliRegisterCodeStatus(
             query.biliUid,
             credential?.code,
             credential?.verifier,
@@ -199,7 +199,7 @@ export const authRoutes = ripple(
         async ({ body, cookie, set }) => {
           set.headers['Cache-Control'] = 'private, no-store';
 
-          const { verifier, ...result } = await userAuthUseCase.createBiliPasswordResetCode(
+          const { verifier, ...result } = await UserAuthUseCase.createBiliPasswordResetCode(
             body.biliUid,
           );
 
@@ -227,7 +227,7 @@ export const authRoutes = ripple(
           set.headers['Cache-Control'] = 'private, no-store';
           const credential = getBiliPasswordResetCredential(cookie);
 
-          return userAuthUseCase.getBiliPasswordResetCodeStatus(
+          return UserAuthUseCase.getBiliPasswordResetCodeStatus(
             query.biliUid,
             credential?.code,
             credential?.verifier,
@@ -245,7 +245,7 @@ export const authRoutes = ripple(
         async ({ body, cookie, set }) => {
           set.headers['Cache-Control'] = 'private, no-store';
 
-          await userAuthUseCase.resetPassword(body, getBiliPasswordResetCredential(cookie));
+          await UserAuthUseCase.resetPassword(body, getBiliPasswordResetCredential(cookie));
           removeBiliPasswordResetCookies(cookie);
 
           return { success: true };

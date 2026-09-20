@@ -16,7 +16,7 @@ import {
   assertAdminAvailableExists,
   AdminSuperAdminCannotBeBannedError,
 } from '../domain';
-import { adminRepo } from '../repository';
+import { AdminRepo } from '../repository';
 
 export interface AdminDefaultAccount {
   password: string;
@@ -24,13 +24,13 @@ export interface AdminDefaultAccount {
   username: string;
 }
 
-export const adminUseCase = ripple(
+export const AdminUseCase = ripple(
   {
-    adminRepo,
+    AdminRepo,
   },
-  ({ adminRepo }) => {
+  ({ AdminRepo }) => {
     async function getAvailableById(adminId: string) {
-      const admin = await adminRepo.findById(adminId);
+      const admin = await AdminRepo.findById(adminId);
 
       assertAdminAvailableExists(admin);
 
@@ -38,7 +38,7 @@ export const adminUseCase = ripple(
     }
 
     async function createAdmin(body: AdminCreateBody, role: AdminRole = 'admin') {
-      const existingBiliUidAdmin = await adminRepo.findByUid(body.uid);
+      const existingBiliUidAdmin = await AdminRepo.findByUid(body.uid);
 
       if (existingBiliUidAdmin) {
         throw new AdminAlreadyExistsError('管理员 B站 UID 已存在');
@@ -46,7 +46,7 @@ export const adminUseCase = ripple(
 
       const passwordHash = await PasswordUtil.hash(body.password);
 
-      const admin = await adminRepo.create({
+      const admin = await AdminRepo.create({
         uid: body.uid,
         username: body.username,
         passwordHash,
@@ -70,14 +70,14 @@ export const adminUseCase = ripple(
       const admin = await getAvailableById(adminId);
 
       if (body.username && body.username !== admin.username) {
-        const existingUsernameAdmin = await adminRepo.findByUsername(body.username);
+        const existingUsernameAdmin = await AdminRepo.findByUsername(body.username);
 
         if (existingUsernameAdmin) {
           throw new AdminAlreadyExistsError('管理员用户名已存在');
         }
       }
 
-      const updated = await adminRepo.update(adminId, body);
+      const updated = await AdminRepo.update(adminId, body);
 
       if (!updated) {
         throw new AdminNotFoundError();
@@ -104,7 +104,7 @@ export const adminUseCase = ripple(
       },
 
       page(query: AdminPageQuery) {
-        return adminRepo.page(query);
+        return AdminRepo.page(query);
       },
 
       update(adminId: string, body: AdminUpdateBody) {
@@ -127,7 +127,7 @@ export const adminUseCase = ripple(
         }
 
         const passwordHash = await PasswordUtil.hash(data.newPassword);
-        await adminRepo.updatePassword(adminId, passwordHash);
+        await AdminRepo.updatePassword(adminId, passwordHash);
       },
 
       async resetPassword(adminId: string) {
@@ -136,7 +136,7 @@ export const adminUseCase = ripple(
         const password = PasswordUtil.generate();
         const passwordHash = await PasswordUtil.hash(password);
 
-        await adminRepo.updatePassword(admin.id, passwordHash);
+        await AdminRepo.updatePassword(admin.id, passwordHash);
 
         return password;
       },
@@ -148,7 +148,7 @@ export const adminUseCase = ripple(
           throw new AdminSuperAdminCannotBeBannedError();
         }
 
-        const banned = await adminRepo.ban(adminId);
+        const banned = await AdminRepo.ban(adminId);
 
         if (!banned) {
           throw new AdminNotFoundError();
@@ -158,13 +158,13 @@ export const adminUseCase = ripple(
       },
 
       async restore(adminId: string) {
-        const admin = await adminRepo.findById(adminId);
+        const admin = await AdminRepo.findById(adminId);
 
         if (!admin) {
           throw new AdminNotFoundError();
         }
 
-        const restored = await adminRepo.restore(adminId);
+        const restored = await AdminRepo.restore(adminId);
 
         if (!restored) {
           throw new AdminNotFoundError();
@@ -181,7 +181,7 @@ export const adminUseCase = ripple(
       async initDefaultAdmin(defaultAdmin: AdminDefaultAccount) {
         const { uid, username, password } = defaultAdmin;
 
-        const existing = await adminRepo.findByUid(uid);
+        const existing = await AdminRepo.findByUid(uid);
 
         if (existing) {
           return;
@@ -211,4 +211,4 @@ export const adminUseCase = ripple(
   { debugName: 'AdminUseCase' },
 );
 
-export type AdminUseCase = InferInput<typeof adminUseCase>;
+export type AdminUseCase = InferInput<typeof AdminUseCase>;

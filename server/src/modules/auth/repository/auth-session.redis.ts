@@ -7,11 +7,11 @@ import { REFRESH_TOKEN_EXPIRES_IN_SECONDS } from '../constants';
 import type { AuthRole, AuthSession, AuthTokenPair } from '../domain';
 import releaseRefreshLockScript from './release-refresh-lock.lua' with { type: 'text' };
 
-export const authSessionRepo = ripple(
+export const AuthSessionRepo = ripple(
   {
-    redis: Redis,
+    Redis,
   },
-  ({ redis }) => {
+  ({ Redis }) => {
     const ttlSeconds = REFRESH_TOKEN_EXPIRES_IN_SECONDS;
 
     function key(role: AuthRole, sessionId: string) {
@@ -37,7 +37,7 @@ export const authSessionRepo = ripple(
           createdAt: new Date().toISOString(),
         };
 
-        await redis.set(key(role, sessionId), JSON.stringify(session), {
+        await Redis.set(key(role, sessionId), JSON.stringify(session), {
           expiration: {
             type: 'EX',
             value: ttlSeconds,
@@ -48,7 +48,7 @@ export const authSessionRepo = ripple(
       },
 
       async find(role: AuthRole, sessionId: string) {
-        const raw = await redis.get(key(role, sessionId));
+        const raw = await Redis.get(key(role, sessionId));
 
         if (!raw) {
           return null;
@@ -58,15 +58,15 @@ export const authSessionRepo = ripple(
       },
 
       async exists(role: AuthRole, sessionId: string) {
-        return (await redis.exists(key(role, sessionId))) > 0;
+        return (await Redis.exists(key(role, sessionId))) > 0;
       },
 
       async delete(role: AuthRole, sessionId: string) {
-        await redis.del(key(role, sessionId));
+        await Redis.del(key(role, sessionId));
       },
 
       async extend(role: AuthRole, sessionId: string) {
-        return redis.expire(key(role, sessionId), ttlSeconds);
+        return Redis.expire(key(role, sessionId), ttlSeconds);
       },
 
       async acquireRefreshLock(
@@ -75,7 +75,7 @@ export const authSessionRepo = ripple(
         lockValue: string,
         ttlMs: number,
       ) {
-        const result = await redis.set(refreshLockKey(role, sessionId), lockValue, {
+        const result = await Redis.set(refreshLockKey(role, sessionId), lockValue, {
           expiration: {
             type: 'PX',
             value: ttlMs,
@@ -91,14 +91,14 @@ export const authSessionRepo = ripple(
        * 避免已过期请求误删后续请求新建的锁。
        */
       async releaseRefreshLock(role: AuthRole, sessionId: string, lockValue: string) {
-        await redis.eval(releaseRefreshLockScript, {
+        await Redis.eval(releaseRefreshLockScript, {
           keys: [refreshLockKey(role, sessionId)],
           arguments: [lockValue],
         });
       },
 
       async getRefreshResult(role: AuthRole, sessionId: string) {
-        const raw = await redis.get(refreshResultKey(role, sessionId));
+        const raw = await Redis.get(refreshResultKey(role, sessionId));
 
         if (!raw) {
           return null;
@@ -117,7 +117,7 @@ export const authSessionRepo = ripple(
         tokens: AuthTokenPair,
         resultTtlSeconds = 5,
       ) {
-        await redis.set(refreshResultKey(role, sessionId), JSON.stringify(tokens), {
+        await Redis.set(refreshResultKey(role, sessionId), JSON.stringify(tokens), {
           expiration: {
             type: 'EX',
             value: resultTtlSeconds,
@@ -129,4 +129,4 @@ export const authSessionRepo = ripple(
   { debugName: 'AuthSessionRepository' },
 );
 
-export type AuthSessionRedisRepository = InferInput<typeof authSessionRepo>;
+export type AuthSessionRedisRepository = InferInput<typeof AuthSessionRepo>;

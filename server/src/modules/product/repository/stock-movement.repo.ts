@@ -6,13 +6,17 @@ import type { DbExecutor } from '#db';
 import { QueryPageBuilder } from '#db/helper';
 import { productStockMovements, type InsertProductStockMovement } from '#db/schema';
 
-export const stockMovementRepo = ripple(
+export const StockMovementRepo = ripple(
   {
-    db: Database,
+    Database,
   },
-  ({ db }) => ({
+  ({ Database }) => ({
     page(query: StockMovementPageQuery) {
-      return new QueryPageBuilder(db, productStockMovements, db.query.productStockMovements)
+      return new QueryPageBuilder(
+        Database,
+        productStockMovements,
+        Database.query.productStockMovements,
+      )
         .page(query.page)
         .pageSize(query.pageSize)
         .where({
@@ -45,7 +49,7 @@ export const stockMovementRepo = ripple(
         .paginate();
     },
 
-    async create(input: InsertProductStockMovement, executor: DbExecutor = db) {
+    async create(input: InsertProductStockMovement, executor: DbExecutor = Database) {
       const [movement] = await executor.insert(productStockMovements).values(input).returning();
 
       return movement ?? null;
@@ -54,4 +58,4 @@ export const stockMovementRepo = ripple(
   { debugName: 'StockMovementRepository' },
 );
 
-export type StockMovementRepository = InferInput<typeof stockMovementRepo>;
+export type StockMovementRepository = InferInput<typeof StockMovementRepo>;

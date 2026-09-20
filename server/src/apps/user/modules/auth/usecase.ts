@@ -3,38 +3,38 @@ import { type InferInput, ripple } from 'cyrenejs';
 
 import { Database } from '#context/tokens';
 import { BiliRoom } from '#env/bili';
-import { authUseCase, biliPasswordResetUseCase, biliRegisterUseCase } from '#modules/auth';
-import { pointAccountUseCase } from '#modules/point';
-import { rewardUseCase } from '#modules/reward';
-import { userUseCase } from '#modules/user';
+import { AuthUseCase, BiliPasswordResetUseCase, BiliRegisterUseCase } from '#modules/auth';
+import { PointAccountUseCase } from '#modules/point';
+import { RewardUseCase } from '#modules/reward';
+import { UserUseCase } from '#modules/user';
 import { BadRequestError, InvalidCredentialsError, PasswordUtil } from '#utils';
 import { logger } from '#utils/logger';
 
 const userAuthLogger = logger.scope('UserAuthUseCase');
 
-export const userAuthUseCase = ripple(
+export const UserAuthUseCase = ripple(
   {
-    authUseCase,
-    biliPasswordResetUseCase,
-    biliRegisterUseCase,
-    biliRoom: BiliRoom,
-    db: Database,
-    pointAccountUseCase,
-    rewardUseCase,
-    userUseCase,
+    AuthUseCase,
+    BiliPasswordResetUseCase,
+    BiliRegisterUseCase,
+    BiliRoom,
+    Database,
+    PointAccountUseCase,
+    RewardUseCase,
+    UserUseCase,
   },
   ({
-    authUseCase,
-    biliPasswordResetUseCase,
-    biliRegisterUseCase,
-    biliRoom,
-    db,
-    pointAccountUseCase,
-    rewardUseCase,
-    userUseCase,
+    AuthUseCase,
+    BiliPasswordResetUseCase,
+    BiliRegisterUseCase,
+    BiliRoom,
+    Database,
+    PointAccountUseCase,
+    RewardUseCase,
+    UserUseCase,
   }) => ({
     async login(input: UserLoginBody) {
-      const user = await userUseCase.getAvailableByBiliUid(input.biliUid);
+      const user = await UserUseCase.getAvailableByBiliUid(input.biliUid);
 
       const isValidPassword = await PasswordUtil.verify(input.password, user.passwordHash);
 
@@ -42,7 +42,7 @@ export const userAuthUseCase = ripple(
         throw new InvalidCredentialsError();
       }
 
-      const tokens = await authUseCase.createSessionTokenPair({
+      const tokens = await AuthUseCase.createSessionTokenPair({
         id: user.id,
         role: 'user',
       });
@@ -66,7 +66,7 @@ export const userAuthUseCase = ripple(
         throw new BadRequestError('UID 归属验证已失效，请重新验证');
       }
 
-      const challenge = await biliRegisterUseCase.getOwnedChallenge(
+      const challenge = await BiliRegisterUseCase.getOwnedChallenge(
         credential.code,
         credential.verifier,
         input.biliUid,
@@ -81,15 +81,15 @@ export const userAuthUseCase = ripple(
       }
 
       // 旧平台积分必须与用户创建原子提交，避免用户已注册却无法再次触发迁移。
-      const user = await db.transaction(async tx => {
-        const created = await userUseCase.create(input, tx);
-        await pointAccountUseCase.replayLegacyMigrations(tx, created);
+      const user = await Database.transaction(async tx => {
+        const created = await UserUseCase.create(input, tx);
+        await PointAccountUseCase.replayLegacyMigrations(tx, created);
         return created;
       });
 
       // 用户创建成功后再消费验证，避免数据库事务失败时丢失已完成的 UID 验证。
       try {
-        await biliRegisterUseCase.consumeChallenge(
+        await BiliRegisterUseCase.consumeChallenge(
           credential.code,
           credential.verifier,
           input.biliUid,
@@ -107,7 +107,7 @@ export const userAuthUseCase = ripple(
 
       // 奖励回放是注册后的可重试任务，不应让已经成功创建的用户看到注册失败。
       try {
-        await rewardUseCase.replayRewardBiliGuardByUserId(user.id);
+        await RewardUseCase.replayRewardBiliGuardByUserId(user.id);
       } catch (error) {
         userAuthLogger.warn(
           {
@@ -130,7 +130,7 @@ export const userAuthUseCase = ripple(
         throw new BadRequestError('UID 归属验证已失效，请重新验证');
       }
 
-      const challenge = await biliPasswordResetUseCase.getOwnedChallenge(
+      const challenge = await BiliPasswordResetUseCase.getOwnedChallenge(
         credential.code,
         credential.verifier,
         input.biliUid,
@@ -144,9 +144,9 @@ export const userAuthUseCase = ripple(
         throw new BadRequestError('UID 归属验证已失效，请重新验证');
       }
 
-      const user = await userUseCase.getAvailableByBiliUid(input.biliUid);
+      const user = await UserUseCase.getAvailableByBiliUid(input.biliUid);
 
-      const consumed = await biliPasswordResetUseCase.consumeChallenge(
+      const consumed = await BiliPasswordResetUseCase.consumeChallenge(
         credential.code,
         credential.verifier,
         input.biliUid,
@@ -156,16 +156,16 @@ export const userAuthUseCase = ripple(
         throw new BadRequestError('UID 归属验证已失效，请重新验证');
       }
 
-      await userUseCase.setPassword(user.id, input.newPassword);
+      await UserUseCase.setPassword(user.id, input.newPassword);
     },
 
     async createBiliRegisterCode(biliUid: string) {
-      const { challenge, verifier } = await biliRegisterUseCase.createChallenge(biliUid);
+      const { challenge, verifier } = await BiliRegisterUseCase.createChallenge(biliUid);
 
       return {
         code: challenge.code,
         expiresAt: challenge.expiresAt,
-        roomId: biliRoom,
+        roomId: BiliRoom,
         verifier,
       };
     },
@@ -175,7 +175,7 @@ export const userAuthUseCase = ripple(
       code: string | undefined,
       verifier: string | undefined,
     ) {
-      const challenge = await biliRegisterUseCase.getOwnedChallenge(code, verifier, biliUid);
+      const challenge = await BiliRegisterUseCase.getOwnedChallenge(code, verifier, biliUid);
 
       if (
         !challenge ||
@@ -191,7 +191,7 @@ export const userAuthUseCase = ripple(
           status: 'matched' as const,
           code: challenge.code,
           expiresAt: challenge.expiresAt,
-          roomId: biliRoom,
+          roomId: BiliRoom,
           biliUser: {
             uid: challenge.biliUid!,
             name: challenge.biliName,
@@ -203,18 +203,18 @@ export const userAuthUseCase = ripple(
         status: 'pending' as const,
         code: challenge.code,
         expiresAt: challenge.expiresAt,
-        roomId: biliRoom,
+        roomId: BiliRoom,
       };
     },
 
     async createBiliPasswordResetCode(biliUid: string) {
-      await userUseCase.getAvailableByBiliUid(biliUid);
-      const { challenge, verifier } = await biliPasswordResetUseCase.createChallenge(biliUid);
+      await UserUseCase.getAvailableByBiliUid(biliUid);
+      const { challenge, verifier } = await BiliPasswordResetUseCase.createChallenge(biliUid);
 
       return {
         code: challenge.code,
         expiresAt: challenge.expiresAt,
-        roomId: biliRoom,
+        roomId: BiliRoom,
         verifier,
       };
     },
@@ -224,7 +224,7 @@ export const userAuthUseCase = ripple(
       code: string | undefined,
       verifier: string | undefined,
     ) {
-      const challenge = await biliPasswordResetUseCase.getOwnedChallenge(code, verifier, biliUid);
+      const challenge = await BiliPasswordResetUseCase.getOwnedChallenge(code, verifier, biliUid);
 
       if (
         !challenge ||
@@ -240,7 +240,7 @@ export const userAuthUseCase = ripple(
           status: 'matched' as const,
           code: challenge.code,
           expiresAt: challenge.expiresAt,
-          roomId: biliRoom,
+          roomId: BiliRoom,
           biliUser: {
             uid: challenge.biliUid!,
             name: challenge.biliName,
@@ -252,11 +252,11 @@ export const userAuthUseCase = ripple(
         status: 'pending' as const,
         code: challenge.code,
         expiresAt: challenge.expiresAt,
-        roomId: biliRoom,
+        roomId: BiliRoom,
       };
     },
   }),
   { debugName: 'UserAuthUseCase' },
 );
 
-export type UserAuthUseCase = InferInput<typeof userAuthUseCase>;
+export type UserAuthUseCase = InferInput<typeof UserAuthUseCase>;

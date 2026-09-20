@@ -10,23 +10,23 @@ import {
   AUTH_STATE_COOKIE_VALUE,
   REFRESH_TOKEN_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_OPTIONS,
-  authUseCase,
+  AuthUseCase,
   getAuthStateCookieOptions,
 } from '#modules/auth';
 
-import { adminAuthUseCase } from './usecase';
+import { AdminAuthUseCase } from './usecase';
 
 export * from './usecase';
 
-export const adminAuthRoutes = ripple(
+export const AdminAuthRoutes = ripple(
   {
-    adminAuthUseCase,
-    apiOrigin: ApiOrigin,
-    authUseCase,
-    webOrigins: WebOrigins,
+    AdminAuthUseCase,
+    ApiOrigin,
+    AuthUseCase,
+    WebOrigins,
   },
-  ({ adminAuthUseCase, apiOrigin, authUseCase, webOrigins }) => {
-    const authStateCookieOptions = getAuthStateCookieOptions(apiOrigin, webOrigins);
+  ({ AdminAuthUseCase, ApiOrigin, AuthUseCase, WebOrigins }) => {
+    const authStateCookieOptions = getAuthStateCookieOptions(ApiOrigin, WebOrigins);
 
     return new Elysia({
       name: 'AuthRoute',
@@ -38,7 +38,7 @@ export const adminAuthRoutes = ripple(
       .post(
         '/login',
         async ({ body, cookie }) => {
-          const { user, accessToken, refreshToken } = await adminAuthUseCase.login(body);
+          const { user, accessToken, refreshToken } = await AdminAuthUseCase.login(body);
 
           cookie[ACCESS_TOKEN_COOKIE_NAME]!.set({
             ...ACCESS_TOKEN_COOKIE_OPTIONS,
@@ -69,7 +69,7 @@ export const adminAuthRoutes = ripple(
           const accessToken = cookie[ACCESS_TOKEN_COOKIE_NAME]?.value;
 
           if (accessToken && typeof accessToken === 'string') {
-            await authUseCase.revokeByAccessToken(accessToken);
+            await AuthUseCase.revokeByAccessToken(accessToken);
           }
 
           cookie[ACCESS_TOKEN_COOKIE_NAME]!.remove();

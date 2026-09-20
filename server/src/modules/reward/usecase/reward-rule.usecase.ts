@@ -2,23 +2,23 @@ import type { CreateRewardRuleBody, UpdateRewardRuleBody } from '@shared/schema/
 import { type InferInput, ripple } from 'cyrenejs';
 
 import type { InsertRewardRule, UpdateRewardRule } from '#db/schema';
-import { pointTypeUseCase } from '#modules/point';
+import { PointTypeUseCase } from '#modules/point';
 
 import {
   RewardRuleNameExistsError,
   RewardRuleNotFoundError,
   assertRewardRuleTimeRange,
 } from '../domain';
-import { rewardRuleRepo } from '../repository';
+import { RewardRuleRepo } from '../repository';
 
-export const rewardRuleUseCase = ripple(
+export const RewardRuleUseCase = ripple(
   {
-    pointTypeUseCase,
-    rewardRuleRepo,
+    PointTypeUseCase,
+    RewardRuleRepo,
   },
-  ({ pointTypeUseCase, rewardRuleRepo }) => {
+  ({ PointTypeUseCase, RewardRuleRepo }) => {
     async function get(rewardRuleId: string) {
-      const rule = await rewardRuleRepo.findById(rewardRuleId);
+      const rule = await RewardRuleRepo.findById(rewardRuleId);
 
       if (!rule) {
         throw new RewardRuleNotFoundError();
@@ -31,9 +31,9 @@ export const rewardRuleUseCase = ripple(
       get,
 
       async create(ruleData: CreateRewardRuleBody) {
-        await pointTypeUseCase.getAvailableById(ruleData.pointTypeId);
+        await PointTypeUseCase.getAvailableById(ruleData.pointTypeId);
 
-        const exists = await rewardRuleRepo.findByName(ruleData.name);
+        const exists = await RewardRuleRepo.findByName(ruleData.name);
 
         if (exists) {
           throw new RewardRuleNameExistsError();
@@ -47,7 +47,7 @@ export const rewardRuleUseCase = ripple(
           startAt,
         };
 
-        const rule = await rewardRuleRepo.create(createData);
+        const rule = await RewardRuleRepo.create(createData);
 
         if (!rule) {
           throw new RewardRuleNotFoundError();
@@ -60,11 +60,11 @@ export const rewardRuleUseCase = ripple(
         const current = await get(rewardRuleId);
 
         if (ruleData.pointTypeId) {
-          await pointTypeUseCase.getAvailableById(ruleData.pointTypeId);
+          await PointTypeUseCase.getAvailableById(ruleData.pointTypeId);
         }
 
         if (ruleData.name && ruleData.name !== current.name) {
-          const exists = await rewardRuleRepo.findByName(ruleData.name);
+          const exists = await RewardRuleRepo.findByName(ruleData.name);
 
           if (exists) {
             throw new RewardRuleNameExistsError();
@@ -86,7 +86,7 @@ export const rewardRuleUseCase = ripple(
           startAt,
         };
 
-        const rule = await rewardRuleRepo.update(rewardRuleId, updateData);
+        const rule = await RewardRuleRepo.update(rewardRuleId, updateData);
 
         if (!rule) {
           throw new RewardRuleNotFoundError();
@@ -96,7 +96,7 @@ export const rewardRuleUseCase = ripple(
       },
 
       async enable(rewardRuleId: string) {
-        const rule = await rewardRuleRepo.updateEnabled(rewardRuleId, true);
+        const rule = await RewardRuleRepo.updateEnabled(rewardRuleId, true);
 
         if (!rule) {
           throw new RewardRuleNotFoundError();
@@ -106,7 +106,7 @@ export const rewardRuleUseCase = ripple(
       },
 
       async disable(rewardRuleId: string) {
-        const rule = await rewardRuleRepo.updateEnabled(rewardRuleId, false);
+        const rule = await RewardRuleRepo.updateEnabled(rewardRuleId, false);
 
         if (!rule) {
           throw new RewardRuleNotFoundError();
@@ -116,7 +116,7 @@ export const rewardRuleUseCase = ripple(
       },
 
       async remove(rewardRuleId: string) {
-        const rule = await rewardRuleRepo.delete(rewardRuleId);
+        const rule = await RewardRuleRepo.delete(rewardRuleId);
 
         if (!rule) {
           throw new RewardRuleNotFoundError();
@@ -126,15 +126,15 @@ export const rewardRuleUseCase = ripple(
       },
 
       listManage() {
-        return rewardRuleRepo.listManage();
+        return RewardRuleRepo.listManage();
       },
 
       listVisible() {
-        return rewardRuleRepo.listVisible();
+        return RewardRuleRepo.listVisible();
       },
     };
   },
   { debugName: 'RewardRuleUseCase' },
 );
 
-export type RewardRuleUseCase = InferInput<typeof rewardRuleUseCase>;
+export type RewardRuleUseCase = InferInput<typeof RewardRuleUseCase>;

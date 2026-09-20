@@ -2,7 +2,7 @@ import type { DashboardOverviewQuery } from '@shared/schema/dashboard';
 import { BiliGuardType } from '@shared/schema/reward';
 import { type InferInput, ripple } from 'cyrenejs';
 
-import { dashboardRepo } from '../repository';
+import { DashboardRepo } from '../repository';
 
 function createMonthKeys(months: number, start: Date) {
   return Array.from({ length: months }, (_, index) => {
@@ -47,11 +47,11 @@ function buildBiliGuardTrend(
   }));
 }
 
-export const dashboardUseCase = ripple(
+export const DashboardUseCase = ripple(
   {
-    dashboardRepo,
+    DashboardRepo,
   },
-  ({ dashboardRepo }) => ({
+  ({ DashboardRepo }) => ({
     async overview(query: DashboardOverviewQuery = {}) {
       const months = query.months ?? 12;
       const now = new Date();
@@ -71,16 +71,16 @@ export const dashboardUseCase = ripple(
         recentOrders,
         recentFailedBiliGuardEvents,
       ] = await Promise.all([
-        dashboardRepo.countBiliGuardEvents(currentMonthStart, nextMonthStart),
-        dashboardRepo.countOrders(currentMonthStart, nextMonthStart),
-        dashboardRepo.countPendingOrders(),
-        dashboardRepo.sumGrantedPoints(currentMonthStart, nextMonthStart),
-        dashboardRepo.listMonthlyBiliGuardStats(statsStart),
-        dashboardRepo.listMonthlyOrderStats(statsStart),
-        dashboardRepo.countBiliGuardEventsByStatus(),
-        dashboardRepo.countUnboundBiliGuardEvents(),
-        dashboardRepo.listRecentOrders(10),
-        dashboardRepo.listRecentFailedBiliGuardEvents(10),
+        DashboardRepo.countBiliGuardEvents(currentMonthStart, nextMonthStart),
+        DashboardRepo.countOrders(currentMonthStart, nextMonthStart),
+        DashboardRepo.countPendingOrders(),
+        DashboardRepo.sumGrantedPoints(currentMonthStart, nextMonthStart),
+        DashboardRepo.listMonthlyBiliGuardStats(statsStart),
+        DashboardRepo.listMonthlyOrderStats(statsStart),
+        DashboardRepo.countBiliGuardEventsByStatus(),
+        DashboardRepo.countUnboundBiliGuardEvents(),
+        DashboardRepo.listRecentOrders(10),
+        DashboardRepo.listRecentFailedBiliGuardEvents(10),
       ]);
 
       return {
@@ -104,4 +104,4 @@ export const dashboardUseCase = ripple(
   { debugName: 'DashboardUseCase' },
 );
 
-export type DashboardUseCase = InferInput<typeof dashboardUseCase>;
+export type DashboardUseCase = InferInput<typeof DashboardUseCase>;

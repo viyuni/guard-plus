@@ -1,15 +1,15 @@
 import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { userAuthGuard } from '#apps/user/http';
-import { pointAccountUseCase } from '#modules/point';
+import { UserAuthGuard } from '#apps/user/http';
+import { PointAccountUseCase } from '#modules/point';
 
-export const pointAccountRoutes = ripple(
+export const PointAccountRoutes = ripple(
   {
-    authGuard: userAuthGuard,
-    pointAccountUseCase,
+    UserAuthGuard,
+    PointAccountUseCase,
   },
-  ({ authGuard, pointAccountUseCase }) =>
+  ({ UserAuthGuard, PointAccountUseCase }) =>
     new Elysia({
       name: 'PointAccountRoute',
       prefix: '/pointAccounts',
@@ -17,11 +17,11 @@ export const pointAccountRoutes = ripple(
         tags: ['PointAccount'],
       },
     })
-      .use(authGuard)
+      .use(UserAuthGuard)
       .get(
         '/',
         ({ auth: { id: userId } }) => {
-          return pointAccountUseCase.listMine(userId);
+          return PointAccountUseCase.listMine(userId);
         },
         {
           requiredAuth: true,

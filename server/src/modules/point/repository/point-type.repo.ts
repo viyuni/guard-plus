@@ -5,12 +5,12 @@ import { Database } from '#context/tokens';
 import type { DbExecutor } from '#db';
 import { pointTypes, type InsertPointType, type PointType, type UpdatePointType } from '#db/schema';
 
-export const pointTypeRepo = ripple(
+export const PointTypeRepo = ripple(
   {
-    db: Database,
+    Database,
   },
-  ({ db }) => ({
-    async findById(pointTypeId: string, executor: DbExecutor = db) {
+  ({ Database }) => ({
+    async findById(pointTypeId: string, executor: DbExecutor = Database) {
       return (
         (await executor.query.pointTypes.findFirst({
           where: {
@@ -20,7 +20,7 @@ export const pointTypeRepo = ripple(
       );
     },
 
-    async findByName(name: string, executor: DbExecutor = db) {
+    async findByName(name: string, executor: DbExecutor = Database) {
       return (
         (await executor.query.pointTypes.findFirst({
           where: {
@@ -30,12 +30,12 @@ export const pointTypeRepo = ripple(
       );
     },
 
-    async create(input: InsertPointType, executor: DbExecutor = db) {
+    async create(input: InsertPointType, executor: DbExecutor = Database) {
       const [row] = await executor.insert(pointTypes).values(input).returning();
       return row ?? null;
     },
 
-    async update(pointTypeId: string, data: UpdatePointType, executor: DbExecutor = db) {
+    async update(pointTypeId: string, data: UpdatePointType, executor: DbExecutor = Database) {
       const [row] = await executor
         .update(pointTypes)
         .set(data)
@@ -48,7 +48,7 @@ export const pointTypeRepo = ripple(
     async updateStatus(
       pointTypeId: string,
       status: PointType['status'],
-      executor: DbExecutor = db,
+      executor: DbExecutor = Database,
     ) {
       const [row] = await executor
         .update(pointTypes)
@@ -62,7 +62,7 @@ export const pointTypeRepo = ripple(
     },
 
     list() {
-      return db.query.pointTypes.findMany({
+      return Database.query.pointTypes.findMany({
         orderBy: t => [sql`${t.sort} DESC NULLS FIRST`],
       });
     },
@@ -70,4 +70,4 @@ export const pointTypeRepo = ripple(
   { debugName: 'PointTypeRepository' },
 );
 
-export type PointTypeRepository = InferInput<typeof pointTypeRepo>;
+export type PointTypeRepository = InferInput<typeof PointTypeRepo>;

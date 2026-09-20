@@ -21,9 +21,12 @@ This package contains the admin and user API apps, event ingestion runtime, back
 ### Dependency injection
 
 Module `context.ts` files declare individual Repository and UseCase providers with
-`cyrenejs` `ripple`. Business classes keep ordinary constructor dependencies.
-`src/context/tokens.ts` holds only infrastructure and optional-capability tokens
-(`Database`, `Redis`, `PointImageUseCase`, `RewardLogger`).
+`cyrenejs` `ripple`. A provider definition is PascalCase (`OrderUseCase`) and so is
+every key inside a dependency object, so injections stay shorthand
+(`{ Database, OrderRepo }`); `guard-plus/ripple-pascal-case` and
+`guard-plus/ripple-deps-pascal-case` enforce both. Business classes keep ordinary
+constructor dependencies. `src/context/tokens.ts` holds only infrastructure and
+optional-capability tokens (`Database`, `Redis`, `PointImageUseCase`, `RewardLogger`).
 
 ### Environment and configuration
 
@@ -42,7 +45,7 @@ imports an env singleton:
 Modules request config exactly like any other dependency:
 
 ```ts
-export const imageUseCase = ripple({ imageSavePath: ImageSavePath }, ({ imageSavePath }) => {
+export const ImageUseCase = ripple({ imageSavePath: ImageSavePath }, ({ imageSavePath }) => {
   // ...
 });
 ```
@@ -55,7 +58,7 @@ env prefixes; downstream code depends on generic tokens.
 `createContainer({ db, redis, config })`, `createEventContainer({ db, redis, config })`,
 and `createAppContext(...)` are asynchronous and bind the config fields to tokens.
 Each call owns an isolated Cyrene runtime; providers share instances only within that
-runtime. The returned container exposes `repositories`, `useCases`, and `runtime`.
+runtime. The returned container exposes every provider by its export name, plus `runtime`.
 HTTP contexts dispose the runtime on Elysia stop; scripts and tests must dispose it
 explicitly or use `await using`. Externally bound DB/Redis clients remain owned by the
 caller. `src/utils/logger.ts`, `src/db`, and `src/redis` still read their env at the

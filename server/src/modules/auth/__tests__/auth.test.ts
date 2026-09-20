@@ -10,8 +10,8 @@ import type { RedisClient } from '#redis';
 
 import type { AuthTokenPair } from '../domain';
 import { createAuthGuard, getAuthStateCookieOptions } from '../index';
-import { authSessionRepo } from '../repository';
-import { authUseCase } from '../usecase';
+import { AuthSessionRepo } from '../repository';
+import { AuthUseCase } from '../usecase';
 
 afterEach(() => {
   setSystemTime();
@@ -44,7 +44,7 @@ async function createAuthUseCase() {
   const refreshLocks = new Set<string>();
 
   const runtime = new Cyrene({
-    providers: { authSessionRepo, authUseCase },
+    providers: { AuthSessionRepo, AuthUseCase },
     bindings: [
       // 会话仓库的方法会被下面整体替换, 这里只需要一个占位客户端。
       { token: Redis, value: {} as RedisClient },
@@ -55,7 +55,7 @@ async function createAuthUseCase() {
   runtimes.push(runtime);
 
   const container = await runtime.start();
-  const repo = container.authSessionRepo;
+  const repo = container.AuthSessionRepo;
 
   spyOn(repo, 'create').mockImplementation(
     async (accountId: string, role: 'user' | 'admin' | 'superAdmin') => {
@@ -131,7 +131,7 @@ async function createAuthUseCase() {
   );
 
   return {
-    authUseCase: container.authUseCase,
+    authUseCase: container.AuthUseCase,
     authSessionRepo: repo,
   };
 }

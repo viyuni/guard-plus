@@ -12,7 +12,7 @@ import { createEventContainer } from './context';
 import { eventAppConfig, eventEnv } from './env';
 import { createEventServer } from './server';
 
-const { runtime, biliPasswordResetUseCase, biliRegisterUseCase, rewardUseCase } =
+const { runtime, BiliPasswordResetUseCase, BiliRegisterUseCase, RewardUseCase } =
   await createEventContainer({
     db,
     redis,
@@ -22,7 +22,7 @@ const { runtime, biliPasswordResetUseCase, biliRegisterUseCase, rewardUseCase } 
 const _worker = new Worker<Guard>(
   BILIBILI_EVENT_QUEUE_NAME,
   job => {
-    return rewardUseCase.rewardBiliGuard(job.data);
+    return RewardUseCase.rewardBiliGuard(job.data);
   },
   {
     embedded: true,
@@ -51,20 +51,16 @@ listener.on('event', event => {
   }
 
   if (event.type === 'message') {
-    biliRegisterUseCase
-      .matchMessage({
-        code: event.content,
-        biliUid: event.uid.toString(),
-        biliName: event.uname,
-      })
-      .catch(error => logger.error(error, 'Bilibili register message match failed'));
-    biliPasswordResetUseCase
-      .matchMessage({
-        code: event.content,
-        biliUid: event.uid.toString(),
-        biliName: event.uname,
-      })
-      .catch(error => logger.error(error, 'Bilibili password reset message match failed'));
+    BiliRegisterUseCase.matchMessage({
+      code: event.content,
+      biliUid: event.uid.toString(),
+      biliName: event.uname,
+    }).catch(error => logger.error(error, 'Bilibili register message match failed'));
+    BiliPasswordResetUseCase.matchMessage({
+      code: event.content,
+      biliUid: event.uid.toString(),
+      biliName: event.uname,
+    }).catch(error => logger.error(error, 'Bilibili password reset message match failed'));
 
     return;
   }

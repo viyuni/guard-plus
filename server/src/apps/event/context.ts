@@ -5,22 +5,22 @@ import type { DbClient } from '#db';
 import { BiliRoom, RegisterCodeTtl } from '#env/bili';
 import type { EventConfig } from '#env/config';
 import { DataSecret } from '#env/shared';
-import { biliPasswordResetRepo, biliPasswordResetUseCase } from '#modules/auth';
-import { biliRegisterRepo, biliRegisterUseCase } from '#modules/auth';
-import { biliEventRepo } from '#modules/bili-event';
+import { BiliPasswordResetRepo, BiliPasswordResetUseCase } from '#modules/auth';
+import { BiliRegisterRepo, BiliRegisterUseCase } from '#modules/auth';
+import { BiliEventRepo } from '#modules/bili-event';
 import {
-  pointAccountRepo,
-  pointAccountUseCase,
-  pointBalanceUseCase,
-  pointConversionRuleRepo,
-  pointConversionUseCase,
-  pointTransactionRepo,
-  pointTransactionUseCase,
-  pointTypeRepo,
-  pointTypeUseCase,
+  PointAccountRepo,
+  PointAccountUseCase,
+  PointBalanceUseCase,
+  PointConversionRuleRepo,
+  PointConversionUseCase,
+  PointTransactionRepo,
+  PointTransactionUseCase,
+  PointTypeRepo,
+  PointTypeUseCase,
 } from '#modules/point';
-import { rewardUseCase } from '#modules/reward';
-import { userRepo, userUseCase } from '#modules/user';
+import { RewardUseCase } from '#modules/reward';
+import { UserRepo, UserUseCase } from '#modules/user';
 import type { RedisClient } from '#redis';
 import { logger } from '#utils/logger';
 
@@ -39,23 +39,23 @@ export interface CreateEventContextOptions {
 export async function createEventContainer({ db, redis, config }: CreateEventContextOptions) {
   const runtime = new Cyrene({
     providers: {
-      biliEventRepo,
-      biliPasswordResetRepo,
-      biliRegisterRepo,
-      pointAccountRepo,
-      pointConversionRuleRepo,
-      pointTransactionRepo,
-      pointTypeRepo,
-      userRepo,
-      biliPasswordResetUseCase,
-      biliRegisterUseCase,
-      pointAccountUseCase,
-      pointBalanceUseCase,
-      pointConversionUseCase,
-      pointTransactionUseCase,
-      pointTypeUseCase,
-      rewardUseCase,
-      userUseCase,
+      BiliEventRepo,
+      BiliPasswordResetRepo,
+      BiliRegisterRepo,
+      PointAccountRepo,
+      PointConversionRuleRepo,
+      PointTransactionRepo,
+      PointTypeRepo,
+      UserRepo,
+      BiliPasswordResetUseCase,
+      BiliRegisterUseCase,
+      PointAccountUseCase,
+      PointBalanceUseCase,
+      PointConversionUseCase,
+      PointTransactionUseCase,
+      PointTypeUseCase,
+      RewardUseCase,
+      UserUseCase,
     },
     bindings: [
       { token: Database, value: db },

@@ -19,19 +19,25 @@ import {
   calculatePointConversionToAmount,
   PointIdempotencyKey,
 } from '../domain';
-import { pointAccountRepo, pointConversionRuleRepo } from '../repository';
-import { pointBalanceUseCase } from './point-balance.usecase';
-import { pointTypeUseCase } from './point-type.usecase';
+import { PointAccountRepo, PointConversionRuleRepo } from '../repository';
+import { PointBalanceUseCase } from './point-balance.usecase';
+import { PointTypeUseCase } from './point-type.usecase';
 
-export const pointConversionUseCase = ripple(
+export const PointConversionUseCase = ripple(
   {
-    db: Database,
-    pointAccountRepo,
-    pointBalanceUseCase,
-    pointConversionRuleRepo,
-    pointTypeUseCase,
+    Database,
+    PointAccountRepo,
+    PointBalanceUseCase,
+    PointConversionRuleRepo,
+    PointTypeUseCase,
   },
-  ({ db, pointAccountRepo, pointBalanceUseCase, pointConversionRuleRepo, pointTypeUseCase }) => {
+  ({
+    Database,
+    PointAccountRepo,
+    PointBalanceUseCase,
+    PointConversionRuleRepo,
+    PointTypeUseCase,
+  }) => {
     // 确保积分类型可用
     async function assertPointTypesAvailable(fromPointTypeId: string, toPointTypeId: string) {
       if (fromPointTypeId === toPointTypeId) {
@@ -39,8 +45,8 @@ export const pointConversionUseCase = ripple(
       }
 
       await Promise.all([
-        pointTypeUseCase.getAvailableById(fromPointTypeId),
-        pointTypeUseCase.getAvailableById(toPointTypeId),
+        PointTypeUseCase.getAvailableById(fromPointTypeId),
+        PointTypeUseCase.getAvailableById(toPointTypeId),
       ]);
     }
 
@@ -49,7 +55,7 @@ export const pointConversionUseCase = ripple(
       toPointTypeId: string,
       currentRuleId?: string,
     ) {
-      const exists = await pointConversionRuleRepo.findByPointTypePair({
+      const exists = await PointConversionRuleRepo.findByPointTypePair({
         fromPointTypeId,
         toPointTypeId,
       });
@@ -60,7 +66,7 @@ export const pointConversionUseCase = ripple(
     }
 
     async function get(pointConversionRuleId: string) {
-      const rule = await pointConversionRuleRepo.findById(pointConversionRuleId);
+      const rule = await PointConversionRuleRepo.findById(pointConversionRuleId);
 
       if (!rule) {
         throw new PointConversionRuleNotFoundError();
@@ -71,11 +77,11 @@ export const pointConversionUseCase = ripple(
 
     return {
       listManage() {
-        return pointConversionRuleRepo.listManage();
+        return PointConversionRuleRepo.listManage();
       },
 
       listVisible() {
-        return pointConversionRuleRepo.listVisible();
+        return PointConversionRuleRepo.listVisible();
       },
 
       get,
@@ -89,7 +95,7 @@ export const pointConversionUseCase = ripple(
           startAt,
         });
 
-        const exists = await pointConversionRuleRepo.findByName(ruleData.name);
+        const exists = await PointConversionRuleRepo.findByName(ruleData.name);
 
         if (exists) {
           throw new PointConversionRuleNameExistsError();
@@ -106,7 +112,7 @@ export const pointConversionUseCase = ripple(
           startAt,
         };
 
-        return pointConversionRuleRepo.create(createData);
+        return PointConversionRuleRepo.create(createData);
       },
 
       async update(pointConversionRuleId: string, ruleData: UpdatePointConversionRuleBody) {
@@ -123,7 +129,7 @@ export const pointConversionUseCase = ripple(
         assertPointConversionRuleShape(next);
 
         if (ruleData.name && ruleData.name !== current.name) {
-          const exists = await pointConversionRuleRepo.findByName(ruleData.name);
+          const exists = await PointConversionRuleRepo.findByName(ruleData.name);
 
           if (exists) {
             throw new PointConversionRuleNameExistsError();
@@ -143,7 +149,7 @@ export const pointConversionUseCase = ripple(
           startAt,
         };
 
-        const rule = await pointConversionRuleRepo.update(pointConversionRuleId, updateData);
+        const rule = await PointConversionRuleRepo.update(pointConversionRuleId, updateData);
 
         if (!rule) {
           throw new PointConversionRuleNotFoundError();
@@ -159,7 +165,7 @@ export const pointConversionUseCase = ripple(
           return rule;
         }
 
-        return pointConversionRuleRepo.enabled(pointConversionRuleId);
+        return PointConversionRuleRepo.enabled(pointConversionRuleId);
       },
 
       async disable(pointConversionRuleId: string) {
@@ -169,11 +175,11 @@ export const pointConversionUseCase = ripple(
           return rule;
         }
 
-        return pointConversionRuleRepo.disabled(pointConversionRuleId);
+        return PointConversionRuleRepo.disabled(pointConversionRuleId);
       },
 
       async remove(pointConversionRuleId: string) {
-        const rule = await pointConversionRuleRepo.delete(pointConversionRuleId);
+        const rule = await PointConversionRuleRepo.delete(pointConversionRuleId);
 
         if (!rule) {
           throw new PointConversionRuleNotFoundError();
@@ -183,7 +189,7 @@ export const pointConversionUseCase = ripple(
       },
 
       async convert(conversionData: ConvertPointBody) {
-        const rule = await pointConversionRuleRepo.findById(conversionData.ruleId);
+        const rule = await PointConversionRuleRepo.findById(conversionData.ruleId);
 
         if (!rule) {
           throw new PointConversionRuleNotFoundError();
@@ -193,15 +199,15 @@ export const pointConversionUseCase = ripple(
 
         const toAmount = calculatePointConversionToAmount(rule, conversionData.fromAmount);
 
-        return db.transaction(async tx => {
+        return Database.transaction(async tx => {
           // 获取扣除的积分账户并行锁
-          const fromAccount = await pointAccountRepo.ensureAccountAndLock(tx, {
+          const fromAccount = await PointAccountRepo.ensureAccountAndLock(tx, {
             userId: conversionData.userId,
             pointTypeId: rule.fromPointTypeId,
           });
 
           // 获取添加的积分账户并行锁
-          const toAccount = await pointAccountRepo.ensureAccountAndLock(tx, {
+          const toAccount = await PointAccountRepo.ensureAccountAndLock(tx, {
             userId: conversionData.userId,
             pointTypeId: rule.toPointTypeId,
           });
@@ -210,7 +216,7 @@ export const pointConversionUseCase = ripple(
           const remark = conversionData.remark ?? `积分转换：${rule.name}`;
 
           // 扣除积分
-          const consumeResult = await pointBalanceUseCase.changeBalance(tx, fromAccount, {
+          const consumeResult = await PointBalanceUseCase.changeBalance(tx, fromAccount, {
             type: 'consume',
             userId: conversionData.userId,
             pointTypeId: rule.fromPointTypeId,
@@ -231,7 +237,7 @@ export const pointConversionUseCase = ripple(
           });
 
           // 添加积分
-          const grantResult = await pointBalanceUseCase.changeBalance(tx, toAccount, {
+          const grantResult = await PointBalanceUseCase.changeBalance(tx, toAccount, {
             type: 'grant',
             userId: conversionData.userId,
             pointTypeId: rule.toPointTypeId,
@@ -263,4 +269,4 @@ export const pointConversionUseCase = ripple(
   { debugName: 'PointConversionUseCase' },
 );
 
-export type PointConversionUseCase = InferInput<typeof pointConversionUseCase>;
+export type PointConversionUseCase = InferInput<typeof PointConversionUseCase>;

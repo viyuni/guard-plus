@@ -1,13 +1,13 @@
 import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { rewardBiliGuardRoutes } from './reward-bili-guard.route';
-import { rewardRuleRoutes } from './reward-rule.route';
+import { RewardBiliGuardRoutes } from './reward-bili-guard.route';
+import { RewardRuleRoutes } from './reward-rule.route';
 
-export const rewardRoutes = ripple(
+export const RewardRoutes = ripple(
   {
-    rewardBiliGuardRoutes,
-    rewardRuleRoutes,
+    RewardBiliGuardRoutes,
+    RewardRuleRoutes,
   },
   routes =>
     new Elysia({
@@ -17,6 +17,6 @@ export const rewardRoutes = ripple(
         tags: ['Reward'],
       },
     })
-      .use(routes.rewardBiliGuardRoutes)
-      .use(routes.rewardRuleRoutes),
+      .use(routes.RewardBiliGuardRoutes)
+      .use(routes.RewardRuleRoutes),
 );

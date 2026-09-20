@@ -9,12 +9,11 @@ import { RegisterCodeTtl } from '#env/bili';
 import type { RedisClient } from '#redis';
 
 import type { BiliRegisterRedisRepository } from '../repository';
-import { biliPasswordResetRepo, biliRegisterRepo } from '../repository';
-import type { BiliRegisterUseCase } from '../usecase/bili-register.usecase';
+import { BiliPasswordResetRepo, BiliRegisterRepo } from '../repository';
 import {
   BILI_REGISTER_CODE_PREFIX,
-  biliPasswordResetUseCase,
-  biliRegisterUseCase,
+  BiliPasswordResetUseCase,
+  BiliRegisterUseCase,
 } from '../usecase/bili-register.usecase';
 
 const testRedisUrl = Bun.env.TEST_REDIS_URL;
@@ -69,10 +68,10 @@ beforeEach(async () => {
 
   const runtime = new Cyrene({
     providers: {
-      biliPasswordResetRepo,
-      biliPasswordResetUseCase,
-      biliRegisterRepo,
-      biliRegisterUseCase,
+      BiliPasswordResetRepo,
+      BiliPasswordResetUseCase,
+      BiliRegisterRepo,
+      BiliRegisterUseCase,
     },
     bindings: [
       { token: Redis, value: redis },
@@ -84,10 +83,10 @@ beforeEach(async () => {
 
   const container = await runtime.start();
 
-  repo = container.biliRegisterRepo;
-  useCase = container.biliRegisterUseCase;
-  resetRepo = container.biliPasswordResetRepo;
-  resetUseCase = container.biliPasswordResetUseCase;
+  repo = container.BiliRegisterRepo;
+  useCase = container.BiliRegisterUseCase;
+  resetRepo = container.BiliPasswordResetRepo;
+  resetUseCase = container.BiliPasswordResetUseCase;
 });
 
 afterEach(async () => {

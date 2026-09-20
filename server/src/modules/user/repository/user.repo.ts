@@ -14,15 +14,15 @@ const userSelectCols = defineSelectColumns(
   ({ passwordHash: _passwordHash, phoneHash: _phoneHash, ...cols }) => cols,
 );
 
-export const userRepo = ripple(
+export const UserRepo = ripple(
   {
-    db: Database,
+    Database,
   },
-  ({ db }) => ({
+  ({ Database }) => ({
     /**
      * 获取用户
      */
-    async findById(userId: string, executor: DbExecutor = db) {
+    async findById(userId: string, executor: DbExecutor = Database) {
       const user = await executor.query.users.findFirst({
         where: {
           id: userId,
@@ -35,7 +35,7 @@ export const userRepo = ripple(
     /**
      * 通过 B站 UID 查询用户
      */
-    async findByBiliUid(biliUid: string, executor: DbExecutor = db) {
+    async findByBiliUid(biliUid: string, executor: DbExecutor = Database) {
       const user = await executor.query.users.findFirst({
         where: {
           biliUid,
@@ -49,7 +49,7 @@ export const userRepo = ripple(
      * 查询用户详情
      */
     async findDetailById(userId: string) {
-      const user = await db.query.users.findFirst({
+      const user = await Database.query.users.findFirst({
         columns: {
           id: true,
           biliUid: true,
@@ -89,8 +89,7 @@ export const userRepo = ripple(
      * 封禁用户
      */
     async ban(userId: string) {
-      const [user] = await db
-        .update(users)
+      const [user] = await Database.update(users)
         .set({
           status: 'banned',
         })
@@ -104,8 +103,7 @@ export const userRepo = ripple(
      * 恢复用户
      */
     async restore(userId: string) {
-      const [user] = await db
-        .update(users)
+      const [user] = await Database.update(users)
         .set({
           status: 'active',
         })
@@ -115,7 +113,7 @@ export const userRepo = ripple(
       return user ?? null;
     },
 
-    async create(data: InsertUser, executor: DbExecutor = db) {
+    async create(data: InsertUser, executor: DbExecutor = Database) {
       const [user] = await executor.insert(users).values(data).returning(userSelectCols);
 
       if (!user) {
@@ -126,8 +124,7 @@ export const userRepo = ripple(
     },
 
     async updatePassword(userId: string, passwordHash: string) {
-      const [user] = await db
-        .update(users)
+      const [user] = await Database.update(users)
         .set({
           passwordHash,
         })
@@ -142,8 +139,7 @@ export const userRepo = ripple(
     },
 
     async update(userId: string, data: UpdateUser) {
-      const [user] = await db
-        .update(users)
+      const [user] = await Database.update(users)
         .set(data)
         .where(eq(users.id, userId))
         .returning(userSelectCols);
@@ -159,7 +155,7 @@ export const userRepo = ripple(
      * 分页
      */
     page(query: UserPageQuery) {
-      return new QueryPageBuilder(db, users, db.query.users)
+      return new QueryPageBuilder(Database, users, Database.query.users)
         .page(query.page)
         .pageSize(query.pageSize)
         .where({
@@ -225,4 +221,4 @@ export const userRepo = ripple(
   { debugName: 'UserRepository' },
 );
 
-export type UserRepository = InferInput<typeof userRepo>;
+export type UserRepository = InferInput<typeof UserRepo>;

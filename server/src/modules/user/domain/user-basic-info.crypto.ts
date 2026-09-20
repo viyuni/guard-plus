@@ -21,12 +21,12 @@ const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12;
 const FORMAT_VERSION = 'v1';
 
-export const userBasicInfoCrypto = ripple(
+export const UserBasicInfoCrypto = ripple(
   {
-    dataSecret: DataSecret,
+    DataSecret,
   },
-  ({ dataSecret }) => {
-    const key = createHash('sha256').update(dataSecret).digest();
+  ({ DataSecret }) => {
+    const key = createHash('sha256').update(DataSecret).digest();
 
     function encryptNullable(value: string | null | undefined) {
       if (value === undefined) {
@@ -121,4 +121,4 @@ export const userBasicInfoCrypto = ripple(
   { debugName: 'UserBasicInfoCrypto' },
 );
 
-export type UserBasicInfoCrypto = InferInput<typeof userBasicInfoCrypto>;
+export type UserBasicInfoCrypto = InferInput<typeof UserBasicInfoCrypto>;

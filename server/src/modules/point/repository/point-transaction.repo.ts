@@ -9,11 +9,11 @@ import { pointTransactions, type InsertPointTransaction } from '#db/schema';
 
 import { PointTransactionNotFoundError } from '../domain';
 
-export const pointTransactionRepo = ripple(
+export const PointTransactionRepo = ripple(
   {
-    db: Database,
+    Database,
   },
-  ({ db }) => ({
+  ({ Database }) => ({
     async requireByIdForUpdate(tx: DbTransaction, transactionId: string) {
       const [transaction] = await tx
         .select()
@@ -30,7 +30,7 @@ export const pointTransactionRepo = ripple(
 
     async findByAccountAndIdempotencyKey(
       input: { accountId: string; idempotencyKey: string },
-      executor: DbExecutor = db,
+      executor: DbExecutor = Database,
     ) {
       return await executor.query.pointTransactions.findFirst({
         where: {
@@ -40,7 +40,10 @@ export const pointTransactionRepo = ripple(
       });
     },
 
-    async findReversalByOriginalTransactionId(transactionId: string, executor: DbExecutor = db) {
+    async findReversalByOriginalTransactionId(
+      transactionId: string,
+      executor: DbExecutor = Database,
+    ) {
       return await executor.query.pointTransactions.findFirst({
         where: {
           reversalOfTransactionId: transactionId,
@@ -55,7 +58,7 @@ export const pointTransactionRepo = ripple(
     },
 
     pageManage(query: PointTransactionPageQuery) {
-      return new QueryPageBuilder(db, pointTransactions, db.query.pointTransactions)
+      return new QueryPageBuilder(Database, pointTransactions, Database.query.pointTransactions)
         .pageSize(query.pageSize)
         .page(query.page)
         .where({
@@ -95,7 +98,7 @@ export const pointTransactionRepo = ripple(
     },
 
     pageMine(query: PointTransactionPageQuery) {
-      return new QueryPageBuilder(db, pointTransactions, db.query.pointTransactions)
+      return new QueryPageBuilder(Database, pointTransactions, Database.query.pointTransactions)
         .pageSize(query.pageSize)
         .page(query.page)
         .where({
@@ -134,4 +137,4 @@ export const pointTransactionRepo = ripple(
   { debugName: 'PointTransactionRepository' },
 );
 
-export type PointTransactionRepository = InferInput<typeof pointTransactionRepo>;
+export type PointTransactionRepository = InferInput<typeof PointTransactionRepo>;

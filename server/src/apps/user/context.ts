@@ -7,15 +7,15 @@ import { db } from '#db';
 import { redis } from '#redis';
 import { logger } from '#utils/logger';
 
-import { authRoutes } from './modules/auth';
+import { AuthRoutes } from './modules/auth';
 import * as userAuthUseCase from './modules/auth/usecase';
 import * as notifyWorker from './modules/email/worker';
-import { orderRoutes } from './modules/order';
-import { pointAccountRoutes } from './modules/point-account';
-import { pointConversionRoutes } from './modules/point-conversion';
-import { pointTransactionRoutes } from './modules/point-transaction';
-import { productRoutes } from './modules/product';
-import { userRoutes } from './modules/user';
+import { OrderRoutes } from './modules/order';
+import { PointAccountRoutes } from './modules/point-account';
+import { PointConversionRoutes } from './modules/point-conversion';
+import { PointTransactionRoutes } from './modules/point-transaction';
+import { ProductRoutes } from './modules/product';
+import { UserRoutes } from './modules/user';
 
 const { context, container } = await createAppContext({
   db,
@@ -34,13 +34,13 @@ const appProviders = await container.runtime
       {
         ...providersOf(userAuthUseCase),
         ...providersOf(notifyWorker),
-        authRoutes,
-        orderRoutes,
-        pointAccountRoutes,
-        pointConversionRoutes,
-        pointTransactionRoutes,
-        productRoutes,
-        userRoutes,
+        AuthRoutes,
+        OrderRoutes,
+        PointAccountRoutes,
+        PointConversionRoutes,
+        PointTransactionRoutes,
+        ProductRoutes,
+        UserRoutes,
       },
       deps => deps,
     ),
@@ -56,13 +56,13 @@ const appProviders = await container.runtime
  * 只能在根 app 挂载一次。
  */
 export const appRuntimeContext = context
-  .use(appProviders.authRoutes)
-  .use(appProviders.orderRoutes)
-  .use(appProviders.pointAccountRoutes)
-  .use(appProviders.pointConversionRoutes)
-  .use(appProviders.pointTransactionRoutes)
-  .use(appProviders.productRoutes)
-  .use(appProviders.userRoutes);
+  .use(appProviders.AuthRoutes)
+  .use(appProviders.OrderRoutes)
+  .use(appProviders.PointAccountRoutes)
+  .use(appProviders.PointConversionRoutes)
+  .use(appProviders.PointTransactionRoutes)
+  .use(appProviders.ProductRoutes)
+  .use(appProviders.UserRoutes);
 
 appRuntimeContext.onStart(() => {
   logger.info('Notify Worker started...');

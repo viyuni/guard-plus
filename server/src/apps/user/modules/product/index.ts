@@ -3,13 +3,13 @@ import { ProductIdParamsSchema } from '@shared/schema/product';
 import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { productUseCase } from '#modules/product';
+import { ProductUseCase } from '#modules/product';
 
-export const productRoutes = ripple(
+export const ProductRoutes = ripple(
   {
-    productUseCase,
+    ProductUseCase,
   },
-  ({ productUseCase }) =>
+  ({ ProductUseCase }) =>
     new Elysia({
       name: 'UserProductRoute',
       prefix: '/products',
@@ -20,7 +20,7 @@ export const productRoutes = ripple(
       .get(
         '/',
         ({ query }) => {
-          return productUseCase.pageRedeem(query);
+          return ProductUseCase.pageRedeem(query);
         },
         {
           query: pageQuery,
@@ -32,7 +32,7 @@ export const productRoutes = ripple(
       .get(
         '/:productId',
         ({ params }) => {
-          return productUseCase.getRedeem(params.productId);
+          return ProductUseCase.getRedeem(params.productId);
         },
         {
           params: ProductIdParamsSchema,

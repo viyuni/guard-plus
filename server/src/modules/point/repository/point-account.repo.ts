@@ -16,11 +16,11 @@ import {
 
 const POSTGRES_INTEGER_MAX = 2_147_483_647;
 
-export const pointAccountRepo = ripple(
+export const PointAccountRepo = ripple(
   {
-    db: Database,
+    Database,
   },
-  ({ db }) => {
+  ({ Database }) => {
     /**
      * 查询积分账户并行锁
      *
@@ -41,7 +41,7 @@ export const pointAccountRepo = ripple(
     }
 
     return {
-      listMine(userId: string, executor: DbExecutor = db) {
+      listMine(userId: string, executor: DbExecutor = Database) {
         return executor.query.pointAccounts.findMany({
           where: {
             userId,
@@ -172,4 +172,4 @@ export const pointAccountRepo = ripple(
   { debugName: 'PointAccountRepository' },
 );
 
-export type PointAccountRepository = InferInput<typeof pointAccountRepo>;
+export type PointAccountRepository = InferInput<typeof PointAccountRepo>;

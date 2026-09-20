@@ -4,16 +4,15 @@ import { and, count, desc, eq, gte, isNull, lt, sql, sum } from 'drizzle-orm';
 import { Database } from '#context/tokens';
 import { biliEvents, orders, pointTransactions, users } from '#db/schema';
 
-export const dashboardRepo = ripple(
+export const DashboardRepo = ripple(
   {
-    db: Database,
+    Database,
   },
-  ({ db }) => ({
+  ({ Database }) => ({
     async countBiliGuardEvents(start: Date, end: Date) {
-      const [row] = await db
-        .select({
-          count: count(),
-        })
+      const [row] = await Database.select({
+        count: count(),
+      })
         .from(biliEvents)
         .where(
           and(
@@ -27,10 +26,9 @@ export const dashboardRepo = ripple(
     },
 
     async countOrders(start: Date, end: Date) {
-      const [row] = await db
-        .select({
-          count: count(),
-        })
+      const [row] = await Database.select({
+        count: count(),
+      })
         .from(orders)
         .where(and(gte(orders.createdAt, start), lt(orders.createdAt, end)));
 
@@ -38,10 +36,9 @@ export const dashboardRepo = ripple(
     },
 
     async countPendingOrders() {
-      const [row] = await db
-        .select({
-          count: count(),
-        })
+      const [row] = await Database.select({
+        count: count(),
+      })
         .from(orders)
         .where(eq(orders.status, 'pending'));
 
@@ -49,10 +46,9 @@ export const dashboardRepo = ripple(
     },
 
     async sumGrantedPoints(start: Date, end: Date) {
-      const [row] = await db
-        .select({
-          total: sum(pointTransactions.delta),
-        })
+      const [row] = await Database.select({
+        total: sum(pointTransactions.delta),
+      })
         .from(pointTransactions)
         .where(
           and(
@@ -66,12 +62,11 @@ export const dashboardRepo = ripple(
     },
 
     async listMonthlyBiliGuardStats(start: Date) {
-      return await db
-        .select({
-          month: sql<string>`to_char(date_trunc('month', ${biliEvents.occurredAt}), 'YYYY-MM')`,
-          guardType: sql<number>`(${biliEvents.eventSnapshot}->>'guardType')::int`,
-          count: count(),
-        })
+      return await Database.select({
+        month: sql<string>`to_char(date_trunc('month', ${biliEvents.occurredAt}), 'YYYY-MM')`,
+        guardType: sql<number>`(${biliEvents.eventSnapshot}->>'guardType')::int`,
+        count: count(),
+      })
         .from(biliEvents)
         .where(and(eq(biliEvents.eventType, 'biliGuard'), gte(biliEvents.occurredAt, start)))
         .groupBy(
@@ -82,11 +77,10 @@ export const dashboardRepo = ripple(
     },
 
     async listMonthlyOrderStats(start: Date) {
-      return await db
-        .select({
-          month: sql<string>`to_char(date_trunc('month', ${orders.createdAt}), 'YYYY-MM')`,
-          count: count(),
-        })
+      return await Database.select({
+        month: sql<string>`to_char(date_trunc('month', ${orders.createdAt}), 'YYYY-MM')`,
+        count: count(),
+      })
         .from(orders)
         .where(gte(orders.createdAt, start))
         .groupBy(sql`date_trunc('month', ${orders.createdAt})`)
@@ -94,21 +88,19 @@ export const dashboardRepo = ripple(
     },
 
     async countBiliGuardEventsByStatus() {
-      return await db
-        .select({
-          status: biliEvents.status,
-          count: count(),
-        })
+      return await Database.select({
+        status: biliEvents.status,
+        count: count(),
+      })
         .from(biliEvents)
         .where(eq(biliEvents.eventType, 'biliGuard'))
         .groupBy(biliEvents.status);
     },
 
     async countUnboundBiliGuardEvents() {
-      const [row] = await db
-        .select({
-          count: count(),
-        })
+      const [row] = await Database.select({
+        count: count(),
+      })
         .from(biliEvents)
         .where(and(eq(biliEvents.eventType, 'biliGuard'), isNull(biliEvents.userId)));
 
@@ -116,19 +108,18 @@ export const dashboardRepo = ripple(
     },
 
     async listRecentOrders(limit = 10) {
-      return await db
-        .select({
-          id: orders.id,
-          orderNo: orders.orderNo,
-          userId: orders.userId,
-          username: users.username,
-          biliUid: users.biliUid,
-          productName: orders.productNameSnapshot,
-          pointTypeName: orders.pointTypeNameSnapshot,
-          price: orders.price,
-          status: orders.status,
-          createdAt: orders.createdAt,
-        })
+      return await Database.select({
+        id: orders.id,
+        orderNo: orders.orderNo,
+        userId: orders.userId,
+        username: users.username,
+        biliUid: users.biliUid,
+        productName: orders.productNameSnapshot,
+        pointTypeName: orders.pointTypeNameSnapshot,
+        price: orders.price,
+        status: orders.status,
+        createdAt: orders.createdAt,
+      })
         .from(orders)
         .leftJoin(users, eq(orders.userId, users.id))
         .orderBy(desc(orders.createdAt))
@@ -136,7 +127,7 @@ export const dashboardRepo = ripple(
     },
 
     async listRecentFailedBiliGuardEvents(limit = 10) {
-      return await db.query.biliEvents.findMany({
+      return await Database.query.biliEvents.findMany({
         where: {
           eventType: 'biliGuard',
           status: 'failed',
@@ -160,4 +151,4 @@ export const dashboardRepo = ripple(
   { debugName: 'DashboardRepository' },
 );
 
-export type DashboardRepository = InferInput<typeof dashboardRepo>;
+export type DashboardRepository = InferInput<typeof DashboardRepo>;

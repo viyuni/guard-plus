@@ -2,8 +2,8 @@ import type { AdminLoginBody } from '@shared/schema/admin';
 import { type InferInput, ripple } from 'cyrenejs';
 
 import { isAdminAvailable } from '#apps/admin/modules/admin/domain';
-import { adminRepo } from '#apps/admin/modules/admin/repository';
-import { authUseCase } from '#modules/auth';
+import { AdminRepo } from '#apps/admin/modules/admin/repository';
+import { AuthUseCase } from '#modules/auth';
 import { InvalidCredentialsError, PasswordUtil } from '#utils';
 
 export interface AdminLoginUser {
@@ -22,14 +22,14 @@ export interface AdminLoginResult {
   user: AdminLoginUser;
 }
 
-export const adminAuthUseCase = ripple(
+export const AdminAuthUseCase = ripple(
   {
-    adminRepo,
-    authUseCase,
+    AdminRepo,
+    AuthUseCase,
   },
-  ({ adminRepo, authUseCase }) => ({
+  ({ AdminRepo, AuthUseCase }) => ({
     async login(body: AdminLoginBody): Promise<AdminLoginResult> {
-      const user = await adminRepo.findByUid(body.uid);
+      const user = await AdminRepo.findByUid(body.uid);
 
       if (!user) {
         throw new InvalidCredentialsError();
@@ -45,10 +45,10 @@ export const adminAuthUseCase = ripple(
         throw new InvalidCredentialsError();
       }
 
-      const loggedIn = await adminRepo.updateLastLoginAt(user.id);
+      const loggedIn = await AdminRepo.updateLastLoginAt(user.id);
       const { id, uid, username, role, lastLoginAt } = loggedIn ?? user;
 
-      const tokens = await authUseCase.createSessionTokenPair({
+      const tokens = await AuthUseCase.createSessionTokenPair({
         id: user.id,
         role: user.role,
       });
@@ -68,4 +68,4 @@ export const adminAuthUseCase = ripple(
   { debugName: 'AdminAuthUseCase' },
 );
 
-export type AdminAuthUseCase = InferInput<typeof adminAuthUseCase>;
+export type AdminAuthUseCase = InferInput<typeof AdminAuthUseCase>;

@@ -7,7 +7,7 @@ import { ApiOrigin, type AppConfig, JwtSecret, WebOrigins } from '#env/config';
 import { ImageSavePath } from '#env/image';
 import { DataSecret } from '#env/shared';
 import { SmtpConfig } from '#env/smtp';
-import { imageUseCase } from '#modules/image';
+import { ImageUseCase } from '#modules/image';
 import type { RedisClient } from '#redis';
 import { logger } from '#utils/logger';
 
@@ -46,7 +46,7 @@ export async function createContainer({ db, redis, config }: CreateSharedContext
       { token: ImageSavePath, value: config.imageSavePath },
       { token: SmtpConfig, value: config.smtp },
       { token: RewardLogger, value: logger.scope('RewardUseCase') },
-      { token: PointImageUseCase, dependency: imageUseCase },
+      { token: PointImageUseCase, dependency: ImageUseCase },
     ],
   });
 

@@ -2,27 +2,27 @@ import { UserUpdatePasswordSchema, UserUpdateSchema } from '@shared/schema/user'
 import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { userAuthGuard } from '#apps/user/http';
-import { pointConversionUseCase } from '#modules/point';
-import { userUseCase } from '#modules/user';
+import { UserAuthGuard } from '#apps/user/http';
+import { PointConversionUseCase } from '#modules/point';
+import { UserUseCase } from '#modules/user';
 
-export const userRoutes = ripple(
+export const UserRoutes = ripple(
   {
-    authGuard: userAuthGuard,
-    pointConversionUseCase,
-    userUseCase,
+    UserAuthGuard,
+    PointConversionUseCase,
+    UserUseCase,
   },
-  ({ authGuard, pointConversionUseCase, userUseCase }) =>
+  ({ UserAuthGuard, PointConversionUseCase, UserUseCase }) =>
     new Elysia({
       name: 'UserRoute',
     })
-      .use(authGuard)
+      .use(UserAuthGuard)
       .get(
         '/me',
         async ({ auth: { id: userId } }) => {
           const [user, pointConversionRules] = await Promise.all([
-            userUseCase.getDetail(userId),
-            pointConversionUseCase.listVisible(),
+            UserUseCase.getDetail(userId),
+            PointConversionUseCase.listVisible(),
           ]);
 
           return {
@@ -38,7 +38,7 @@ export const userRoutes = ripple(
           },
         },
       )
-      .put('/me', ({ auth: { id: userId }, body }) => userUseCase.update(userId, body), {
+      .put('/me', ({ auth: { id: userId }, body }) => UserUseCase.update(userId, body), {
         body: UserUpdateSchema,
         requiredAuth: true,
         detail: {
@@ -48,7 +48,7 @@ export const userRoutes = ripple(
       })
       .patch(
         '/me/password',
-        ({ auth: { id: userId }, body }) => userUseCase.updatePassword(userId, body),
+        ({ auth: { id: userId }, body }) => UserUseCase.updatePassword(userId, body),
         {
           body: UserUpdatePasswordSchema,
           requiredAuth: true,

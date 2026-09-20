@@ -1,17 +1,17 @@
 import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { pointAccountRoutes } from './point-account.route';
-import { pointConversionRoutes } from './point-conversion.route';
-import { pointTransactionRoutes } from './point-transaction.route';
-import { pointTypeRoutes } from './point-type.route';
+import { PointAccountRoutes } from './point-account.route';
+import { PointConversionRoutes } from './point-conversion.route';
+import { PointTransactionRoutes } from './point-transaction.route';
+import { PointTypeRoutes } from './point-type.route';
 
-export const pointRoutes = ripple(
+export const PointRoutes = ripple(
   {
-    pointAccountRoutes,
-    pointConversionRoutes,
-    pointTransactionRoutes,
-    pointTypeRoutes,
+    PointAccountRoutes,
+    PointConversionRoutes,
+    PointTransactionRoutes,
+    PointTypeRoutes,
   },
   routes =>
     new Elysia({
@@ -21,8 +21,8 @@ export const pointRoutes = ripple(
         tags: ['Point'],
       },
     })
-      .use(routes.pointTypeRoutes)
-      .use(routes.pointAccountRoutes)
-      .use(routes.pointConversionRoutes)
-      .use(routes.pointTransactionRoutes),
+      .use(routes.PointTypeRoutes)
+      .use(routes.PointAccountRoutes)
+      .use(routes.PointConversionRoutes)
+      .use(routes.PointTransactionRoutes),
 );

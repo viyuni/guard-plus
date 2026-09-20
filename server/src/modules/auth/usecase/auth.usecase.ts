@@ -7,7 +7,7 @@ import { UnauthorizedError } from '#utils';
 
 import { ACCESS_TOKEN_EXPIRES_IN_SECONDS, REFRESH_TOKEN_EXPIRES_IN_SECONDS } from '../constants';
 import type { AuthPayload, AuthRole, AuthTokenPair } from '../domain';
-import { authSessionRepo } from '../repository';
+import { AuthSessionRepo } from '../repository';
 
 type AuthTokenType = 'access' | 'refresh';
 type AuthIdentity = Omit<AuthPayload, 'sid'>;
@@ -21,13 +21,13 @@ function getTokenExpiresInSeconds(type: AuthTokenType) {
   return type === 'access' ? ACCESS_TOKEN_EXPIRES_IN_SECONDS : REFRESH_TOKEN_EXPIRES_IN_SECONDS;
 }
 
-export const authUseCase = ripple(
+export const AuthUseCase = ripple(
   {
-    authSessionRepo,
-    jwtSecret: JwtSecret,
+    AuthSessionRepo,
+    JwtSecret,
   },
-  ({ authSessionRepo, jwtSecret }) => {
-    const encodedSecret = new TextEncoder().encode(jwtSecret);
+  ({ AuthSessionRepo, JwtSecret }) => {
+    const encodedSecret = new TextEncoder().encode(JwtSecret);
 
     function normalizeRole(role: AuthPayload['role']): AuthRole {
       return role ?? 'user';
@@ -97,7 +97,7 @@ export const authUseCase = ripple(
         }
 
         const role = normalizeRole(payload.role);
-        const session = await authSessionRepo.find(role, payload.sid);
+        const session = await AuthSessionRepo.find(role, payload.sid);
 
         if (!session || session.accountId !== payload.id) {
           throw new UnauthorizedError();
@@ -117,7 +117,7 @@ export const authUseCase = ripple(
       for (let i = 0; i < REFRESH_RESULT_POLL_ATTEMPTS; i++) {
         await Bun.sleep(REFRESH_RESULT_POLL_INTERVAL_MS);
 
-        const tokens = await authSessionRepo.getRefreshResult(role, sessionId);
+        const tokens = await AuthSessionRepo.getRefreshResult(role, sessionId);
 
         if (tokens) {
           return tokens;
@@ -129,7 +129,7 @@ export const authUseCase = ripple(
 
     async function refreshTokenPair(refreshToken: string) {
       const payload = await verifyToken(refreshToken, 'refresh');
-      const extended = await authSessionRepo.extend(payload.role, payload.sid);
+      const extended = await AuthSessionRepo.extend(payload.role, payload.sid);
 
       if (!extended) {
         throw new UnauthorizedError();
@@ -139,7 +139,7 @@ export const authUseCase = ripple(
     }
 
     async function revoke(payload: AuthPayload) {
-      await authSessionRepo.delete(normalizeRole(payload.role), payload.sid);
+      await AuthSessionRepo.delete(normalizeRole(payload.role), payload.sid);
     }
 
     return {
@@ -149,7 +149,7 @@ export const authUseCase = ripple(
 
       async createSessionTokenPair(identity: AuthIdentity) {
         const role = normalizeRole(identity.role);
-        const session = await authSessionRepo.create(identity.id, role);
+        const session = await AuthSessionRepo.create(identity.id, role);
 
         return signTokenPair({
           ...identity,
@@ -170,7 +170,7 @@ export const authUseCase = ripple(
 
       async refreshTokenPairWithLock(refreshToken: string) {
         const payload = await verifyToken(refreshToken, 'refresh');
-        const cached = await authSessionRepo.getRefreshResult(payload.role, payload.sid);
+        const cached = await AuthSessionRepo.getRefreshResult(payload.role, payload.sid);
 
         if (cached) {
           return {
@@ -181,7 +181,7 @@ export const authUseCase = ripple(
 
         const lockValue = nanoid();
 
-        const locked = await authSessionRepo.acquireRefreshLock(
+        const locked = await AuthSessionRepo.acquireRefreshLock(
           payload.role,
           payload.sid,
           lockValue,
@@ -198,14 +198,14 @@ export const authUseCase = ripple(
         }
 
         try {
-          const extended = await authSessionRepo.extend(payload.role, payload.sid);
+          const extended = await AuthSessionRepo.extend(payload.role, payload.sid);
 
           if (!extended) {
             throw new UnauthorizedError();
           }
 
           const tokens = await signTokenPair(payload);
-          await authSessionRepo.saveRefreshResult(
+          await AuthSessionRepo.saveRefreshResult(
             payload.role,
             payload.sid,
             tokens,
@@ -217,7 +217,7 @@ export const authUseCase = ripple(
             ...tokens,
           };
         } finally {
-          await authSessionRepo.releaseRefreshLock(payload.role, payload.sid, lockValue);
+          await AuthSessionRepo.releaseRefreshLock(payload.role, payload.sid, lockValue);
         }
       },
 
@@ -235,4 +235,4 @@ export const authUseCase = ripple(
   { debugName: 'AuthUseCase' },
 );
 
-export type AuthUseCase = InferInput<typeof authUseCase>;
+export type AuthUseCase = InferInput<typeof AuthUseCase>;

@@ -5,7 +5,7 @@ import { SmtpConfig } from '#env/smtp';
 import type { NewOrderEmailInput } from '#queues';
 import { BadRequestError } from '#utils';
 
-import { mailer } from '../domain';
+import { Mailer } from '../domain';
 import newOrderTemplate from '../domain/new-order.template.ejs' with { type: 'text' };
 
 function formatDateTime(input: Date | string) {
@@ -41,14 +41,14 @@ function formatOrderStatus(input: string) {
   return names[input] ?? input;
 }
 
-export const emailUseCase = ripple(
+export const EmailUseCase = ripple(
   {
-    mailer,
-    smtpConfig: SmtpConfig,
+    Mailer,
+    SmtpConfig,
   },
-  ({ mailer, smtpConfig }) => {
+  ({ Mailer, SmtpConfig }) => {
     // 通知收件人来自 SMTP 配置。
-    const notifyEmails = smtpConfig?.notifyEmails ?? [];
+    const notifyEmails = SmtpConfig?.notifyEmails ?? [];
 
     function renderTemplate(template: string, data: Record<string, unknown>) {
       return ejs.render(template, data);
@@ -76,13 +76,13 @@ export const emailUseCase = ripple(
           };
         }
 
-        if (!mailer) {
+        if (!Mailer) {
           throw new BadRequestError('SMTP 未配置，无法发送邮件');
         }
 
         const html = renderNewOrderEmail(input);
 
-        await mailer.send({
+        await Mailer.send({
           to: notifyEmails,
           subject: `新订单通知：${input.productName}`,
           html,
@@ -97,4 +97,4 @@ export const emailUseCase = ripple(
   { debugName: 'EmailUseCase' },
 );
 
-export type EmailUseCase = InferInput<typeof emailUseCase>;
+export type EmailUseCase = InferInput<typeof EmailUseCase>;

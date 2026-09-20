@@ -7,15 +7,15 @@ import {
 import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { adminAuthGuard } from '#apps/admin/http';
-import { pointAccountUseCase } from '#modules/point';
+import { AdminAuthGuard } from '#apps/admin/http';
+import { PointAccountUseCase } from '#modules/point';
 
-export const pointAccountRoutes = ripple(
+export const PointAccountRoutes = ripple(
   {
-    authGuard: adminAuthGuard,
-    pointAccountUseCase,
+    AdminAuthGuard,
+    PointAccountUseCase,
   },
-  ({ authGuard, pointAccountUseCase }) =>
+  ({ AdminAuthGuard, PointAccountUseCase }) =>
     new Elysia({
       name: 'PointAccountRoute',
       prefix: '/accounts',
@@ -23,20 +23,20 @@ export const pointAccountRoutes = ripple(
         tags: ['PointAccount'],
       },
     })
-      .use(authGuard)
-      .get('/legacy-migrations', ({ query }) => pointAccountUseCase.pageLegacyMigrations(query), {
+      .use(AdminAuthGuard)
+      .get('/legacy-migrations', ({ query }) => PointAccountUseCase.pageLegacyMigrations(query), {
         requiredAdminAuth: true,
         query: LegacyPointMigrationPageQuerySchema,
         detail: { description: '分页查询旧平台积分迁移记录' },
       })
-      .post('/legacy-migrations', ({ body }) => pointAccountUseCase.createLegacyMigration(body), {
+      .post('/legacy-migrations', ({ body }) => PointAccountUseCase.createLegacyMigration(body), {
         requiredAdminAuth: true,
         body: CreateLegacyPointMigrationSchema,
         detail: { description: '录入旧平台待迁移积分' },
       })
       .patch(
         '/legacy-migrations/:migrationId/replay',
-        ({ params }) => pointAccountUseCase.replayLegacyMigration(params.migrationId),
+        ({ params }) => PointAccountUseCase.replayLegacyMigration(params.migrationId),
         {
           requiredAdminAuth: true,
           params: LegacyPointMigrationIdParamsSchema,
@@ -45,7 +45,7 @@ export const pointAccountRoutes = ripple(
       )
       .delete(
         '/legacy-migrations/:migrationId',
-        ({ params }) => pointAccountUseCase.deleteLegacyMigration(params.migrationId),
+        ({ params }) => PointAccountUseCase.deleteLegacyMigration(params.migrationId),
         {
           requiredAdminAuth: true,
           params: LegacyPointMigrationIdParamsSchema,
@@ -55,7 +55,7 @@ export const pointAccountRoutes = ripple(
       .patch(
         '/balance/adjust',
         ({ auth: { id: adminId }, body }) => {
-          return pointAccountUseCase.adjustBalance(adminId, body);
+          return PointAccountUseCase.adjustBalance(adminId, body);
         },
         {
           requiredAdminAuth: true,

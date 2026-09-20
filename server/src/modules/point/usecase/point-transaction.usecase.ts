@@ -14,8 +14,8 @@ import {
   reversalPointTransactionDelta,
   resolvePointTransactionTitle,
 } from '../domain';
-import { pointAccountRepo, pointTransactionRepo } from '../repository';
-import { pointBalanceUseCase } from './point-balance.usecase';
+import { PointAccountRepo, PointTransactionRepo } from '../repository';
+import { PointBalanceUseCase } from './point-balance.usecase';
 
 function withTitle<
   T extends {
@@ -45,23 +45,23 @@ function toMineItem<
   };
 }
 
-export const pointTransactionUseCase = ripple(
+export const PointTransactionUseCase = ripple(
   {
-    db: Database,
-    pointAccountRepo,
-    pointBalanceUseCase,
-    pointTransactionRepo,
+    Database,
+    PointAccountRepo,
+    PointBalanceUseCase,
+    PointTransactionRepo,
   },
-  ({ db, pointAccountRepo, pointBalanceUseCase, pointTransactionRepo }) => ({
+  ({ Database, PointAccountRepo, PointBalanceUseCase, PointTransactionRepo }) => ({
     /**
      * 冲正积分流水
      */
     async reversal(adminId: string, data: ReversalPointTransactionBody) {
-      return db.transaction(async tx => {
+      return Database.transaction(async tx => {
         // 获取原始积分交易记录并行锁
-        const original = await pointTransactionRepo.requireByIdForUpdate(tx, data.transactionId);
+        const original = await PointTransactionRepo.requireByIdForUpdate(tx, data.transactionId);
 
-        const existingReversal = await pointTransactionRepo.findReversalByOriginalTransactionId(
+        const existingReversal = await PointTransactionRepo.findReversalByOriginalTransactionId(
           original.id,
           tx,
         );
@@ -69,12 +69,12 @@ export const pointTransactionUseCase = ripple(
         assertPointTransactionCanReverse(original, existingReversal);
 
         // 锁账户
-        const account = await pointAccountRepo.requireByIdForUpdate(tx, original.pointAccountId);
+        const account = await PointAccountRepo.requireByIdForUpdate(tx, original.pointAccountId);
 
         //  反转
         const reversalDelta = reversalPointTransactionDelta(original);
 
-        return await pointBalanceUseCase.changeBalance(tx, account, {
+        return await PointBalanceUseCase.changeBalance(tx, account, {
           type: 'reversal',
           userId: original.userId,
           pointTypeId: original.pointTypeId,
@@ -93,14 +93,14 @@ export const pointTransactionUseCase = ripple(
     },
 
     pageManage(query: PointTransactionPageQuery) {
-      return pointTransactionRepo.pageManage(query).then(res => ({
+      return PointTransactionRepo.pageManage(query).then(res => ({
         ...res,
         items: res.items.map(item => withTitle(item)),
       }));
     },
 
     async pageMine(userId: string, query: PointTransactionPageQuery) {
-      const page = await pointTransactionRepo.pageMine({ ...query, userId });
+      const page = await PointTransactionRepo.pageMine({ ...query, userId });
 
       return {
         ...page,
@@ -111,4 +111,4 @@ export const pointTransactionUseCase = ripple(
   { debugName: 'PointTransactionUseCase' },
 );
 
-export type PointTransactionUseCase = InferInput<typeof pointTransactionUseCase>;
+export type PointTransactionUseCase = InferInput<typeof PointTransactionUseCase>;

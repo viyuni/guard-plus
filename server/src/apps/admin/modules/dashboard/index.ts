@@ -2,15 +2,15 @@ import { DashboardOverviewQuerySchema } from '@shared/schema/dashboard';
 import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { adminAuthGuard } from '#apps/admin/http';
-import { dashboardUseCase } from '#modules/dashboard';
+import { AdminAuthGuard } from '#apps/admin/http';
+import { DashboardUseCase } from '#modules/dashboard';
 
-export const dashboardRoutes = ripple(
+export const DashboardRoutes = ripple(
   {
-    authGuard: adminAuthGuard,
-    dashboardUseCase,
+    AdminAuthGuard,
+    DashboardUseCase,
   },
-  ({ authGuard, dashboardUseCase }) =>
+  ({ AdminAuthGuard, DashboardUseCase }) =>
     new Elysia({
       name: 'DashboardRoute',
       prefix: '/dashboard',
@@ -18,11 +18,11 @@ export const dashboardRoutes = ripple(
         tags: ['Dashboard'],
       },
     })
-      .use(authGuard)
+      .use(AdminAuthGuard)
       .get(
         '/overview',
         ({ query }) => {
-          return dashboardUseCase.overview(query);
+          return DashboardUseCase.overview(query);
         },
         {
           query: DashboardOverviewQuerySchema,

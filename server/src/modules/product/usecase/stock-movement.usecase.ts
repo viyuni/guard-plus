@@ -1,21 +1,21 @@
 import type { StockMovementPageQuery } from '@shared/schema/stock';
 import { type InferInput, ripple } from 'cyrenejs';
 
-import { stockMovementRepo } from '../repository';
+import { StockMovementRepo } from '../repository';
 
-export const stockMovementUseCase = ripple(
+export const StockMovementUseCase = ripple(
   {
-    stockMovementRepo,
+    StockMovementRepo,
   },
-  ({ stockMovementRepo }) => ({
+  ({ StockMovementRepo }) => ({
     /**
      * 获取库存变动
      */
     page(query: StockMovementPageQuery) {
-      return stockMovementRepo.page(query);
+      return StockMovementRepo.page(query);
     },
   }),
   { debugName: 'StockMovementUseCase' },
 );
 
-export type StockMovementUseCase = InferInput<typeof stockMovementUseCase>;
+export type StockMovementUseCase = InferInput<typeof StockMovementUseCase>;

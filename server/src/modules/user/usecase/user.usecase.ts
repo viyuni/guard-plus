@@ -13,21 +13,21 @@ import {
   UserAlreadyRegisteredError,
   assertUserAvailableExists,
   assertUserExists,
-  userBasicInfoCrypto,
+  UserBasicInfoCrypto,
 } from '../domain';
-import { userRepo } from '../repository';
+import { UserRepo } from '../repository';
 
-export const userUseCase = ripple(
+export const UserUseCase = ripple(
   {
-    userBasicInfoCrypto,
-    userRepo,
+    UserBasicInfoCrypto,
+    UserRepo,
   },
-  ({ userBasicInfoCrypto, userRepo }) => {
+  ({ UserBasicInfoCrypto, UserRepo }) => {
     /**
      * 查询可用用户
      */
     async function getAvailableById(userId: string, db?: DbExecutor) {
-      const user = await userRepo.findById(userId, db);
+      const user = await UserRepo.findById(userId, db);
       assertUserAvailableExists(user);
 
       return user;
@@ -40,21 +40,21 @@ export const userUseCase = ripple(
        * 查询可用用户通过 UID
        */
       async getAvailableByBiliUid(biliUid: string, db?: DbExecutor) {
-        const user = await userRepo.findByBiliUid(biliUid, db);
+        const user = await UserRepo.findByBiliUid(biliUid, db);
         assertUserAvailableExists(user);
 
         return user;
       },
 
       async findByBiliUid(biliUid: string, db?: DbExecutor) {
-        return userRepo.findByBiliUid(biliUid, db);
+        return UserRepo.findByBiliUid(biliUid, db);
       },
 
       /**
        * 获取用户详情
        */
       async getDetail(userId: string) {
-        const user = await userRepo.findDetailById(userId);
+        const user = await UserRepo.findDetailById(userId);
 
         assertUserAvailableExists(user);
 
@@ -62,7 +62,7 @@ export const userUseCase = ripple(
 
         return {
           ...profile,
-          ...userBasicInfoCrypto.decryptBasicInfo({
+          ...UserBasicInfoCrypto.decryptBasicInfo({
             phoneEncrypted,
             emailEncrypted,
             addressEncrypted,
@@ -74,7 +74,7 @@ export const userUseCase = ripple(
        * 查询用户列表
        */
       async page(query: UserPageQuery) {
-        const result = await userRepo.page(query);
+        const result = await UserRepo.page(query);
 
         return {
           ...result,
@@ -83,7 +83,7 @@ export const userUseCase = ripple(
 
             return {
               ...item,
-              ...userBasicInfoCrypto.decryptBasicInfo({
+              ...UserBasicInfoCrypto.decryptBasicInfo({
                 phoneEncrypted,
                 emailEncrypted,
                 addressEncrypted,
@@ -97,7 +97,7 @@ export const userUseCase = ripple(
        * 封禁用户
        */
       async ban(userId: string) {
-        const user = await userRepo.ban(userId);
+        const user = await UserRepo.ban(userId);
 
         assertUserExists(user);
 
@@ -108,7 +108,7 @@ export const userUseCase = ripple(
        * 恢复用户
        */
       async restore(userId: string) {
-        const user = await userRepo.restore(userId);
+        const user = await UserRepo.restore(userId);
 
         assertUserExists(user);
 
@@ -119,7 +119,7 @@ export const userUseCase = ripple(
        * 创建用户
        */
       async create(input: UserRegisterBody, db?: DbExecutor) {
-        const existing = await userRepo.findByBiliUid(input.biliUid, db);
+        const existing = await UserRepo.findByBiliUid(input.biliUid, db);
 
         if (existing) {
           throw new UserAlreadyRegisteredError();
@@ -127,10 +127,10 @@ export const userUseCase = ripple(
 
         const passwordHash = await PasswordUtil.hash(input.password);
 
-        const user = await userRepo.create(
+        const user = await UserRepo.create(
           {
             ...input,
-            ...userBasicInfoCrypto.encryptBasicInfo(input),
+            ...UserBasicInfoCrypto.encryptBasicInfo(input),
             passwordHash,
           },
           db,
@@ -147,16 +147,16 @@ export const userUseCase = ripple(
       },
 
       async update(userId: string, data: UpdateUserBody) {
-        const user = await userRepo.findById(userId);
+        const user = await UserRepo.findById(userId);
         assertUserExists(user);
 
         const updateData = {
           ...(data.username === undefined ? {} : { username: data.username }),
-          ...userBasicInfoCrypto.encryptBasicInfoPatch(data),
+          ...UserBasicInfoCrypto.encryptBasicInfoPatch(data),
         };
 
-        const updatedUser = await userRepo.update(user.id, updateData);
-        const basicInfo = userBasicInfoCrypto.decryptBasicInfo(updatedUser);
+        const updatedUser = await UserRepo.update(user.id, updateData);
+        const basicInfo = UserBasicInfoCrypto.decryptBasicInfo(updatedUser);
 
         return {
           id: updatedUser.id,
@@ -179,14 +179,14 @@ export const userUseCase = ripple(
 
         const passwordHash = await PasswordUtil.hash(data.newPassword);
 
-        await userRepo.updatePassword(user.id, passwordHash);
+        await UserRepo.updatePassword(user.id, passwordHash);
       },
 
       async setPassword(userId: string, newPassword: string) {
         const user = await getAvailableById(userId);
         const passwordHash = await PasswordUtil.hash(newPassword);
 
-        await userRepo.updatePassword(user.id, passwordHash);
+        await UserRepo.updatePassword(user.id, passwordHash);
       },
 
       /**
@@ -200,7 +200,7 @@ export const userUseCase = ripple(
         const radomPassword = PasswordUtil.generate();
         const passwordHash = await PasswordUtil.hash(radomPassword);
 
-        await userRepo.updatePassword(user.id, passwordHash);
+        await UserRepo.updatePassword(user.id, passwordHash);
 
         return {
           password: radomPassword,
@@ -211,4 +211,4 @@ export const userUseCase = ripple(
   { debugName: 'UserUseCase' },
 );
 
-export type UserUseCase = InferInput<typeof userUseCase>;
+export type UserUseCase = InferInput<typeof UserUseCase>;

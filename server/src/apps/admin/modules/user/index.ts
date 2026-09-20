@@ -7,18 +7,18 @@ import {
 import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { adminAuthGuard } from '#apps/admin/http';
-import { userUseCase } from '#modules/user';
+import { AdminAuthGuard } from '#apps/admin/http';
+import { UserUseCase } from '#modules/user';
 
-import { adminUserUseCase } from './usecase';
+import { AdminUserUseCase } from './usecase';
 
-export const adminUserRoutes = ripple(
+export const AdminUserRoutes = ripple(
   {
-    adminUserUseCase,
-    authGuard: adminAuthGuard,
-    userUseCase,
+    AdminUserUseCase,
+    AdminAuthGuard,
+    UserUseCase,
   },
-  ({ adminUserUseCase, authGuard, userUseCase }) =>
+  ({ AdminUserUseCase, AdminAuthGuard, UserUseCase }) =>
     new Elysia({
       name: 'UserRoute',
       prefix: '/users',
@@ -26,11 +26,11 @@ export const adminUserRoutes = ripple(
         tags: ['User'],
       },
     })
-      .use(authGuard)
+      .use(AdminAuthGuard)
       .get(
         '/',
         ({ query }) => {
-          return userUseCase.page(query);
+          return UserUseCase.page(query);
         },
         {
           query: UserPageQuerySchema,
@@ -43,7 +43,7 @@ export const adminUserRoutes = ripple(
       .post(
         '/',
         async ({ body }) => {
-          return await adminUserUseCase.create(body);
+          return await AdminUserUseCase.create(body);
         },
         {
           body: UserRegisterSchema,
@@ -56,7 +56,7 @@ export const adminUserRoutes = ripple(
       .patch(
         '/:userId',
         async ({ params, body }) => {
-          return await userUseCase.update(params.userId, body);
+          return await UserUseCase.update(params.userId, body);
         },
         {
           params: UserIdParamsSchema,
@@ -70,7 +70,7 @@ export const adminUserRoutes = ripple(
       .patch(
         '/:userId/ban',
         async ({ params }) => {
-          const { id, status } = await userUseCase.ban(params.userId);
+          const { id, status } = await UserUseCase.ban(params.userId);
 
           return {
             id,
@@ -88,7 +88,7 @@ export const adminUserRoutes = ripple(
       .patch(
         '/:userId/restore',
         async ({ params }) => {
-          const { id, status } = await userUseCase.restore(params.userId);
+          const { id, status } = await UserUseCase.restore(params.userId);
 
           return {
             id,
@@ -106,7 +106,7 @@ export const adminUserRoutes = ripple(
       .patch(
         '/:userId/resetPassword',
         async ({ params }) => {
-          return await userUseCase.resetPassword(params.userId);
+          return await UserUseCase.resetPassword(params.userId);
         },
         {
           params: UserIdParamsSchema,

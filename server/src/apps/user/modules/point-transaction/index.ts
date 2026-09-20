@@ -2,15 +2,15 @@ import { TransactionPageQuerySchema } from '@shared/schema/point-transaction';
 import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { userAuthGuard } from '#apps/user/http';
-import { pointTransactionUseCase } from '#modules/point';
+import { UserAuthGuard } from '#apps/user/http';
+import { PointTransactionUseCase } from '#modules/point';
 
-export const pointTransactionRoutes = ripple(
+export const PointTransactionRoutes = ripple(
   {
-    authGuard: userAuthGuard,
-    pointTransactionUseCase,
+    UserAuthGuard,
+    PointTransactionUseCase,
   },
-  ({ authGuard, pointTransactionUseCase }) =>
+  ({ UserAuthGuard, PointTransactionUseCase }) =>
     new Elysia({
       name: 'PointTransactionRoute',
       prefix: '/pointTransactions',
@@ -18,11 +18,11 @@ export const pointTransactionRoutes = ripple(
         tags: ['PointTransaction'],
       },
     })
-      .use(authGuard)
+      .use(UserAuthGuard)
       .get(
         '/',
         ({ query, auth: { id: userId } }) => {
-          return pointTransactionUseCase.pageMine(userId, query);
+          return PointTransactionUseCase.pageMine(userId, query);
         },
         {
           query: TransactionPageQuerySchema,

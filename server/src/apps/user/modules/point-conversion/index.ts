@@ -2,15 +2,15 @@ import { UserConvertPointSchema } from '@shared/schema/point-conversion';
 import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { userAuthGuard } from '#apps/user/http';
-import { pointConversionUseCase } from '#modules/point';
+import { UserAuthGuard } from '#apps/user/http';
+import { PointConversionUseCase } from '#modules/point';
 
-export const pointConversionRoutes = ripple(
+export const PointConversionRoutes = ripple(
   {
-    authGuard: userAuthGuard,
-    pointConversionUseCase,
+    UserAuthGuard,
+    PointConversionUseCase,
   },
-  ({ authGuard, pointConversionUseCase }) =>
+  ({ UserAuthGuard, PointConversionUseCase }) =>
     new Elysia({
       name: 'PointConversionRoute',
       prefix: '/pointConversions',
@@ -18,11 +18,11 @@ export const pointConversionRoutes = ripple(
         tags: ['PointConversion'],
       },
     })
-      .use(authGuard)
+      .use(UserAuthGuard)
       .get(
         '/',
         () => {
-          return pointConversionUseCase.listVisible();
+          return PointConversionUseCase.listVisible();
         },
         {
           requiredAuth: true,
@@ -34,7 +34,7 @@ export const pointConversionRoutes = ripple(
       .post(
         '/convert',
         ({ auth: { id: userId }, body }) => {
-          return pointConversionUseCase.convert({
+          return PointConversionUseCase.convert({
             ...body,
             userId,
           });

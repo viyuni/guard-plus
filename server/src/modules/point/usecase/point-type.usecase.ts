@@ -15,16 +15,16 @@ import {
   shouldEnablePointType,
   shouldDisablePointType,
 } from '../domain';
-import { pointTypeRepo } from '../repository';
+import { PointTypeRepo } from '../repository';
 
-export const pointTypeUseCase = ripple(
+export const PointTypeUseCase = ripple(
   {
-    imageUseCase: PointImageUseCase,
-    pointTypeRepo,
+    PointImageUseCase,
+    PointTypeRepo,
   },
-  ({ imageUseCase, pointTypeRepo }) => ({
+  ({ PointImageUseCase, PointTypeRepo }) => ({
     async get(pointTypeId: string) {
-      const pointType = await pointTypeRepo.findById(pointTypeId);
+      const pointType = await PointTypeRepo.findById(pointTypeId);
 
       assertPointTypeExists(pointType);
 
@@ -32,7 +32,7 @@ export const pointTypeUseCase = ripple(
     },
 
     async getAvailableById(pointTypeId: string, db?: DbExecutor) {
-      const pointType = await pointTypeRepo.findById(pointTypeId, db);
+      const pointType = await PointTypeRepo.findById(pointTypeId, db);
 
       assertPointTypeAvailableExists(pointType);
 
@@ -40,29 +40,29 @@ export const pointTypeUseCase = ripple(
     },
 
     async create(data: CreatePointTypeBody) {
-      const exists = await pointTypeRepo.findByName(data.name);
+      const exists = await PointTypeRepo.findByName(data.name);
 
       if (exists) {
         throw new PointTypeNameExistsError();
       }
 
-      return pointTypeRepo.create({ ...data, status: 'disabled' });
+      return PointTypeRepo.create({ ...data, status: 'disabled' });
     },
 
     async update(pointTypeId: string, data: UpdatePointTypeBody) {
-      const pointType = await pointTypeRepo.findById(pointTypeId);
+      const pointType = await PointTypeRepo.findById(pointTypeId);
 
       assertPointTypeExists(pointType);
 
       if (data.name && data.name !== pointType.name) {
-        const exists = await pointTypeRepo.findByName(data.name);
+        const exists = await PointTypeRepo.findByName(data.name);
 
         if (exists) {
           throw new PointTypeNameExistsError();
         }
       }
 
-      const updated = await pointTypeRepo.update(pointTypeId, data);
+      const updated = await PointTypeRepo.update(pointTypeId, data);
 
       assertPointTypeExists(updated);
 
@@ -70,17 +70,17 @@ export const pointTypeUseCase = ripple(
     },
 
     async updateIcon(pointTypeId: string, body: PointTypeIconUploadBody) {
-      const pointType = await pointTypeRepo.findById(pointTypeId);
+      const pointType = await PointTypeRepo.findById(pointTypeId);
 
       assertPointTypeExists(pointType);
 
-      if (!imageUseCase) {
+      if (!PointImageUseCase) {
         throw new Error('ImageUseCase is required to update point type icon');
       }
 
-      const { filename } = await imageUseCase.save(body.icon);
+      const { filename } = await PointImageUseCase.save(body.icon);
 
-      const updated = await pointTypeRepo.update(pointTypeId, {
+      const updated = await PointTypeRepo.update(pointTypeId, {
         icon: filename,
       });
 
@@ -90,7 +90,7 @@ export const pointTypeUseCase = ripple(
     },
 
     async enable(pointTypeId: string) {
-      const pointType = await pointTypeRepo.findById(pointTypeId);
+      const pointType = await PointTypeRepo.findById(pointTypeId);
 
       assertPointTypeExists(pointType);
 
@@ -98,11 +98,11 @@ export const pointTypeUseCase = ripple(
         return pointType;
       }
 
-      return pointTypeRepo.updateStatus(pointTypeId, 'active');
+      return PointTypeRepo.updateStatus(pointTypeId, 'active');
     },
 
     async disable(pointTypeId: string) {
-      const pointType = await pointTypeRepo.findById(pointTypeId);
+      const pointType = await PointTypeRepo.findById(pointTypeId);
 
       assertPointTypeExists(pointType);
 
@@ -110,14 +110,14 @@ export const pointTypeUseCase = ripple(
         return pointType;
       }
 
-      return pointTypeRepo.updateStatus(pointTypeId, 'disabled');
+      return PointTypeRepo.updateStatus(pointTypeId, 'disabled');
     },
 
     list() {
-      return pointTypeRepo.list();
+      return PointTypeRepo.list();
     },
   }),
   { debugName: 'PointTypeUseCase' },
 );
 
-export type PointTypeUseCase = InferInput<typeof pointTypeUseCase>;
+export type PointTypeUseCase = InferInput<typeof PointTypeUseCase>;

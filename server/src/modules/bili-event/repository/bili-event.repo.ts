@@ -13,11 +13,11 @@ import {
   type InsertBiliEvent,
 } from '#db/schema';
 
-export const biliEventRepo = ripple(
+export const BiliEventRepo = ripple(
   {
-    db: Database,
+    Database,
   },
-  ({ db }) => {
+  ({ Database }) => {
     async function updateStatus(
       biliEventId: string,
       input: {
@@ -40,7 +40,7 @@ export const biliEventRepo = ripple(
     }
 
     return {
-      async findByBiliEventId(biliEventId: string, executor: DbExecutor = db) {
+      async findByBiliEventId(biliEventId: string, executor: DbExecutor = Database) {
         return await executor.query.biliEvents.findFirst({
           where: {
             biliEventId,
@@ -48,7 +48,7 @@ export const biliEventRepo = ripple(
         });
       },
 
-      async listReplayableBiliGuardByBiliUid(biliUid: string, executor: DbExecutor = db) {
+      async listReplayableBiliGuardByBiliUid(biliUid: string, executor: DbExecutor = Database) {
         return await executor
           .select()
           .from(biliEvents)
@@ -62,7 +62,7 @@ export const biliEventRepo = ripple(
           .orderBy(asc(biliEvents.occurredAt), asc(biliEvents.createdAt));
       },
 
-      pageBiliGuard(query: BiliEventPageQuery, executor: DbExecutor = db) {
+      pageBiliGuard(query: BiliEventPageQuery, executor: DbExecutor = Database) {
         return new QueryPageBuilder(executor, biliEvents, executor.query.biliEvents)
           .page(query.page)
           .pageSize(query.pageSize)
@@ -114,7 +114,7 @@ export const biliEventRepo = ripple(
         input: Pick<InsertBiliEvent, 'biliEventId' | 'biliUid' | 'occurredAt' | 'eventSnapshot'> & {
           rewardItemSnapshots: BiliEventRewardItemSnapshot[];
         },
-        executor: DbExecutor = db,
+        executor: DbExecutor = Database,
       ) {
         const [event] = await executor
           .insert(biliEvents)
@@ -131,7 +131,7 @@ export const biliEventRepo = ripple(
         return event ?? null;
       },
 
-      async markProcessing(biliEventId: string, executor: DbExecutor = db) {
+      async markProcessing(biliEventId: string, executor: DbExecutor = Database) {
         return await updateStatus(
           biliEventId,
           {
@@ -150,7 +150,7 @@ export const biliEventRepo = ripple(
           lastErrorCode: string;
           lastErrorMessage: string;
         },
-        executor: DbExecutor = db,
+        executor: DbExecutor = Database,
       ) {
         return await updateStatus(
           biliEventId,
@@ -172,7 +172,7 @@ export const biliEventRepo = ripple(
           userId: string;
           rewardResultSnapshots: BiliEventRewardResultSnapshot[];
         },
-        executor: DbExecutor = db,
+        executor: DbExecutor = Database,
       ) {
         return await updateStatus(
           biliEventId,
@@ -194,7 +194,7 @@ export const biliEventRepo = ripple(
           lastErrorCode: string;
           lastErrorMessage: string;
         },
-        executor: DbExecutor = db,
+        executor: DbExecutor = Database,
       ) {
         const [event] = await executor
           .update(biliEvents)
@@ -215,4 +215,4 @@ export const biliEventRepo = ripple(
   { debugName: 'BiliEventRepository' },
 );
 
-export type BiliEventRepository = InferInput<typeof biliEventRepo>;
+export type BiliEventRepository = InferInput<typeof BiliEventRepo>;

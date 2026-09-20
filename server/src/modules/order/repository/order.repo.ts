@@ -32,16 +32,16 @@ function buildManageWhere(query: OrderPageQuery) {
   };
 }
 
-export const orderRepo = ripple(
+export const OrderRepo = ripple(
   {
-    db: Database,
+    Database,
   },
-  ({ db }) => ({
+  ({ Database }) => ({
     /**
      * 管理员 - 订单列表
      */
     pageManage(query: OrderPageQuery) {
-      return new QueryPageBuilder(db, orders, db.query.orders)
+      return new QueryPageBuilder(Database, orders, Database.query.orders)
         .page(query.page)
         .pageSize(query.pageSize)
         .where(buildManageWhere(query))
@@ -62,7 +62,7 @@ export const orderRepo = ripple(
      * 用户订单列表
      */
     pageMine(query: OrderPageQuery) {
-      return new QueryPageBuilder(db, orders, db.query.orders)
+      return new QueryPageBuilder(Database, orders, Database.query.orders)
         .page(query.page)
         .pageSize(query.pageSize)
         .where({
@@ -102,7 +102,7 @@ export const orderRepo = ripple(
         .paginate();
     },
 
-    async findById(orderId: string, executor: DbExecutor = db) {
+    async findById(orderId: string, executor: DbExecutor = Database) {
       return await executor.query.orders.findFirst({
         where: {
           id: orderId,
@@ -116,7 +116,7 @@ export const orderRepo = ripple(
       return order;
     },
 
-    async findExportRowsByIds(orderIds: string[], executor: DbExecutor = db) {
+    async findExportRowsByIds(orderIds: string[], executor: DbExecutor = Database) {
       if (!orderIds.length) {
         return [];
       }
@@ -143,7 +143,7 @@ export const orderRepo = ripple(
       return row;
     },
 
-    async update(orderId: string, data: UpdateOrder, executor: DbExecutor = db) {
+    async update(orderId: string, data: UpdateOrder, executor: DbExecutor = Database) {
       const [row] = await executor
         .update(orders)
         .set(data)
@@ -157,7 +157,7 @@ export const orderRepo = ripple(
       orderId: string,
       statuses: OrderStatus[],
       data: UpdateOrder,
-      executor: DbExecutor = db,
+      executor: DbExecutor = Database,
     ) {
       const [row] = await executor
         .update(orders)
@@ -171,4 +171,4 @@ export const orderRepo = ripple(
   { debugName: 'OrderRepository' },
 );
 
-export type OrderRepository = InferInput<typeof orderRepo>;
+export type OrderRepository = InferInput<typeof OrderRepo>;

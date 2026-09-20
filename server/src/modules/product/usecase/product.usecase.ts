@@ -11,8 +11,8 @@ import { type InferInput, ripple } from 'cyrenejs';
 import { Database } from '#context/tokens';
 import type { DbTransaction } from '#db';
 import type { InsertProduct, Product, UpdateProduct } from '#db/schema';
-import { imageUseCase } from '#modules/image';
-import { pointTypeUseCase } from '#modules/point';
+import { ImageUseCase } from '#modules/image';
+import { PointTypeUseCase } from '#modules/point';
 
 import {
   ProductCodeExistsError,
@@ -29,23 +29,23 @@ import {
   assertStockMovementDeltaMatchesType,
   assertSufficientStock,
 } from '../domain';
-import { productRepo, stockMovementRepo } from '../repository';
+import { ProductRepo, StockMovementRepo } from '../repository';
 import { STOCK_MOVEMENT_SOURCE_TYPE, type ChangeStockInput } from './types';
 
-export const productUseCase = ripple(
+export const ProductUseCase = ripple(
   {
-    db: Database,
-    imageUseCase,
-    pointTypeUseCase,
-    productRepo,
-    stockMovementRepo,
+    Database,
+    ImageUseCase,
+    PointTypeUseCase,
+    ProductRepo,
+    StockMovementRepo,
   },
-  ({ db, imageUseCase, pointTypeUseCase, productRepo, stockMovementRepo }) => {
+  ({ Database, ImageUseCase, PointTypeUseCase, ProductRepo, StockMovementRepo }) => {
     /**
      * 获取商品信息
      */
     async function get(productId: string) {
-      const product = await productRepo.findById(productId);
+      const product = await ProductRepo.findById(productId);
 
       if (!product) {
         throw new ProductNotFoundError();
@@ -61,7 +61,7 @@ export const productUseCase = ripple(
      * 如果商品不存在或商品状态不可用，则抛出业务异常。
      */
     async function requireByIdForUpdate(tx: DbTransaction, productId: string) {
-      const product = await productRepo.findByIdForUpdate(tx, productId);
+      const product = await ProductRepo.findByIdForUpdate(tx, productId);
 
       if (!product) {
         throw new ProductNotFoundError();
@@ -83,7 +83,7 @@ export const productUseCase = ripple(
 
       if (input.delta > 0) {
         // 执行增加
-        updateProduct = await productRepo.increaseStock(tx, {
+        updateProduct = await ProductRepo.increaseStock(tx, {
           productId: product.id,
           amount: input.delta,
         });
@@ -95,14 +95,14 @@ export const productUseCase = ripple(
         assertSufficientStock(product, amount);
 
         // 执行扣除
-        updateProduct = await productRepo.decreaseStock(tx, {
+        updateProduct = await ProductRepo.decreaseStock(tx, {
           productId: product.id,
           amount,
         });
       }
 
       // 记录库存变动
-      const movement = await stockMovementRepo.create(
+      const movement = await StockMovementRepo.create(
         {
           productId: input.productId,
           type: input.type,
@@ -146,13 +146,13 @@ export const productUseCase = ripple(
        * 创建商品
        */
       async create(productData: CreateProductBody) {
-        await pointTypeUseCase.getAvailableById(productData.pointTypeId);
+        await PointTypeUseCase.getAvailableById(productData.pointTypeId);
         assertProductPrice(productData.price);
         assertProductStock(productData.stock);
         const { startAt, endAt } = productData;
         assertProductTimeRange(startAt, endAt);
 
-        if (productData.code && (await productRepo.findByCode(productData.code))) {
+        if (productData.code && (await ProductRepo.findByCode(productData.code))) {
           throw new ProductCodeExistsError();
         }
 
@@ -164,7 +164,7 @@ export const productUseCase = ripple(
           startAt,
         };
 
-        return productRepo.create(updateData);
+        return ProductRepo.create(updateData);
       },
 
       /**
@@ -174,13 +174,13 @@ export const productUseCase = ripple(
         const current = await get(productId);
 
         if (productData.pointTypeId) {
-          await pointTypeUseCase.getAvailableById(productData.pointTypeId);
+          await PointTypeUseCase.getAvailableById(productData.pointTypeId);
         }
 
         if (
           productData.code &&
           productData.code !== current.code &&
-          (await productRepo.findByCode(productData.code))
+          (await ProductRepo.findByCode(productData.code))
         ) {
           throw new ProductCodeExistsError();
         }
@@ -197,7 +197,7 @@ export const productUseCase = ripple(
           startAt,
         };
 
-        const product = await productRepo.update(productId, updateData);
+        const product = await ProductRepo.update(productId, updateData);
 
         if (!product) {
           throw new ProductNotFoundError();
@@ -211,9 +211,9 @@ export const productUseCase = ripple(
        */
       async updateCover(productId: string, body: ProductCoverUploadBody) {
         await get(productId);
-        const { filename } = await imageUseCase.save(body.cover);
+        const { filename } = await ImageUseCase.save(body.cover);
 
-        return productRepo.update(productId, {
+        return ProductRepo.update(productId, {
           cover: filename,
         });
       },
@@ -228,7 +228,7 @@ export const productUseCase = ripple(
           return product;
         }
 
-        return productRepo.updateStatus(productId, 'active');
+        return ProductRepo.updateStatus(productId, 'active');
       },
 
       /**
@@ -241,11 +241,11 @@ export const productUseCase = ripple(
           return product;
         }
 
-        return productRepo.updateStatus(productId, 'disabled');
+        return ProductRepo.updateStatus(productId, 'disabled');
       },
 
       async remove(productId: string) {
-        const product = await productRepo.delete(productId);
+        const product = await ProductRepo.delete(productId);
 
         if (!product) {
           throw new ProductNotFoundError();
@@ -266,7 +266,7 @@ export const productUseCase = ripple(
         adminId: string,
         adjustmentData: StockAdjustmentBody,
       ) {
-        return db.transaction(async tx => {
+        return Database.transaction(async tx => {
           const product = await requireByIdForUpdate(tx, productId);
 
           return await changeStock(tx, product, {
@@ -296,18 +296,18 @@ export const productUseCase = ripple(
        * 管理员 - 商品列表
        */
       pageManage(query: ProductPageQuery) {
-        return productRepo.pageManage(query);
+        return ProductRepo.pageManage(query);
       },
 
       /**
        * 兑换 - 商品列表
        */
       pageRedeem(query: PageQuery) {
-        return productRepo.pageRedeem(query);
+        return ProductRepo.pageRedeem(query);
       },
     };
   },
   { debugName: 'ProductUseCase' },
 );
 
-export type ProductUseCase = InferInput<typeof productUseCase>;
+export type ProductUseCase = InferInput<typeof ProductUseCase>;

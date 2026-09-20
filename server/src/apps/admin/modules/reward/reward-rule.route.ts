@@ -6,16 +6,16 @@ import {
 import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { adminAuthGuard } from '#apps/admin/http';
+import { AdminAuthGuard } from '#apps/admin/http';
 import { RewardErrors } from '#modules/reward';
-import { rewardRuleUseCase } from '#modules/reward';
+import { RewardRuleUseCase } from '#modules/reward';
 
-export const rewardRuleRoutes = ripple(
+export const RewardRuleRoutes = ripple(
   {
-    authGuard: adminAuthGuard,
-    rewardRuleUseCase,
+    AdminAuthGuard,
+    RewardRuleUseCase,
   },
-  ({ authGuard, rewardRuleUseCase }) =>
+  ({ AdminAuthGuard, RewardRuleUseCase }) =>
     new Elysia({
       name: 'RewardRuleRoute',
       prefix: '/rules',
@@ -23,12 +23,12 @@ export const rewardRuleRoutes = ripple(
         tags: ['RewardRule'],
       },
     })
-      .use(authGuard)
+      .use(AdminAuthGuard)
       .error(RewardErrors)
       .get(
         '/',
         () => {
-          return rewardRuleUseCase.listManage();
+          return RewardRuleUseCase.listManage();
         },
         {
           requiredAdminAuth: true,
@@ -40,7 +40,7 @@ export const rewardRuleRoutes = ripple(
       .get(
         '/:rewardRuleId',
         ({ params }) => {
-          return rewardRuleUseCase.get(params.rewardRuleId);
+          return RewardRuleUseCase.get(params.rewardRuleId);
         },
         {
           params: RewardRuleIdParamsSchema,
@@ -53,7 +53,7 @@ export const rewardRuleRoutes = ripple(
       .post(
         '/',
         ({ body }) => {
-          return rewardRuleUseCase.create(body);
+          return RewardRuleUseCase.create(body);
         },
         {
           body: CreateRewardRuleSchema,
@@ -66,7 +66,7 @@ export const rewardRuleRoutes = ripple(
       .put(
         '/:rewardRuleId',
         ({ body, params }) => {
-          return rewardRuleUseCase.update(params.rewardRuleId, body);
+          return RewardRuleUseCase.update(params.rewardRuleId, body);
         },
         {
           body: UpdateRewardRuleSchema,
@@ -80,7 +80,7 @@ export const rewardRuleRoutes = ripple(
       .patch(
         '/:rewardRuleId/enable',
         ({ params }) => {
-          return rewardRuleUseCase.enable(params.rewardRuleId);
+          return RewardRuleUseCase.enable(params.rewardRuleId);
         },
         {
           params: RewardRuleIdParamsSchema,
@@ -93,7 +93,7 @@ export const rewardRuleRoutes = ripple(
       .patch(
         '/:rewardRuleId/disable',
         ({ params }) => {
-          return rewardRuleUseCase.disable(params.rewardRuleId);
+          return RewardRuleUseCase.disable(params.rewardRuleId);
         },
         {
           params: RewardRuleIdParamsSchema,
@@ -106,7 +106,7 @@ export const rewardRuleRoutes = ripple(
       .delete(
         '/:rewardRuleId',
         ({ params }) => {
-          return rewardRuleUseCase.remove(params.rewardRuleId);
+          return RewardRuleUseCase.remove(params.rewardRuleId);
         },
         {
           params: RewardRuleIdParamsSchema,

@@ -9,15 +9,15 @@ import {
 import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { adminAuthGuard } from '#apps/admin/http';
-import { orderUseCase } from '#modules/order';
+import { AdminAuthGuard } from '#apps/admin/http';
+import { OrderUseCase } from '#modules/order';
 
-export const adminOrderRoutes = ripple(
+export const AdminOrderRoutes = ripple(
   {
-    authGuard: adminAuthGuard,
-    orderUseCase,
+    AdminAuthGuard,
+    OrderUseCase,
   },
-  ({ authGuard, orderUseCase }) =>
+  ({ AdminAuthGuard, OrderUseCase }) =>
     new Elysia({
       name: 'OrderRoute',
       prefix: '/orders',
@@ -25,11 +25,11 @@ export const adminOrderRoutes = ripple(
         tags: ['Order'],
       },
     })
-      .use(authGuard)
+      .use(AdminAuthGuard)
       .get(
         '/',
         ({ query }) => {
-          return orderUseCase.pageManage(query);
+          return OrderUseCase.pageManage(query);
         },
         {
           query: OrderPageQuerySchema,
@@ -42,7 +42,7 @@ export const adminOrderRoutes = ripple(
       .post(
         '/export',
         async ({ body }) => {
-          return orderUseCase.exportOrders(body);
+          return OrderUseCase.exportOrders(body);
         },
         {
           body: ExportOrdersSchema,
@@ -55,7 +55,7 @@ export const adminOrderRoutes = ripple(
       .get(
         '/:orderId',
         ({ params }) => {
-          return orderUseCase.get(params.orderId);
+          return OrderUseCase.get(params.orderId);
         },
         {
           params: OrderIdParamsSchema,
@@ -68,7 +68,7 @@ export const adminOrderRoutes = ripple(
       .patch(
         '/:orderId/complete',
         async ({ params }) => {
-          const { id, status } = await orderUseCase.complete(params.orderId);
+          const { id, status } = await OrderUseCase.complete(params.orderId);
 
           return {
             id,
@@ -86,7 +86,7 @@ export const adminOrderRoutes = ripple(
       .patch(
         '/:orderId/express',
         async ({ body, params }) => {
-          const { expressCompany, expressNo, id } = await orderUseCase.updateExpress(
+          const { expressCompany, expressNo, id } = await OrderUseCase.updateExpress(
             params.orderId,
             body,
           );
@@ -110,7 +110,7 @@ export const adminOrderRoutes = ripple(
         '/:orderId/receiver',
         async ({ body, params }) => {
           const { id, receiverAddressEncrypted, receiverPhoneEncrypted } =
-            await orderUseCase.updateReceiver(params.orderId, body);
+            await OrderUseCase.updateReceiver(params.orderId, body);
 
           return {
             id,
@@ -130,7 +130,7 @@ export const adminOrderRoutes = ripple(
       .patch(
         '/:orderId/refund',
         async ({ body, params }) => {
-          const { id, status } = await orderUseCase.refund(params.orderId, body);
+          const { id, status } = await OrderUseCase.refund(params.orderId, body);
 
           return {
             id,

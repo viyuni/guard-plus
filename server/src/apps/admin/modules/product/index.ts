@@ -9,16 +9,16 @@ import { StockAdjustmentSchema, StockMovementPageQuerySchema } from '@shared/sch
 import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { adminAuthGuard } from '#apps/admin/http';
-import { productUseCase, stockMovementUseCase } from '#modules/product';
+import { AdminAuthGuard } from '#apps/admin/http';
+import { ProductUseCase, StockMovementUseCase } from '#modules/product';
 
-export const adminProductRoutes = ripple(
+export const AdminProductRoutes = ripple(
   {
-    authGuard: adminAuthGuard,
-    productUseCase,
-    stockMovementUseCase,
+    AdminAuthGuard,
+    ProductUseCase,
+    StockMovementUseCase,
   },
-  ({ authGuard, productUseCase, stockMovementUseCase }) =>
+  ({ AdminAuthGuard, ProductUseCase, StockMovementUseCase }) =>
     new Elysia({
       name: 'ProductRoute',
       prefix: '/products',
@@ -26,11 +26,11 @@ export const adminProductRoutes = ripple(
         tags: ['Product'],
       },
     })
-      .use(authGuard)
+      .use(AdminAuthGuard)
       .get(
         '/',
         ({ query }) => {
-          return productUseCase.pageManage(query);
+          return ProductUseCase.pageManage(query);
         },
         {
           query: ProductPageQuerySchema,
@@ -43,7 +43,7 @@ export const adminProductRoutes = ripple(
       .get(
         '/stock/movements',
         ({ query }) => {
-          return stockMovementUseCase.page(query);
+          return StockMovementUseCase.page(query);
         },
         {
           query: StockMovementPageQuerySchema,
@@ -56,7 +56,7 @@ export const adminProductRoutes = ripple(
       .get(
         '/:productId/stock/movements',
         ({ query, params }) => {
-          return stockMovementUseCase.page({
+          return StockMovementUseCase.page({
             ...query,
             productId: params.productId,
           });
@@ -73,7 +73,7 @@ export const adminProductRoutes = ripple(
       .get(
         '/:productId',
         ({ params }) => {
-          return productUseCase.get(params.productId);
+          return ProductUseCase.get(params.productId);
         },
         {
           params: ProductIdParamsSchema,
@@ -86,7 +86,7 @@ export const adminProductRoutes = ripple(
       .post(
         '/',
         ({ body }) => {
-          return productUseCase.create(body);
+          return ProductUseCase.create(body);
         },
         {
           body: CreateProductSchema,
@@ -104,7 +104,7 @@ export const adminProductRoutes = ripple(
       .put(
         '/:productId',
         ({ body, params }) => {
-          return productUseCase.update(params.productId, body);
+          return ProductUseCase.update(params.productId, body);
         },
         {
           body: UpdateProductSchema,
@@ -118,7 +118,7 @@ export const adminProductRoutes = ripple(
       .put(
         '/:productId/cover',
         ({ body, params }) => {
-          return productUseCase.updateCover(params.productId, body);
+          return ProductUseCase.updateCover(params.productId, body);
         },
         {
           body: ProductCoverUploadSchema,
@@ -137,7 +137,7 @@ export const adminProductRoutes = ripple(
       .patch(
         '/:productId/enable',
         ({ params }) => {
-          return productUseCase.active(params.productId);
+          return ProductUseCase.active(params.productId);
         },
         {
           params: ProductIdParamsSchema,
@@ -150,7 +150,7 @@ export const adminProductRoutes = ripple(
       .patch(
         '/:productId/disable',
         ({ params }) => {
-          return productUseCase.disable(params.productId);
+          return ProductUseCase.disable(params.productId);
         },
         {
           params: ProductIdParamsSchema,
@@ -163,7 +163,7 @@ export const adminProductRoutes = ripple(
       .delete(
         '/:productId',
         ({ params }) => {
-          return productUseCase.remove(params.productId);
+          return ProductUseCase.remove(params.productId);
         },
         {
           params: ProductIdParamsSchema,
@@ -178,7 +178,7 @@ export const adminProductRoutes = ripple(
         async ({ body, params, auth: { id: adminId } }) => {
           const {
             product: { id, stock },
-          } = await productUseCase.adminAdjustStock(params.productId, adminId, body);
+          } = await ProductUseCase.adminAdjustStock(params.productId, adminId, body);
 
           return {
             id,

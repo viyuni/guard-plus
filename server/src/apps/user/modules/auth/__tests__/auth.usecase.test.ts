@@ -1,15 +1,15 @@
 import { afterEach, expect, it, spyOn } from 'bun:test';
 
 import type { DbClient } from '#db';
-import { biliPasswordResetUseCase, biliRegisterUseCase } from '#modules/auth';
+import { BiliPasswordResetUseCase, BiliRegisterUseCase } from '#modules/auth';
 import type { BiliRegisterChallenge } from '#modules/auth/domain';
-import { pointAccountUseCase } from '#modules/point';
-import { rewardUseCase } from '#modules/reward';
-import { userUseCase } from '#modules/user';
+import { PointAccountUseCase } from '#modules/point';
+import { RewardUseCase } from '#modules/reward';
+import { UserUseCase } from '#modules/user';
 import { createTestRuntime } from '#test-helpers/test-runtime';
 import { BadRequestError } from '#utils';
 
-import { userAuthUseCase } from '../usecase';
+import { UserAuthUseCase } from '../usecase';
 
 const input = {
   biliUid: '123456',
@@ -40,7 +40,7 @@ async function createUseCase(
   const tx = {};
 
   const runtime = createTestRuntime(
-    { userAuthUseCase },
+    { UserAuthUseCase },
     {
       database: {
         transaction: async (callback: (actualTx: unknown) => unknown) => callback(tx),
@@ -52,7 +52,7 @@ async function createUseCase(
 
   const container = await runtime.start();
 
-  const create = spyOn(await runtime.resolve(userUseCase), 'create').mockImplementation(
+  const create = spyOn(await runtime.resolve(UserUseCase), 'create').mockImplementation(
     async () =>
       ({
         id: 'user-id',
@@ -62,7 +62,7 @@ async function createUseCase(
   );
 
   const replayRewardBiliGuardByUserId = spyOn(
-    await runtime.resolve(rewardUseCase),
+    await runtime.resolve(RewardUseCase),
     'replayRewardBiliGuardByUserId',
   ).mockImplementation(async () => {
     if (options.rewardError) {
@@ -73,7 +73,7 @@ async function createUseCase(
   });
 
   const replayLegacyMigrations = spyOn(
-    await runtime.resolve(pointAccountUseCase),
+    await runtime.resolve(PointAccountUseCase),
     'replayLegacyMigrations',
   ).mockImplementation(async () => {
     if (options.migrationError) {
@@ -83,8 +83,8 @@ async function createUseCase(
     return [];
   });
 
-  const registerUseCase = await runtime.resolve(biliRegisterUseCase);
-  const resetUseCase = await runtime.resolve(biliPasswordResetUseCase);
+  const registerUseCase = await runtime.resolve(BiliRegisterUseCase);
+  const resetUseCase = await runtime.resolve(BiliPasswordResetUseCase);
 
   const getOwnedChallenge = spyOn(registerUseCase, 'getOwnedChallenge').mockImplementation(
     async () => challenge,
@@ -112,7 +112,7 @@ async function createUseCase(
     async () => passwordResetChallenge,
   );
 
-  const accountUseCase = await runtime.resolve(userUseCase);
+  const accountUseCase = await runtime.resolve(UserUseCase);
 
   const getAvailableByBiliUid = spyOn(accountUseCase, 'getAvailableByBiliUid').mockImplementation(
     async () =>
@@ -137,7 +137,7 @@ async function createUseCase(
     replayLegacyMigrations,
     tx,
     setPassword,
-    useCase: container.userAuthUseCase,
+    useCase: container.UserAuthUseCase,
   };
 }
 

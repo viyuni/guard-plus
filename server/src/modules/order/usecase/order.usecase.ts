@@ -9,11 +9,11 @@ import type {
 import { type InferInput, ripple } from 'cyrenejs';
 
 import { Database } from '#context/tokens';
-import { pointAccountRepo, pointBalanceUseCase, pointTypeUseCase } from '#modules/point';
+import { PointAccountRepo, PointBalanceUseCase, PointTypeUseCase } from '#modules/point';
 import { POINT_CHANGE_SOURCE_TYPE, PointIdempotencyKey } from '#modules/point';
 import { assertProductAvailable, STOCK_MOVEMENT_SOURCE_TYPE } from '#modules/product';
-import { StockIdempotencyKey, productUseCase } from '#modules/product';
-import { userBasicInfoCrypto, userUseCase } from '#modules/user';
+import { StockIdempotencyKey, ProductUseCase } from '#modules/product';
+import { UserBasicInfoCrypto, UserUseCase } from '#modules/user';
 import { publishOrderCreated, type NewOrderEmailInput } from '#queues';
 
 import {
@@ -26,7 +26,7 @@ import {
   assertOrderCanRefund,
   OrderUpdateFailedError,
 } from '../domain';
-import { orderRepo } from '../repository';
+import { OrderRepo } from '../repository';
 
 function toCsv(
   rows: Array<{
@@ -58,26 +58,26 @@ function escapeCsvCell(value: string) {
   return /[",\n\r]/.test(escaped) ? `"${escaped}"` : escaped;
 }
 
-export const orderUseCase = ripple(
+export const OrderUseCase = ripple(
   {
-    db: Database,
-    orderRepo,
-    pointAccountRepo,
-    pointBalanceUseCase,
-    pointTypeUseCase,
-    productUseCase,
-    userBasicInfoCrypto,
-    userUseCase,
+    Database,
+    OrderRepo,
+    PointAccountRepo,
+    PointBalanceUseCase,
+    PointTypeUseCase,
+    ProductUseCase,
+    UserBasicInfoCrypto,
+    UserUseCase,
   },
   ({
-    db,
-    orderRepo,
-    pointAccountRepo,
-    pointBalanceUseCase,
-    pointTypeUseCase,
-    productUseCase,
-    userBasicInfoCrypto,
-    userUseCase,
+    Database,
+    OrderRepo,
+    PointAccountRepo,
+    PointBalanceUseCase,
+    PointTypeUseCase,
+    ProductUseCase,
+    UserBasicInfoCrypto,
+    UserUseCase,
   }) => {
     function decryptOrderReceiver<
       TOrder extends {
@@ -85,7 +85,7 @@ export const orderUseCase = ripple(
         receiverAddressEncrypted?: string | null;
       },
     >(order: TOrder) {
-      const receiver = userBasicInfoCrypto.decryptBasicInfo({
+      const receiver = UserBasicInfoCrypto.decryptBasicInfo({
         phoneEncrypted: order.receiverPhoneEncrypted,
         addressEncrypted: order.receiverAddressEncrypted,
       });
@@ -98,7 +98,7 @@ export const orderUseCase = ripple(
     }
 
     async function get(orderId: string) {
-      const order = await orderRepo.findById(orderId);
+      const order = await OrderRepo.findById(orderId);
 
       if (!order) {
         throw new OrderNotFoundError();
@@ -111,21 +111,21 @@ export const orderUseCase = ripple(
       get,
 
       async create(userId: string, orderData: CreateOrderBody) {
-        const { order, user, product } = await db.transaction(async tx => {
-          const user = await userUseCase.getAvailableById(userId, tx);
-          const product = await productUseCase.requireByIdForUpdate(tx, orderData.productId);
+        const { order, user, product } = await Database.transaction(async tx => {
+          const user = await UserUseCase.getAvailableById(userId, tx);
+          const product = await ProductUseCase.requireByIdForUpdate(tx, orderData.productId);
 
           // 确保账户存在并锁行
-          const account = await pointAccountRepo.ensureAccountAndLock(tx, {
+          const account = await PointAccountRepo.ensureAccountAndLock(tx, {
             userId: user.id,
             pointTypeId: product.pointTypeId,
           });
 
-          const pointType = await pointTypeUseCase.getAvailableById(product.pointTypeId, tx);
+          const pointType = await PointTypeUseCase.getAvailableById(product.pointTypeId, tx);
 
           assertProductAvailable(product);
 
-          const order = await orderRepo.create(tx, {
+          const order = await OrderRepo.create(tx, {
             orderNo: OrderNo.create(),
             userId,
             productId: product.id,
@@ -147,7 +147,7 @@ export const orderUseCase = ripple(
             throw new OrderNotFoundError('订单创建失败');
           }
 
-          const point = await pointBalanceUseCase.changeBalance(tx, account, {
+          const point = await PointBalanceUseCase.changeBalance(tx, account, {
             type: 'consume',
             userId,
             pointTypeId: product.pointTypeId,
@@ -163,7 +163,7 @@ export const orderUseCase = ripple(
             },
           });
 
-          await productUseCase.changeStock(tx, product, {
+          await ProductUseCase.changeStock(tx, product, {
             type: 'consume',
             productId: product.id,
             delta: -1,
@@ -178,7 +178,7 @@ export const orderUseCase = ripple(
             },
           });
 
-          const updateOrder = await orderRepo.update(
+          const updateOrder = await OrderRepo.update(
             order.id,
             {
               consumeTransactionId: point.transaction.id,
@@ -218,8 +218,8 @@ export const orderUseCase = ripple(
       },
 
       async complete(orderId: string) {
-        return db.transaction(async tx => {
-          const order = await orderRepo.findByIdForUpdate(tx, orderId);
+        return Database.transaction(async tx => {
+          const order = await OrderRepo.findByIdForUpdate(tx, orderId);
 
           if (!order) {
             throw new OrderNotFoundError();
@@ -227,7 +227,7 @@ export const orderUseCase = ripple(
 
           assertOrderCanComplete(order);
 
-          const updateOrder = await orderRepo.updateWhereStatus(
+          const updateOrder = await OrderRepo.updateWhereStatus(
             orderId,
             ['pending'],
             {
@@ -246,8 +246,8 @@ export const orderUseCase = ripple(
       },
 
       async refund(orderId: string, refundData: RefundOrderBody) {
-        return db.transaction(async tx => {
-          const order = await orderRepo.findByIdForUpdate(tx, orderId);
+        return Database.transaction(async tx => {
+          const order = await OrderRepo.findByIdForUpdate(tx, orderId);
 
           if (!order) {
             throw new OrderNotFoundError();
@@ -255,15 +255,15 @@ export const orderUseCase = ripple(
 
           assertOrderCanRefund(order);
 
-          const product = await productUseCase.requireByIdForUpdate(tx, order.productId);
+          const product = await ProductUseCase.requireByIdForUpdate(tx, order.productId);
 
           // 确保账户存在并锁行
-          const account = await pointAccountRepo.ensureAccountAndLock(tx, {
+          const account = await PointAccountRepo.ensureAccountAndLock(tx, {
             userId: order.userId,
             pointTypeId: order.pointTypeId,
           });
 
-          const point = await pointBalanceUseCase.changeBalance(tx, account, {
+          const point = await PointBalanceUseCase.changeBalance(tx, account, {
             type: 'refund',
             userId: order.userId,
             pointTypeId: order.pointTypeId,
@@ -280,7 +280,7 @@ export const orderUseCase = ripple(
             },
           });
 
-          await productUseCase.changeStock(tx, product, {
+          await ProductUseCase.changeStock(tx, product, {
             type: 'restore',
             productId: order.productId,
             delta: 1,
@@ -296,7 +296,7 @@ export const orderUseCase = ripple(
             },
           });
 
-          const updateOrder = await orderRepo.updateWhereStatus(
+          const updateOrder = await OrderRepo.updateWhereStatus(
             orderId,
             ['pending', 'completed'],
             {
@@ -319,7 +319,7 @@ export const orderUseCase = ripple(
       async updateExpress(orderId: string, expressData: UpdateOrderExpressBody) {
         await get(orderId);
 
-        const updateOrder = await orderRepo.update(orderId, {
+        const updateOrder = await OrderRepo.update(orderId, {
           expressCompany: expressData.expressCompany,
           expressNo: expressData.expressNo,
         });
@@ -334,12 +334,12 @@ export const orderUseCase = ripple(
       async updateReceiver(orderId: string, receiverData: UpdateOrderReceiverBody) {
         await get(orderId);
 
-        const encrypted = userBasicInfoCrypto.encryptBasicInfoPatch({
+        const encrypted = UserBasicInfoCrypto.encryptBasicInfoPatch({
           phone: receiverData.phone,
           address: receiverData.address,
         });
 
-        const updateOrder = await orderRepo.update(orderId, {
+        const updateOrder = await OrderRepo.update(orderId, {
           receiverPhoneEncrypted: encrypted.phoneEncrypted,
           receiverAddressEncrypted: encrypted.addressEncrypted,
         });
@@ -352,14 +352,14 @@ export const orderUseCase = ripple(
       },
 
       async exportOrders(exportData: ExportOrdersBody) {
-        const rows = await orderRepo.findExportRowsByIds(exportData.ids);
+        const rows = await OrderRepo.findExportRowsByIds(exportData.ids);
 
         const orderedRows = exportData.ids
           .map(id => rows.find(row => row.id === id))
           .filter(row => row !== undefined);
 
         const csvRows = orderedRows.map(row => {
-          const receiver = userBasicInfoCrypto.decryptBasicInfo({
+          const receiver = UserBasicInfoCrypto.decryptBasicInfo({
             phoneEncrypted: row.receiverPhoneEncrypted,
             addressEncrypted: row.receiverAddressEncrypted,
           });
@@ -384,7 +384,7 @@ export const orderUseCase = ripple(
        * 管理员 - 订单列表
        */
       pageManage(query: OrderPageQuery) {
-        return orderRepo.pageManage(query).then(page => ({
+        return OrderRepo.pageManage(query).then(page => ({
           ...page,
           items: page.items.map(order => decryptOrderReceiver(order)),
         }));
@@ -394,7 +394,7 @@ export const orderUseCase = ripple(
        * 用户订单列表
        */
       pageMine(query: OrderPageQuery) {
-        return orderRepo.pageMine(query).then(page => ({
+        return OrderRepo.pageMine(query).then(page => ({
           ...page,
           items: page.items.map(order => decryptOrderReceiver(order)),
         }));
@@ -404,4 +404,4 @@ export const orderUseCase = ripple(
   { debugName: 'OrderUseCase' },
 );
 
-export type OrderUseCase = InferInput<typeof orderUseCase>;
+export type OrderUseCase = InferInput<typeof OrderUseCase>;

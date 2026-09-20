@@ -11,9 +11,8 @@ import { InvalidCredentialsError } from '#utils';
 import { PasswordUtil } from '#utils';
 
 import { AdminNotFoundError, AdminSuperAdminCannotBeBannedError } from '../domain/errors';
-import { adminRepo } from '../repository';
-import type { AdminUseCase } from '../usecase';
-import { adminUseCase } from '../usecase';
+import { AdminRepo } from '../repository';
+import { AdminUseCase } from '../usecase';
 
 const testDatabaseUrl = Bun.env.TEST_DATABASE_URL;
 const describeWithDatabase = testDatabaseUrl ? describe : describe.skip;
@@ -106,13 +105,13 @@ beforeEach(async () => {
   await clearAdmins();
 
   const runtime = new Cyrene({
-    providers: { adminRepo, adminUseCase },
+    providers: { AdminRepo, AdminUseCase },
     bindings: [{ token: Database, value: db }],
   });
 
   runtimes.push(runtime);
 
-  useCase = (await runtime.start()).adminUseCase;
+  useCase = (await runtime.start()).AdminUseCase;
 });
 
 afterEach(async () => {

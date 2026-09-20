@@ -9,27 +9,27 @@ import {
 import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { adminAuthGuard } from '#apps/admin/http';
+import { AdminAuthGuard } from '#apps/admin/http';
 
 import { AdminErrors } from './domain';
-import { adminUseCase } from './usecase';
+import { AdminUseCase } from './usecase';
 
 export * from './repository';
 export * from './domain';
 
-export const adminRoutes = ripple(
+export const AdminRoutes = ripple(
   {
-    adminUseCase,
-    authGuard: adminAuthGuard,
+    AdminUseCase,
+    AdminAuthGuard,
   },
-  ({ adminUseCase, authGuard }) =>
+  ({ AdminUseCase, AdminAuthGuard }) =>
     new Elysia({
       name: 'AdminRoute',
       prefix: '/admin',
     })
-      .use(authGuard)
+      .use(AdminAuthGuard)
       .error(AdminErrors)
-      .get('/', ({ query }) => adminUseCase.page(query), {
+      .get('/', ({ query }) => AdminUseCase.page(query), {
         query: AdminPageQuerySchema,
         requiredSuperAdminAuth: true,
         detail: {
@@ -37,14 +37,14 @@ export const adminRoutes = ripple(
           description: '管理员列表',
         },
       })
-      .get('/me', ({ auth: { id: adminId } }) => adminUseCase.me(adminId), {
+      .get('/me', ({ auth: { id: adminId } }) => AdminUseCase.me(adminId), {
         requiredAdminAuth: true,
         detail: {
           tags: ['Admin'],
           description: '获取当前管理员信息',
         },
       })
-      .patch('/me', ({ auth: { id: adminId }, body }) => adminUseCase.updateMe(adminId, body), {
+      .patch('/me', ({ auth: { id: adminId }, body }) => AdminUseCase.updateMe(adminId, body), {
         body: AdminUpdateSchema,
         requiredAdminAuth: true,
         detail: {
@@ -52,7 +52,7 @@ export const adminRoutes = ripple(
           description: '更新当前管理员信息',
         },
       })
-      .post('/', ({ body }) => adminUseCase.create(body), {
+      .post('/', ({ body }) => AdminUseCase.create(body), {
         body: AdminCreateSchema,
         requiredSuperAdminAuth: true,
         detail: {
@@ -60,7 +60,7 @@ export const adminRoutes = ripple(
           description: '创建管理员',
         },
       })
-      .patch('/:adminId', ({ params, body }) => adminUseCase.update(params.adminId, body), {
+      .patch('/:adminId', ({ params, body }) => AdminUseCase.update(params.adminId, body), {
         body: SuperAdminUpdateSchema,
         params: AdminIdParamsSchema,
         requiredSuperAdminAuth: true,
@@ -69,7 +69,7 @@ export const adminRoutes = ripple(
           description: '超级管理员更新管理员信息',
         },
       })
-      .patch('/:adminId/ban', ({ params }) => adminUseCase.ban(params.adminId), {
+      .patch('/:adminId/ban', ({ params }) => AdminUseCase.ban(params.adminId), {
         params: AdminIdParamsSchema,
         requiredSuperAdminAuth: true,
         detail: {
@@ -77,7 +77,7 @@ export const adminRoutes = ripple(
           description: '封禁普通管理员',
         },
       })
-      .patch('/:adminId/restore', ({ params }) => adminUseCase.restore(params.adminId), {
+      .patch('/:adminId/restore', ({ params }) => AdminUseCase.restore(params.adminId), {
         params: AdminIdParamsSchema,
         requiredSuperAdminAuth: true,
         detail: {
@@ -87,7 +87,7 @@ export const adminRoutes = ripple(
       })
       .patch(
         '/updatePassword',
-        ({ auth: { id: adminId }, body }) => adminUseCase.updatePassword(adminId, body),
+        ({ auth: { id: adminId }, body }) => AdminUseCase.updatePassword(adminId, body),
         {
           body: AdminUpdatePasswordSchema,
           requiredAdminAuth: true,
@@ -99,7 +99,7 @@ export const adminRoutes = ripple(
       )
       .patch(
         '/:adminId/resetPassword',
-        ({ params }) => adminUseCase.resetPassword(params.adminId),
+        ({ params }) => AdminUseCase.resetPassword(params.adminId),
         {
           params: AdminIdParamsSchema,
           requiredSuperAdminAuth: true,

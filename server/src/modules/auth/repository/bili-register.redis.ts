@@ -89,22 +89,32 @@ function createBiliRegisterRedisRepository({
   };
 }
 
-export const biliRegisterRepo = ripple(
+export const BiliRegisterRepo = ripple(
   {
-    redis: Redis,
-    ttlSeconds: RegisterCodeTtl,
+    Redis,
+    RegisterCodeTtl,
   },
-  deps => createBiliRegisterRedisRepository({ ...deps, purpose: 'register' }),
+  deps =>
+    createBiliRegisterRedisRepository({
+      purpose: 'register',
+      redis: deps.Redis,
+      ttlSeconds: deps.RegisterCodeTtl,
+    }),
   { debugName: 'BiliRegisterRepository' },
 );
 
-export const biliPasswordResetRepo = ripple(
+export const BiliPasswordResetRepo = ripple(
   {
-    redis: Redis,
-    ttlSeconds: RegisterCodeTtl,
+    Redis,
+    RegisterCodeTtl,
   },
-  deps => createBiliRegisterRedisRepository({ ...deps, purpose: 'password-reset' }),
+  deps =>
+    createBiliRegisterRedisRepository({
+      purpose: 'password-reset',
+      redis: deps.Redis,
+      ttlSeconds: deps.RegisterCodeTtl,
+    }),
   { debugName: 'BiliPasswordResetRepository' },
 );
 
-export type BiliRegisterRedisRepository = InferInput<typeof biliRegisterRepo>;
+export type BiliRegisterRedisRepository = InferInput<typeof BiliRegisterRepo>;

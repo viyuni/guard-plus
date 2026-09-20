@@ -6,15 +6,15 @@ import {
 import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { adminAuthGuard } from '#apps/admin/http';
-import { rewardUseCase } from '#modules/reward';
+import { AdminAuthGuard } from '#apps/admin/http';
+import { RewardUseCase } from '#modules/reward';
 
-export const rewardBiliGuardRoutes = ripple(
+export const RewardBiliGuardRoutes = ripple(
   {
-    authGuard: adminAuthGuard,
-    rewardUseCase,
+    AdminAuthGuard,
+    RewardUseCase,
   },
-  ({ authGuard, rewardUseCase }) =>
+  ({ AdminAuthGuard, RewardUseCase }) =>
     new Elysia({
       name: 'RewardBiliGuardRoute',
       prefix: '/biliGuard',
@@ -22,11 +22,11 @@ export const rewardBiliGuardRoutes = ripple(
         tags: ['RewardBiliGuard'],
       },
     })
-      .use(authGuard)
+      .use(AdminAuthGuard)
       .get(
         '/',
         ({ query }) => {
-          return rewardUseCase.pageBiliGuardEvents(query);
+          return RewardUseCase.pageBiliGuardEvents(query);
         },
         {
           query: BiliEventPageQuerySchema,
@@ -39,7 +39,7 @@ export const rewardBiliGuardRoutes = ripple(
       .post(
         '/manual',
         ({ body }) => {
-          return rewardUseCase.createManualBiliGuardEvent(body);
+          return RewardUseCase.createManualBiliGuardEvent(body);
         },
         {
           body: CreateManualBiliGuardEventSchema,
@@ -52,7 +52,7 @@ export const rewardBiliGuardRoutes = ripple(
       .post(
         '/:biliEventId/replay',
         ({ params }) => {
-          return rewardUseCase.replayRewardBiliGuard(params.biliEventId);
+          return RewardUseCase.replayRewardBiliGuard(params.biliEventId);
         },
         {
           params: BiliEventIdParamsSchema,

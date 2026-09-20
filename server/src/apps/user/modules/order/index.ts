@@ -2,15 +2,15 @@ import { CreateOrderSchema, OrderPageQuerySchema } from '@shared/schema/order';
 import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { userAuthGuard } from '#apps/user/http';
-import { orderUseCase } from '#modules/order';
+import { UserAuthGuard } from '#apps/user/http';
+import { OrderUseCase } from '#modules/order';
 
-export const orderRoutes = ripple(
+export const OrderRoutes = ripple(
   {
-    authGuard: userAuthGuard,
-    orderUseCase,
+    UserAuthGuard,
+    OrderUseCase,
   },
-  ({ authGuard, orderUseCase }) =>
+  ({ UserAuthGuard, OrderUseCase }) =>
     new Elysia({
       name: 'UserOrderRoute',
       prefix: '/orders',
@@ -18,11 +18,11 @@ export const orderRoutes = ripple(
         tags: ['Order'],
       },
     })
-      .use(authGuard)
+      .use(UserAuthGuard)
       .get(
         '/',
         ({ query, auth: { id: userId } }) => {
-          return orderUseCase.pageMine({
+          return OrderUseCase.pageMine({
             ...query,
             userId,
           });
@@ -40,7 +40,7 @@ export const orderRoutes = ripple(
         async ({ body, auth: { id: userId } }) => {
           const {
             order: { orderNo, productDeliveryContentSnapshot },
-          } = await orderUseCase.create(userId, body);
+          } = await OrderUseCase.create(userId, body);
 
           return {
             orderNo,

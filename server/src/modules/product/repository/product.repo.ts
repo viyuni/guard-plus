@@ -17,11 +17,11 @@ import {
 
 const POSTGRES_INTEGER_MAX = 2_147_483_647;
 
-export const productRepo = ripple(
+export const ProductRepo = ripple(
   {
-    db: Database,
+    Database,
   },
-  ({ db }) => {
+  ({ Database }) => {
     /**
      * 行锁商品并返回查询结果
      */
@@ -35,7 +35,7 @@ export const productRepo = ripple(
       return product;
     }
 
-    async function update(productId: string, data: UpdateProduct, executor: DbExecutor = db) {
+    async function update(productId: string, data: UpdateProduct, executor: DbExecutor = Database) {
       const [row] = await executor
         .update(products)
         .set(data)
@@ -49,7 +49,7 @@ export const productRepo = ripple(
       /**
        * 获取指定 ID 的商品
        */
-      async findById(productId: string, executor: DbExecutor = db) {
+      async findById(productId: string, executor: DbExecutor = Database) {
         return await executor.query.products.findFirst({
           where: {
             id: productId,
@@ -60,7 +60,7 @@ export const productRepo = ripple(
         });
       },
 
-      async findByCode(code: string, executor: DbExecutor = db) {
+      async findByCode(code: string, executor: DbExecutor = Database) {
         return (
           (await executor.query.products.findFirst({
             where: {
@@ -74,7 +74,7 @@ export const productRepo = ripple(
       /**
        * 创建商品
        */
-      async create(input: InsertProduct, executor: DbExecutor = db) {
+      async create(input: InsertProduct, executor: DbExecutor = Database) {
         const [row] = await executor.insert(products).values(input).returning();
 
         return row ?? null;
@@ -85,11 +85,15 @@ export const productRepo = ripple(
       /**
        * 更新商品状态
        */
-      async updateStatus(productId: string, status: ProductStatus, executor: DbExecutor = db) {
+      async updateStatus(
+        productId: string,
+        status: ProductStatus,
+        executor: DbExecutor = Database,
+      ) {
         return update(productId, { status }, executor);
       },
 
-      async delete(productId: string, executor: DbExecutor = db) {
+      async delete(productId: string, executor: DbExecutor = Database) {
         const [row] = await executor
           .update(products)
           .set({
@@ -170,7 +174,7 @@ export const productRepo = ripple(
        * 管理端分页
        */
       async pageManage(query: ProductPageQuery) {
-        return new QueryPageBuilder(db, products, db.query.products)
+        return new QueryPageBuilder(Database, products, Database.query.products)
           .where({
             deletedAt: {
               isNull: true,
@@ -224,7 +228,7 @@ export const productRepo = ripple(
       async pageRedeem(query: PageQuery) {
         const now = new Date();
 
-        return new QueryPageBuilder(db, products, db.query.products)
+        return new QueryPageBuilder(Database, products, Database.query.products)
           .where({
             deletedAt: {
               isNull: true,
@@ -282,4 +286,4 @@ export const productRepo = ripple(
   { debugName: 'ProductRepository' },
 );
 
-export type ProductRepository = InferInput<typeof productRepo>;
+export type ProductRepository = InferInput<typeof ProductRepo>;

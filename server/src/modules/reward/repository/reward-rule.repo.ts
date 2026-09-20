@@ -11,12 +11,16 @@ import {
   type UpdateRewardRule,
 } from '#db/schema';
 
-export const rewardRuleRepo = ripple(
+export const RewardRuleRepo = ripple(
   {
-    db: Database,
+    Database,
   },
-  ({ db }) => {
-    async function update(rewardRuleId: string, data: UpdateRewardRule, executor: DbExecutor = db) {
+  ({ Database }) => {
+    async function update(
+      rewardRuleId: string,
+      data: UpdateRewardRule,
+      executor: DbExecutor = Database,
+    ) {
       const [rule] = await executor
         .update(rewardRules)
         .set(data)
@@ -27,7 +31,7 @@ export const rewardRuleRepo = ripple(
     }
 
     return {
-      async findById(rewardRuleId: string, executor: DbExecutor = db) {
+      async findById(rewardRuleId: string, executor: DbExecutor = Database) {
         return await executor.query.rewardRules.findFirst({
           where: {
             id: rewardRuleId,
@@ -38,7 +42,7 @@ export const rewardRuleRepo = ripple(
         });
       },
 
-      async findByName(name: string, executor: DbExecutor = db) {
+      async findByName(name: string, executor: DbExecutor = Database) {
         return (
           (await executor.query.rewardRules.findFirst({
             where: {
@@ -51,7 +55,7 @@ export const rewardRuleRepo = ripple(
         );
       },
 
-      async listCandidates(now = new Date(), executor: DbExecutor = db) {
+      async listCandidates(now = new Date(), executor: DbExecutor = Database) {
         const startedAt = or(isNull(rewardRules.startAt), lte(rewardRules.startAt, now));
         const notEndedAt = or(isNull(rewardRules.endAt), gt(rewardRules.endAt, now));
 
@@ -64,14 +68,14 @@ export const rewardRuleRepo = ripple(
           .orderBy(asc(rewardRules.priority), asc(rewardRules.createdAt));
       },
 
-      async create(input: InsertRewardRule, executor: DbExecutor = db) {
+      async create(input: InsertRewardRule, executor: DbExecutor = Database) {
         const [rule] = await executor.insert(rewardRules).values(input).returning();
         return rule ?? null;
       },
 
       update,
 
-      async delete(rewardRuleId: string, executor: DbExecutor = db) {
+      async delete(rewardRuleId: string, executor: DbExecutor = Database) {
         const [rule] = await executor
           .update(rewardRules)
           .set({
@@ -86,13 +90,13 @@ export const rewardRuleRepo = ripple(
       async updateEnabled(
         rewardRuleId: string,
         enabled: RewardRule['enabled'],
-        executor: DbExecutor = db,
+        executor: DbExecutor = Database,
       ) {
         return await update(rewardRuleId, { enabled }, executor);
       },
 
       listManage() {
-        return db.query.rewardRules.findMany({
+        return Database.query.rewardRules.findMany({
           where: {
             deletedAt: {
               isNull: true,
@@ -115,7 +119,7 @@ export const rewardRuleRepo = ripple(
       listVisible() {
         const now = new Date();
 
-        return db.query.rewardRules.findMany({
+        return Database.query.rewardRules.findMany({
           where: {
             AND: [
               {
@@ -168,4 +172,4 @@ export const rewardRuleRepo = ripple(
   { debugName: 'RewardRuleRepository' },
 );
 
-export type RewardRuleRepository = InferInput<typeof rewardRuleRepo>;
+export type RewardRuleRepository = InferInput<typeof RewardRuleRepo>;
