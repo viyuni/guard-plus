@@ -28,9 +28,9 @@
     "vue-sonner": "catalog:"
   },
   "devDependencies": {
-    "@golar/vue": "catalog:",
     "@tailwindcss/vite": "catalog:",
     "@vueuse/nuxt": "catalog:",
-    "golar": "catalog:"
+    "typescript": "catalog:",
+    "vue-tsc": "catalog:"
   }
 }

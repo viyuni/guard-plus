@@ -13,7 +13,7 @@ export default defineConfig({
         command: 'nuxt preview',
       },
       typecheck: {
-        command: 'golar typecheck',
+        command: 'nuxt typecheck',
         input: [{ auto: true }, '!**/*.tsbuildinfo', '!.nuxt/**'],
       },
     },

@@ -35,7 +35,7 @@
     "vue-sonner": "catalog:"
   },
   "devDependencies": {
-    "@golar/vue": "catalog:",
-    "golar": "catalog:"
+    "typescript": "catalog:",
+    "vue-tsc": "catalog:"
   }
 }

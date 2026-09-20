@@ -13,13 +13,10 @@
     "prepare": "vp config"
   },
   "devDependencies": {
-    "@golar/vue": "catalog:",
     "@stylistic/eslint-plugin": "^5.10.0",
     "@tsconfig/node24": "catalog:",
-    "@typescript/native-preview": "catalog:",
     "bun-types": "catalog:",
     "changelogen": "catalog:",
-    "golar": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plus": "catalog:"
@@ -43,7 +40,6 @@
     "@tanstack/vue-form": "^1.32.0",
     "@tanstack/vue-table": "^8.21.3",
     "@tsconfig/node24": "^24.0.4",
-    "@typescript/native-preview": "^7.0.0-dev.20260628.1",
     "@unovis/ts": "^1.6.5",
     "@unovis/vue": "^1.6.5",
     "@vee-validate/valibot": "^4.15.1",
@@ -78,9 +74,8 @@
     "vue-component-type-helpers": "^3.3.4",
     "vue-router": "^5.0.7",
     "vue-sonner": "^2.0.9",
+    "vue-tsc": "^3.3.11",
     "rolldown": "^1.1.0",
-    "markdown-exit": "^1.1.0-beta.2",
-    "@golar/vue": "^0.1.8",
-    "golar": "^0.1.8"
+    "markdown-exit": "^1.1.0-beta.2"
   }
 }

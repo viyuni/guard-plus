@@ -14,19 +14,16 @@ export default defineConfig({
         command: ['vpr @server/app#build:types', 'vp fmt', 'vp lint', 'vpr typecheck'],
       },
       typecheck: {
-        command: 'golar typecheck',
+        command: 'vpr -r typecheck',
       },
       'typecheck:schema': {
         command: 'vpr --filter "@shared/schema" typecheck',
       },
       'typecheck:server': {
-        command: 'vpr --concurrency-limit 1 --filter "@server/*" typecheck',
+        command: 'vpr --filter "@server/*" typecheck',
       },
       'typecheck:web': {
-        command: [
-          'vpr @server/app#build:types',
-          'vpr --concurrency-limit 1 --filter "@web/*" typecheck',
-        ],
+        command: ['vpr @server/app#build:types', 'vpr --filter "@web/*" typecheck'],
       },
       test: {
         command: 'vpr -r test',

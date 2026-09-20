@@ -36,10 +36,10 @@
     "@types/ejs": "^3.1.5",
     "@types/node": "^26.5.1",
     "@types/nodemailer": "^8.0.1",
-    "@typescript/native-preview": "catalog:",
     "@viyuni/vpp": "^0.0.4",
     "bun-types": "catalog:",
     "drizzle-kit": "^1.0.0-rc.5-ab785fc",
-    "drizzle-seed": "^1.0.0-rc.5-ab785fc"
+    "drizzle-seed": "^1.0.0-rc.5-ab785fc",
+    "typescript-7": "npm:typescript@^7.0.2"
   }
 }

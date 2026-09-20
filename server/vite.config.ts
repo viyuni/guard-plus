@@ -65,7 +65,7 @@ export default defineConfig({
       },
       typecheck: {
         cache: true,
-        command: 'tsgo --build',
+        command: 'tsc --build',
         input: [{ auto: true }, '!**/*.tsbuildinfo'],
       },
       check: {
