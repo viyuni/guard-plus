@@ -1,6 +1,6 @@
 import { ripple } from 'cyrenejs';
 
-import { adminEnv } from '#apps/admin/env';
+import { ApiOrigin, WebOrigins } from '#env/config';
 import { authUseCase, createAuthGuard, getAuthStateCookieOptions } from '#modules/auth';
 
 /**
@@ -11,12 +11,11 @@ import { authUseCase, createAuthGuard, getAuthStateCookieOptions } from '#module
  */
 export const adminAuthGuard = ripple(
   {
+    apiOrigin: ApiOrigin,
     authUseCase,
+    webOrigins: WebOrigins,
   },
-  ({ authUseCase }) =>
-    createAuthGuard(
-      authUseCase,
-      getAuthStateCookieOptions(adminEnv.ADMIN_API_ORIGIN, adminEnv.ADMIN_WEB_ORIGINS),
-    ),
+  ({ apiOrigin, authUseCase, webOrigins }) =>
+    createAuthGuard(authUseCase, getAuthStateCookieOptions(apiOrigin, webOrigins)),
   { debugName: 'AdminAuthGuard' },
 );

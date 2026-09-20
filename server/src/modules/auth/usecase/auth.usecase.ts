@@ -2,7 +2,7 @@ import { type InferInput, ripple } from 'cyrenejs';
 import { SignJWT, jwtVerify } from 'jose';
 import { nanoid } from 'nanoid';
 
-import { JwtSecret } from '#context/tokens';
+import { JwtSecret } from '#env/config';
 import { UnauthorizedError } from '#utils';
 
 import { ACCESS_TOKEN_EXPIRES_IN_SECONDS, REFRESH_TOKEN_EXPIRES_IN_SECONDS } from '../constants';

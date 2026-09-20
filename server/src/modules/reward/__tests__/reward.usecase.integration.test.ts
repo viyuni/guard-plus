@@ -5,17 +5,11 @@ import { count, eq } from 'drizzle-orm';
 
 import { adminUserUseCase } from '#apps/admin/modules/user/usecase';
 import { userAuthUseCase } from '#apps/user/modules/auth/usecase';
-import {
-  BiliRoom,
-  Database,
-  DataSecret,
-  JwtSecret,
-  PointImageUseCase,
-  Redis,
-  RegisterCodeTtl,
-  RewardLogger,
-} from '#context/tokens';
+import { Database, PointImageUseCase, Redis, RewardLogger } from '#context/tokens';
 import { pointTransactions } from '#db/schema';
+import { BiliRoom, RegisterCodeTtl } from '#env/bili';
+import { JwtSecret } from '#env/config';
+import { DataSecret } from '#env/shared';
 import { biliRegisterUseCase } from '#modules/auth';
 import type { BiliRegisterChallenge } from '#modules/auth/domain';
 import { redis } from '#redis';

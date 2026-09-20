@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { type InferInput, ripple } from 'cyrenejs';
 
-import { ImageSavePath } from '#context/tokens';
+import { ImageSavePath } from '#env/image';
 
 import { InvalidImageSizeError } from '../domain';
 

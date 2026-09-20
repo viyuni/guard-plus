@@ -2,8 +2,9 @@ import { afterAll, expect, it, spyOn } from 'bun:test';
 
 import { Cyrene } from 'cyrenejs';
 
-import { Database, DataSecret } from '#context/tokens';
+import { Database } from '#context/tokens';
 import type { DbClient } from '#db';
+import { DataSecret } from '#env/shared';
 import type { UserRepository } from '#modules/user';
 import { userRepo, userUseCase } from '#modules/user';
 import { InvalidCredentialsError, PasswordUtil } from '#utils';

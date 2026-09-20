@@ -89,20 +89,15 @@ export async function createDeps() {
   const { runtime, ...providers } = await createContainer({
     db,
     redis,
-    env: {
-      NODE_ENV: 'test',
-      LOG_LEVEL: 'error',
-      IMAGE_SAVE_PATH: '',
-      REDIS_URL: 'redis://localhost:6379',
-      REDIS_CONNECTION_TIMEOUT_MS: 5000,
-      REDIS_IDLE_TIMEOUT_MS: 0,
-      REDIS_MAX_RETRIES: 100,
-      BILI_REGISTER_CODE_TTL_SECONDS: 300,
-      BILI_ROOM: 721,
-      API_ORIGIN: 'http://api.test.localhost',
-      JWT_SECRET: 'test',
-      WEB_ORIGINS: ['http://test.localhost'],
-      DATA_SECRET: 'test',
+    config: {
+      nodeEnv: 'test',
+      dataSecret: 'test',
+      jwtSecret: 'test',
+      biliRoom: 721,
+      registerCodeTtlSeconds: 300,
+      imageSavePath: '',
+      apiOrigin: 'http://api.test.localhost',
+      webOrigins: ['http://test.localhost'],
     },
   });
 

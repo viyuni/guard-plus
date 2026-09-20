@@ -1,7 +1,8 @@
 import type { UserLoginBody, UserRegisterBody, UserResetPasswordBody } from '@shared/schema/user';
 import { type InferInput, ripple } from 'cyrenejs';
 
-import { BiliRoom, Database } from '#context/tokens';
+import { Database } from '#context/tokens';
+import { BiliRoom } from '#env/bili';
 import { authUseCase, biliPasswordResetUseCase, biliRegisterUseCase } from '#modules/auth';
 import { pointAccountUseCase } from '#modules/point';
 import { rewardUseCase } from '#modules/reward';

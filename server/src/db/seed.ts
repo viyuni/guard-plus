@@ -3,7 +3,9 @@ import { fakerZH_CN as faker } from '@faker-js/faker';
 import { Cyrene } from 'cyrenejs';
 import { seed as drizzleSeed } from 'drizzle-seed';
 
-import { Database, DataSecret, BiliRoom, PointImageUseCase, RewardLogger } from '#context/tokens';
+import { Database, PointImageUseCase, RewardLogger } from '#context/tokens';
+import { BiliRoom } from '#env/bili';
+import { DataSecret } from '#env/shared';
 
 import { createDatabase, db } from '.';
 import type { BiliGuardRewardEvent } from '../modules/reward';

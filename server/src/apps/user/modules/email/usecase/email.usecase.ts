@@ -1,7 +1,7 @@
 import { type InferInput, ripple } from 'cyrenejs';
 import ejs from 'ejs';
 
-import { smtpEnv } from '#env/smtp';
+import { SmtpConfig } from '#env/smtp';
 import type { NewOrderEmailInput } from '#queues';
 import { BadRequestError } from '#utils';
 
@@ -44,10 +44,11 @@ function formatOrderStatus(input: string) {
 export const emailUseCase = ripple(
   {
     mailer,
+    smtpConfig: SmtpConfig,
   },
-  ({ mailer }) => {
+  ({ mailer, smtpConfig }) => {
     // 通知收件人来自 SMTP 配置。
-    const notifyEmails = smtpEnv.NOTIFY_EMAILS;
+    const notifyEmails = smtpConfig?.notifyEmails ?? [];
 
     function renderTemplate(template: string, data: Record<string, unknown>) {
       return ejs.render(template, data);

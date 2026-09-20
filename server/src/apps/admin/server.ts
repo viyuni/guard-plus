@@ -1,7 +1,6 @@
 import { cors } from '@elysia/cors';
 import { Elysia } from 'elysia';
 
-import { imageEnv } from '#env/image';
 import { errorHandler } from '#modules/error-handler';
 import { health } from '#modules/health';
 import { image } from '#modules/image';
@@ -9,7 +8,7 @@ import { openapi } from '#modules/openapi';
 import { version } from '~/package.json' with { type: 'json' };
 
 import { appRuntimeContext } from './context';
-import { adminEnv } from './env';
+import { adminAppConfig, adminEnv } from './env';
 
 export const app = new Elysia({
   name: 'AdminServer',
@@ -28,10 +27,10 @@ export const app = new Elysia({
   .use(appRuntimeContext)
   .use(errorHandler)
   .use(health)
-  .use(image({ assets: imageEnv.IMAGE_SAVE_PATH }))
+  .use(image({ assets: adminAppConfig.imageSavePath }))
   .get('/', () => 'Viyuni Guard plus server running... :)');
 
-if (adminEnv.NODE_ENV === 'development') {
+if (adminAppConfig.nodeEnv === 'development') {
   app.use(
     openapi({
       title: 'Viyuni Guard Plus',

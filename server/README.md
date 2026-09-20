@@ -22,14 +22,44 @@ This package contains the admin and user API apps, event ingestion runtime, back
 
 Module `context.ts` files declare individual Repository and UseCase providers with
 `cyrenejs` `ripple`. Business classes keep ordinary constructor dependencies.
-Infrastructure and configuration tokens live in `src/context/tokens.ts`.
+`src/context/tokens.ts` holds only infrastructure and optional-capability tokens
+(`Database`, `Redis`, `PointImageUseCase`, `RewardLogger`).
 
-`createContainer({ db, redis, env })`, `createEventContainer(...)`, and
-`createAppContext(...)` are asynchronous. Each call owns an isolated Cyrene runtime;
-providers share instances only within that runtime. The returned container exposes
-`repositories`, `useCases`, and `runtime`. HTTP contexts dispose the runtime on
-Elysia stop; scripts and tests must dispose it explicitly or use `await using`.
-Externally bound DB/Redis clients remain owned by the caller.
+### Environment and configuration
+
+Env validation lives in `src/env/*`, one file per concern. Each file owns both its
+`createEnv` schema and the config `token` that modules inject, so a module never
+imports an env singleton:
+
+- `src/env/shared.ts`: `NODE_ENV`, `LOG_LEVEL`, `DATA_SECRET` (`DataSecret`)
+- `src/env/bili.ts`: `BILI_ROOM`, `BILI_REGISTER_CODE_TTL_SECONDS` (`BiliRoom`, `RegisterCodeTtl`)
+- `src/env/db.ts`, `src/env/redis.ts`: infrastructure clients, read once at the process edge
+- `src/env/image.ts`: `IMAGE_SAVE_PATH` (`ImageSavePath`)
+- `src/env/smtp.ts`: SMTP settings (`SmtpConfig`, `undefined` when unconfigured)
+- `src/env/config.ts`: the normalized `AppConfig` / `EventConfig` contract plus the
+  app-level `JwtSecret`, `ApiOrigin`, and `WebOrigins` tokens
+
+Modules request config exactly like any other dependency:
+
+```ts
+export const imageUseCase = ripple({ imageSavePath: ImageSavePath }, ({ imageSavePath }) => {
+  // ...
+});
+```
+
+Each app maps its prefixed env to the normalized config once, in
+`src/apps/<app>/env.ts` (for example `ADMIN_JWT_SECRET -> jwtSecret`), and exports
+`adminAppConfig` / `userAppConfig` / `eventAppConfig`. Only that mapping knows the
+env prefixes; downstream code depends on generic tokens.
+
+`createContainer({ db, redis, config })`, `createEventContainer({ db, redis, config })`,
+and `createAppContext(...)` are asynchronous and bind the config fields to tokens.
+Each call owns an isolated Cyrene runtime; providers share instances only within that
+runtime. The returned container exposes `repositories`, `useCases`, and `runtime`.
+HTTP contexts dispose the runtime on Elysia stop; scripts and tests must dispose it
+explicitly or use `await using`. Externally bound DB/Redis clients remain owned by the
+caller. `src/utils/logger.ts`, `src/db`, and `src/redis` still read their env at the
+process edge, before any container exists.
 
 Event and seed entrypoints use smaller graphs without HTTP authentication or image
 configuration. Add new providers to the owning module and compose them at the app

@@ -4,7 +4,8 @@ import { createHash } from 'node:crypto';
 import { Cyrene } from 'cyrenejs';
 import { createClient } from 'redis';
 
-import { RegisterCodeTtl, Redis } from '#context/tokens';
+import { Redis } from '#context/tokens';
+import { RegisterCodeTtl } from '#env/bili';
 import type { RedisClient } from '#redis';
 
 import type { BiliRegisterRedisRepository } from '../repository';

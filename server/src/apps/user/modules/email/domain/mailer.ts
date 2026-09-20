@@ -2,14 +2,7 @@ import { ripple } from 'cyrenejs';
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 
-import { smtpEnv, type SmtpEnv } from '#env/smtp';
-
-interface SmtpConfigOptions {
-  host: string;
-  port: number;
-  user: string;
-  pass: string;
-}
+import { SmtpConfig } from '#env/smtp';
 
 export interface SendMailInput {
   to: string[];
@@ -20,7 +13,7 @@ export interface SendMailInput {
 export class Mailer {
   private readonly transporter: Transporter;
 
-  constructor(private readonly config: SmtpConfigOptions) {
+  constructor(private readonly config: SmtpConfig) {
     this.transporter = nodemailer.createTransport({
       host: config.host,
       port: config.port,
@@ -38,7 +31,7 @@ export class Mailer {
 
   send(input: SendMailInput) {
     return this.transporter.sendMail({
-      from: this.config.user,
+      from: this.config.from,
       to: input.to,
       subject: input.subject,
       html: input.html,
@@ -46,23 +39,20 @@ export class Mailer {
   }
 }
 
-export function createMailer(config: SmtpEnv) {
-  if (!config.SMTP_HOST || !config.SMTP_PORT || !config.SMTP_USER || !config.SMTP_PASS) {
-    return undefined;
-  }
-
-  return new Mailer({
-    host: config.SMTP_HOST,
-    port: config.SMTP_PORT,
-    user: config.SMTP_USER,
-    pass: config.SMTP_PASS,
-  });
+export function createMailer(config: SmtpConfig | undefined) {
+  return config ? new Mailer(config) : undefined;
 }
 
 /**
  * SMTP 未配置时 mailer 为 undefined, 由 UseCase 决定是否降级。
  */
-export const mailer = ripple({}, () => createMailer(smtpEnv), {
-  debugName: 'Mailer',
-  dispose: value => value?.close(),
-});
+export const mailer = ripple(
+  {
+    smtpConfig: SmtpConfig,
+  },
+  ({ smtpConfig }) => createMailer(smtpConfig),
+  {
+    debugName: 'Mailer',
+    dispose: value => value?.close(),
+  },
+);

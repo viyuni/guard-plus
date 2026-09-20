@@ -7,6 +7,7 @@ import {
 import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
+import { ApiOrigin, WebOrigins } from '#env/config';
 import {
   ACCESS_TOKEN_COOKIE_NAME,
   ACCESS_TOKEN_COOKIE_OPTIONS,
@@ -23,15 +24,9 @@ import {
   getAuthStateCookieOptions,
 } from '#modules/auth';
 
-import { userEnv } from '../../env';
 import { userAuthUseCase } from './usecase';
 
 export * from './usecase';
-
-const authStateCookieOptions = getAuthStateCookieOptions(
-  userEnv.USER_API_ORIGIN,
-  userEnv.USER_WEB_ORIGINS,
-);
 
 function getCookieString(value: unknown) {
   return typeof value === 'string' ? value : undefined;
@@ -65,11 +60,15 @@ function removeBiliPasswordResetCookies(
 
 export const authRoutes = ripple(
   {
+    apiOrigin: ApiOrigin,
     authUseCase,
     userAuthUseCase,
+    webOrigins: WebOrigins,
   },
-  ({ authUseCase, userAuthUseCase }) =>
-    new Elysia({
+  ({ apiOrigin, authUseCase, userAuthUseCase, webOrigins }) => {
+    const authStateCookieOptions = getAuthStateCookieOptions(apiOrigin, webOrigins);
+
+    return new Elysia({
       name: 'AuthRoute',
       prefix: '/auth',
       detail: {
@@ -257,5 +256,6 @@ export const authRoutes = ripple(
             summary: '重置用户密码',
           },
         },
-      ),
+      );
+  },
 );

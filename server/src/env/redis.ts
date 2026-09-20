@@ -29,16 +29,8 @@ export const redisEnv = createEnv({
      * Redis 自动重连最大次数
      */
     REDIS_MAX_RETRIES: v.optional(numberish(), 100),
-
-    /**
-     * B 站注册码有效期（秒）
-     */
-    BILI_REGISTER_CODE_TTL_SECONDS: v.optional(numberish(), 300),
   },
-  runtimeEnv: {
-    ...process.env,
-    BILI_REGISTER_CODE_TTL_SECONDS: process.env.BILI_REGISTER_CODE_TTL_SECONDS,
-  },
+  runtimeEnv: process.env,
   emptyStringAsUndefined: true,
 });
 

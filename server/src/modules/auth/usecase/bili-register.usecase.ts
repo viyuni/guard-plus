@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { type InferInput, ripple } from 'cyrenejs';
 import { customAlphabet } from 'nanoid';
 
-import { RegisterCodeTtl } from '#context/tokens';
+import { RegisterCodeTtl } from '#env/bili';
 
 import type { BiliRegisterChallenge } from '../domain';
 import { biliPasswordResetRepo, biliRegisterRepo } from '../repository';

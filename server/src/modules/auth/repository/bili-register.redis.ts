@@ -1,6 +1,7 @@
 import { type InferInput, ripple } from 'cyrenejs';
 
-import { Redis, RegisterCodeTtl } from '#context/tokens';
+import { Redis } from '#context/tokens';
+import { RegisterCodeTtl } from '#env/bili';
 import type { RedisClient } from '#redis';
 
 import type { BiliRegisterChallenge } from '../domain';

@@ -3,21 +3,20 @@ import type { Guard } from '@viyuni/bevent-relay/events';
 import { Worker } from 'bunqueue/client';
 
 import { db } from '#db';
-import { sharedEnv } from '#env/shared';
 import { publishBilibiliGuardEvent } from '#queues';
 import { BILIBILI_EVENT_QUEUE_NAME } from '#queues';
 import { redis } from '#redis';
 import { logger } from '#utils/logger';
 
 import { createEventContainer } from './context';
-import { eventEnv } from './env';
+import { eventAppConfig, eventEnv } from './env';
 import { createEventServer } from './server';
 
 const { runtime, biliPasswordResetUseCase, biliRegisterUseCase, rewardUseCase } =
   await createEventContainer({
     db,
     redis,
-    env: eventEnv,
+    config: eventAppConfig,
   });
 
 const _worker = new Worker<Guard>(
@@ -32,7 +31,7 @@ const _worker = new Worker<Guard>(
 );
 
 const listener = createListener({
-  roomId: eventEnv.BILI_ROOM,
+  roomId: eventAppConfig.biliRoom,
   cookieSync: {
     url: eventEnv.VIYUNI_LOGIN_SYNC_URL,
     password: eventEnv.VIYUNI_LOGIN_SYNC_PASSWORD,
@@ -70,7 +69,7 @@ listener.on('event', event => {
     return;
   }
 
-  if (sharedEnv.NODE_ENV === 'development') {
+  if (eventAppConfig.nodeEnv === 'development') {
     logger.info(event, 'Bilibili Event');
   }
 });

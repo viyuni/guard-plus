@@ -5,7 +5,7 @@ import {
 } from '@shared/schema/reward';
 import { type InferInput, ripple } from 'cyrenejs';
 
-import { BiliRoom, Database, RewardLogger } from '#context/tokens';
+import { Database, RewardLogger } from '#context/tokens';
 import type { DbTransaction } from '#db';
 import type {
   BiliEvent,
@@ -13,6 +13,7 @@ import type {
   BiliEventRewardResultSnapshot,
   User,
 } from '#db/schema';
+import { BiliRoom } from '#env/bili';
 import {
   biliEventRepo,
   BiliEventNotFoundError,

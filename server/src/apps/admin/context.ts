@@ -1,6 +1,6 @@
 import { ripple } from 'cyrenejs';
 
-import { adminEnv } from '#apps/admin/env';
+import { adminAppConfig, adminEnv } from '#apps/admin/env';
 import { createAppContext } from '#context';
 import { providersOf } from '#context/providers';
 import { db } from '#db';
@@ -22,12 +22,7 @@ import * as adminUserUseCase from './modules/user/usecase';
 export const { context, container: adminContainer } = await createAppContext({
   db,
   redis,
-  env: {
-    ...adminEnv,
-    API_ORIGIN: adminEnv.ADMIN_API_ORIGIN,
-    JWT_SECRET: adminEnv.ADMIN_JWT_SECRET,
-    WEB_ORIGINS: adminEnv.ADMIN_WEB_ORIGINS,
-  },
+  config: adminAppConfig,
 });
 
 /**

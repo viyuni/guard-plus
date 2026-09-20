@@ -2,7 +2,7 @@ import { AdminLoginSchema } from '@shared/schema/admin';
 import { ripple } from 'cyrenejs';
 import Elysia from 'elysia';
 
-import { adminEnv } from '#apps/admin/env';
+import { ApiOrigin, WebOrigins } from '#env/config';
 import {
   ACCESS_TOKEN_COOKIE_NAME,
   ACCESS_TOKEN_COOKIE_OPTIONS,
@@ -18,18 +18,17 @@ import { adminAuthUseCase } from './usecase';
 
 export * from './usecase';
 
-const authStateCookieOptions = getAuthStateCookieOptions(
-  adminEnv.ADMIN_API_ORIGIN,
-  adminEnv.ADMIN_WEB_ORIGINS,
-);
-
 export const adminAuthRoutes = ripple(
   {
     adminAuthUseCase,
+    apiOrigin: ApiOrigin,
     authUseCase,
+    webOrigins: WebOrigins,
   },
-  ({ adminAuthUseCase, authUseCase }) =>
-    new Elysia({
+  ({ adminAuthUseCase, apiOrigin, authUseCase, webOrigins }) => {
+    const authStateCookieOptions = getAuthStateCookieOptions(apiOrigin, webOrigins);
+
+    return new Elysia({
       name: 'AuthRoute',
       prefix: '/auth',
       detail: {
@@ -90,5 +89,6 @@ export const adminAuthRoutes = ripple(
             description: '管理员退出登录',
           },
         },
-      ),
+      );
+  },
 );

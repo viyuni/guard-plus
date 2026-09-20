@@ -2,17 +2,11 @@ import { Cyrene } from 'cyrenejs';
 import type { DependencyEntries } from 'cyrenejs';
 import { createClient, type RedisClientOptions } from 'redis';
 
-import {
-  BiliRoom,
-  Database,
-  DataSecret,
-  JwtSecret,
-  PointImageUseCase,
-  Redis,
-  RegisterCodeTtl,
-  RewardLogger,
-} from '#context/tokens';
+import { Database, PointImageUseCase, Redis, RewardLogger } from '#context/tokens';
 import type { DbClient } from '#db';
+import { BiliRoom, RegisterCodeTtl } from '#env/bili';
+import { JwtSecret } from '#env/config';
+import { DataSecret } from '#env/shared';
 
 /**
  * 测试用的依赖装配入口。

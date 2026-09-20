@@ -1,17 +1,10 @@
 import { Cyrene } from 'cyrenejs';
 
-import {
-  BiliRoom,
-  Database,
-  DataSecret,
-  PointImageUseCase,
-  Redis,
-  RegisterCodeTtl,
-  RewardLogger,
-} from '#context/tokens';
+import { Database, PointImageUseCase, Redis, RewardLogger } from '#context/tokens';
 import type { DbClient } from '#db';
-import type { RedisEnv } from '#env/redis';
-import type { SharedEnv } from '#env/shared';
+import { BiliRoom, RegisterCodeTtl } from '#env/bili';
+import type { EventConfig } from '#env/config';
+import { DataSecret } from '#env/shared';
 import { biliPasswordResetRepo, biliPasswordResetUseCase } from '#modules/auth';
 import { biliRegisterRepo, biliRegisterUseCase } from '#modules/auth';
 import { biliEventRepo } from '#modules/bili-event';
@@ -34,11 +27,8 @@ import { logger } from '#utils/logger';
 export interface CreateEventContextOptions {
   db: DbClient;
   redis: RedisClient;
-  env: SharedEnv &
-    RedisEnv & {
-      DATA_SECRET: string;
-      BILI_ROOM?: number;
-    };
+  /** 事件进程的最小配置，见 `#apps/event/env`。 */
+  config: EventConfig;
 }
 
 /**
@@ -46,7 +36,7 @@ export interface CreateEventContextOptions {
  *
  * 这里显式挑选 provider，避免把商品、订单、看板等模块带进事件进程。
  */
-export async function createEventContainer({ db, redis, env }: CreateEventContextOptions) {
+export async function createEventContainer({ db, redis, config }: CreateEventContextOptions) {
   const runtime = new Cyrene({
     providers: {
       biliEventRepo,
@@ -70,9 +60,9 @@ export async function createEventContainer({ db, redis, env }: CreateEventContex
     bindings: [
       { token: Database, value: db },
       { token: Redis, value: redis },
-      { token: DataSecret, value: env.DATA_SECRET },
-      { token: BiliRoom, value: env.BILI_ROOM },
-      { token: RegisterCodeTtl, value: env.BILI_REGISTER_CODE_TTL_SECONDS },
+      { token: DataSecret, value: config.dataSecret },
+      { token: BiliRoom, value: config.biliRoom },
+      { token: RegisterCodeTtl, value: config.registerCodeTtlSeconds },
       { token: RewardLogger, value: logger.scope('RewardUseCase') },
       { token: PointImageUseCase, value: undefined },
     ],

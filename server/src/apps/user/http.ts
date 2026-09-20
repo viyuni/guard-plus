@@ -1,6 +1,6 @@
 import { ripple } from 'cyrenejs';
 
-import { userEnv } from '#apps/user/env';
+import { ApiOrigin, WebOrigins } from '#env/config';
 import { authUseCase, createAuthGuard, getAuthStateCookieOptions } from '#modules/auth';
 
 /**
@@ -11,12 +11,11 @@ import { authUseCase, createAuthGuard, getAuthStateCookieOptions } from '#module
  */
 export const userAuthGuard = ripple(
   {
+    apiOrigin: ApiOrigin,
     authUseCase,
+    webOrigins: WebOrigins,
   },
-  ({ authUseCase }) =>
-    createAuthGuard(
-      authUseCase,
-      getAuthStateCookieOptions(userEnv.USER_API_ORIGIN, userEnv.USER_WEB_ORIGINS),
-    ),
+  ({ apiOrigin, authUseCase, webOrigins }) =>
+    createAuthGuard(authUseCase, getAuthStateCookieOptions(apiOrigin, webOrigins)),
   { debugName: 'UserAuthGuard' },
 );

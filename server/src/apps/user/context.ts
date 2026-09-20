@@ -1,6 +1,6 @@
 import { ripple } from 'cyrenejs';
 
-import { userEnv } from '#apps/user/env';
+import { userAppConfig } from '#apps/user/env';
 import { createAppContext } from '#context';
 import { providersOf } from '#context/providers';
 import { db } from '#db';
@@ -20,12 +20,7 @@ import { userRoutes } from './modules/user';
 const { context, container } = await createAppContext({
   db,
   redis,
-  env: {
-    ...userEnv,
-    API_ORIGIN: userEnv.USER_API_ORIGIN,
-    JWT_SECRET: userEnv.USER_JWT_SECRET,
-    WEB_ORIGINS: userEnv.USER_WEB_ORIGINS,
-  },
+  config: userAppConfig,
 });
 
 /**

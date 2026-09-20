@@ -8,6 +8,7 @@ import { createEventContainer } from '#apps/event/context';
 import { createAppContext, createContainer } from '#context';
 import type { CreateSharedContextOptions } from '#context';
 import { createDatabase } from '#db/client';
+import type { AppConfig, EventConfig } from '#env/config';
 import { pointTypeRepo, pointTypeUseCase } from '#modules/point';
 import { userRepo } from '#modules/user';
 
@@ -16,24 +17,21 @@ const db = createDatabase('postgres://test:test@localhost:1/di_test');
 const redisOptions: RedisClientOptions = {};
 const redis = createClient(redisOptions);
 
+const config: AppConfig = {
+  nodeEnv: 'test',
+  dataSecret: 'test',
+  jwtSecret: 'test',
+  biliRoom: 721,
+  registerCodeTtlSeconds: 300,
+  imageSavePath: './tmp/test-images',
+  apiOrigin: 'http://api.test.localhost',
+  webOrigins: ['http://test.localhost'],
+};
+
 const options = {
   db,
   redis,
-  env: {
-    NODE_ENV: 'test',
-    LOG_LEVEL: 'error',
-    IMAGE_SAVE_PATH: './tmp/test-images',
-    REDIS_URL: 'redis://localhost:1',
-    REDIS_CONNECTION_TIMEOUT_MS: 5000,
-    REDIS_IDLE_TIMEOUT_MS: 0,
-    REDIS_MAX_RETRIES: 0,
-    BILI_REGISTER_CODE_TTL_SECONDS: 300,
-    BILI_ROOM: 721,
-    API_ORIGIN: 'http://api.test.localhost',
-    JWT_SECRET: 'test',
-    WEB_ORIGINS: ['http://test.localhost'],
-    DATA_SECRET: 'test',
-  },
+  config,
 } satisfies CreateSharedContextOptions;
 
 afterAll(() => db.$client.end());
@@ -62,8 +60,14 @@ describe('Cyrene application contexts', () => {
   });
 
   test('starts the event graph without HTTP auth or image configuration', async () => {
-    const { JWT_SECRET: _jwt, IMAGE_SAVE_PATH: _images, ...env } = options.env;
-    const container = await createEventContainer({ db, redis, env });
+    const eventConfig: EventConfig = {
+      nodeEnv: config.nodeEnv,
+      dataSecret: config.dataSecret,
+      biliRoom: config.biliRoom,
+      registerCodeTtlSeconds: config.registerCodeTtlSeconds,
+    };
+
+    const container = await createEventContainer({ db, redis, config: eventConfig });
     await using runtime = container.runtime;
     const names = runtime.inspect().nodes.map(node => node.name);
 

@@ -4,7 +4,8 @@ import { Cyrene } from 'cyrenejs';
 import Elysia from 'elysia';
 import { decodeJwt } from 'jose';
 
-import { JwtSecret, Redis } from '#context/tokens';
+import { Redis } from '#context/tokens';
+import { JwtSecret } from '#env/config';
 import type { RedisClient } from '#redis';
 
 import type { AuthTokenPair } from '../domain';
