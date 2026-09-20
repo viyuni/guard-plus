@@ -38,18 +38,16 @@ const { canSubmit, handleSubmit, isLoading } = usePopoverForm({
   schema: UpdateRewardRuleSchema,
   open,
   initialValues: () => ({
-    name: props.rule?.name ?? '',
-    description: props.rule?.description ?? undefined,
-    conditions: props.rule
-      ? toRewardRuleCondition(props.rule.conditions)
-      : { type: 'biliGuard' as const },
-    pointTypeId: props.rule?.pointTypeId ?? '',
-    points: props.rule?.points ?? 1,
-    enabled: props.rule?.enabled ?? false,
-    group: props.rule?.group ?? undefined,
-    startAt: props.rule?.startAt,
-    endAt: props.rule?.endAt,
-    priority: props.rule?.priority ?? 0,
+    name: props.rule.name ?? '',
+    description: props.rule.description ?? undefined,
+    conditions: toRewardRuleCondition(props.rule.conditions),
+    pointTypeId: props.rule.pointTypeId ?? '',
+    points: props.rule.points ?? 1,
+    enabled: props.rule.enabled ?? false,
+    group: props.rule.group ?? undefined,
+    startAt: props.rule.startAt,
+    endAt: props.rule.endAt,
+    priority: props.rule.priority ?? 0,
   }),
   mutation: updateRewardRuleMutation,
   transform(body) {

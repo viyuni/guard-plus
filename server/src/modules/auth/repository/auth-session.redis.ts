@@ -26,6 +26,7 @@ export class AuthSessionRedisRepository {
 
   async create(accountId: string, role: AuthRole) {
     const sessionId = nanoid();
+
     const session: AuthSession = {
       accountId,
       role,
@@ -46,7 +47,9 @@ export class AuthSessionRedisRepository {
   async find(role: AuthRole, sessionId: string) {
     const raw = await this.redis.get(this.key(role, sessionId));
 
-    if (!raw) return null;
+    if (!raw) {
+      return null;
+    }
 
     return JSON.parse(raw) as AuthSession;
   }
@@ -89,7 +92,9 @@ export class AuthSessionRedisRepository {
   async getRefreshResult(role: AuthRole, sessionId: string) {
     const raw = await this.redis.get(this.refreshResultKey(role, sessionId));
 
-    if (!raw) return null;
+    if (!raw) {
+      return null;
+    }
 
     try {
       return JSON.parse(raw) as AuthTokenPair;

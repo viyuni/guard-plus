@@ -38,6 +38,7 @@ const { canSubmit, handleSubmit, isLoading, setFieldValue, values } = usePopover
 const selectedPointAccount = computed(() =>
   props.user.pointAccounts?.find(pointAccount => pointAccount.pointType?.id === values.pointTypeId),
 );
+
 const currentBalance = computed(() => selectedPointAccount.value?.balance ?? 0);
 
 watch(

@@ -26,6 +26,7 @@ function createAuthUseCase() {
   const sessions = new Map<string, { accountId: string; role: 'user' | 'admin' | 'superAdmin' }>();
   const refreshResults = new Map<string, AuthTokenPair>();
   const refreshLocks = new Set<string>();
+
   const authSessionRepo = {
     create: mock(async (accountId: string, role: 'user' | 'admin' | 'superAdmin') => {
       const sessionId = `${role}-${accountId}-session`;
@@ -41,7 +42,9 @@ function createAuthUseCase() {
     find: mock(async (role: 'user' | 'admin' | 'superAdmin', sessionId: string) => {
       const session = sessions.get(`${role}:${sessionId}`);
 
-      if (!session) return null;
+      if (!session) {
+        return null;
+      }
 
       return {
         ...session,
@@ -92,6 +95,7 @@ describe('AuthUseCase', () => {
       id: 'admin-id',
       role: 'superAdmin',
     });
+
     const payload = await authUseCase.verifyAccessToken(accessToken);
 
     expect(payload).toEqual({
@@ -107,6 +111,7 @@ describe('AuthUseCase', () => {
     const { accessToken } = await authUseCase.createSessionTokenPair({
       id: 'user-id',
     });
+
     const payload = await authUseCase.verifyAccessToken(accessToken);
 
     expect(payload).toEqual({
@@ -123,6 +128,7 @@ describe('AuthUseCase', () => {
       id: 'user-id',
       role: 'user',
     });
+
     const tokens = await authUseCase.refreshTokenPair(refreshToken);
     const { accessToken } = tokens;
     const payload = await authUseCase.verifyAccessToken(accessToken);
@@ -284,6 +290,7 @@ describe('requiredAuth token refresh', () => {
     setSystemTime(loginAt);
 
     const { authUseCase, authSessionRepo } = createAuthUseCase();
+
     const originalTokens = await authUseCase.createSessionTokenPair({
       id: 'user-id',
       role: 'user',
@@ -302,6 +309,7 @@ describe('requiredAuth token refresh', () => {
         },
       }),
     );
+
     const nextAccessToken = getSetCookieValue(response, 'accessToken');
     const nextRefreshToken = getSetCookieValue(response, 'refreshToken');
     const authState = getSetCookieValue(response, 'auth');

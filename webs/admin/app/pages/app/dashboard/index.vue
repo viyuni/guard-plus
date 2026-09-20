@@ -67,6 +67,7 @@ const biliGuardTrend = computed(() => overview.value?.trends.biliGuardEvents ?? 
 const orderTrend = computed(() => overview.value?.trends.orders ?? []);
 const biliGuardStatusStats = computed(() => overview.value?.biliGuardStatusStats ?? []);
 const recentOrders = computed(() => overview.value?.recentOrders ?? []);
+
 const recentFailedBiliGuardEvents = computed(
   () => overview.value?.recentFailedBiliGuardEvents ?? [],
 );

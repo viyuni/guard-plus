@@ -1,6 +1,6 @@
 import type { DbTransaction } from '#db';
 import type { PointAccount, PointTransaction } from '#db/schema';
-import { UserUseCase } from '#modules/user';
+import type { UserUseCase } from '#modules/user';
 
 import type { ChangeBalanceInput } from '../domain';
 import {
@@ -11,8 +11,8 @@ import {
   PointTransactionIdempotencyConflictError,
   PointTransactionPolicy,
 } from '../domain';
-import { PointAccountRepository } from '../repository/point-account.repo';
-import { PointTransactionRepository } from '../repository/point-transaction.repo';
+import type { PointAccountRepository } from '../repository/point-account.repo';
+import type { PointTransactionRepository } from '../repository/point-transaction.repo';
 import type { PointTypeUseCase } from './point-type.usecase';
 
 export class PointBalanceUseCase {

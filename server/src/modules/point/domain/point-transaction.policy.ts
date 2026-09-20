@@ -44,41 +44,63 @@ export class PointTransactionPolicy {
     delta: number;
     sourceType: string | null;
   }) {
-    switch (input.sourceType) {
-      case POINT_CHANGE_SOURCE_TYPE.OrderConsume:
+    return (
+      PointTransactionPolicy.resolveSourceTitle(input.sourceType, input.delta) ??
+      PointTransactionPolicy.resolveTypeTitle(input.type, input.delta)
+    );
+  }
+
+  private static resolveSourceTitle(sourceType: string | null, delta: number) {
+    switch (sourceType) {
+      case POINT_CHANGE_SOURCE_TYPE.OrderConsume: {
         return '兑换商品';
+      }
 
-      case POINT_CHANGE_SOURCE_TYPE.OrderRefund:
+      case POINT_CHANGE_SOURCE_TYPE.OrderRefund: {
         return '订单退款';
+      }
 
-      case POINT_CHANGE_SOURCE_TYPE.AdminAdjustment:
-        return input.delta >= 0 ? '管理员发放' : '管理员扣减';
+      case POINT_CHANGE_SOURCE_TYPE.AdminAdjustment: {
+        return delta >= 0 ? '管理员发放' : '管理员扣减';
+      }
 
-      case POINT_CHANGE_SOURCE_TYPE.Reversal:
+      case POINT_CHANGE_SOURCE_TYPE.Reversal: {
         return '积分冲正';
+      }
 
-      case POINT_CHANGE_SOURCE_TYPE.GuardEvent:
+      case POINT_CHANGE_SOURCE_TYPE.GuardEvent: {
         return '大航海奖励';
+      }
 
-      case POINT_CHANGE_SOURCE_TYPE.Conversion:
-        return input.delta >= 0 ? '积分转换转入' : '积分转换转出';
+      case POINT_CHANGE_SOURCE_TYPE.Conversion: {
+        return delta >= 0 ? '积分转换转入' : '积分转换转出';
+      }
     }
 
-    switch (input.type) {
-      case 'grant':
+    return undefined;
+  }
+
+  private static resolveTypeTitle(type: PointTransactionType, delta: number) {
+    switch (type) {
+      case 'grant': {
         return '获得积分';
+      }
 
-      case 'consume':
+      case 'consume': {
         return '消耗积分';
+      }
 
-      case 'refund':
+      case 'refund': {
         return '积分退回';
+      }
 
-      case 'adjust':
-        return input.delta >= 0 ? '积分调整增加' : '积分调整扣减';
+      case 'adjust': {
+        return delta >= 0 ? '积分调整增加' : '积分调整扣减';
+      }
 
-      case 'reversal':
+      case 'reversal': {
         return '积分冲正';
+      }
     }
   }
 }

@@ -38,9 +38,11 @@ export class ImageUseCase {
 
     const filename = `${hashPrefix}.webp`;
     const filePath = path.join(this.imageSavePath, filename);
+
     const resizeImage = image.resize(512, 512, {
       fit: 'inside',
     });
+
     const isExists = await this.exists(filePath);
 
     // 避免重复上传

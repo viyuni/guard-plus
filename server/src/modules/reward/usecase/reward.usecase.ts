@@ -11,20 +11,17 @@ import type {
   BiliEventRewardResultSnapshot,
   User,
 } from '#db/schema';
-import {
-  BiliEventNotFoundError,
-  BiliEventPersistFailedError,
-  BiliEventRepository,
-} from '#modules/bili-event';
-import {
-  POINT_CHANGE_SOURCE_TYPE,
-  PointIdempotencyKey,
+import type { BiliEventRepository } from '#modules/bili-event';
+import { BiliEventNotFoundError, BiliEventPersistFailedError } from '#modules/bili-event';
+import type {
   PointAccountRepository,
   PointBalanceUseCase,
   PointTransactionRepository,
   PointTypeUseCase,
 } from '#modules/point';
-import { UserNotFoundError, UserUseCase } from '#modules/user';
+import { POINT_CHANGE_SOURCE_TYPE, PointIdempotencyKey } from '#modules/point';
+import type { UserUseCase } from '#modules/user';
+import { UserNotFoundError } from '#modules/user';
 
 import {
   RewardPolicy,
@@ -32,7 +29,7 @@ import {
   type BiliGuardRewardEvent,
   type RewardGrantPlanItem,
 } from '../domain';
-import { RewardRuleRepository } from '../repository';
+import type { RewardRuleRepository } from '../repository';
 
 export interface RewardUseCaseDeps {
   biliRoom?: number;
@@ -48,6 +45,32 @@ export interface RewardUseCaseDeps {
   rewardRuleRepo: RewardRuleRepository;
   userUseCase: UserUseCase;
 }
+
+/**
+ * 手动大航海事件时长表。
+ *
+ * 按开通价格区间映射对应的时长（分钟）。
+ */
+const MANUAL_BILI_GUARD_DURATION_TABLE: Array<{
+  min: number;
+  max?: number;
+  duration: number;
+}> = [
+  { min: 0, max: 1, duration: 4 },
+  { min: 1, max: 5, duration: 6 },
+  { min: 5, max: 10, duration: 10 },
+  { min: 10, max: 15, duration: 20 },
+  { min: 15, max: 30, duration: 30 },
+  { min: 30, max: 50, duration: 60 },
+  { min: 50, max: 100, duration: 60 * 2 },
+  { min: 100, max: 500, duration: 60 * 5 },
+  { min: 500, max: 1000, duration: 60 * 30 },
+  { min: 1000, max: 2000, duration: 60 * 60 },
+  { min: 2000, max: 5000, duration: 60 * 60 * 2 },
+  { min: 5000, max: 10000, duration: 60 * 60 * 3 },
+  { min: 10000, max: 20000, duration: 60 * 60 * 4 },
+  { min: 20000, duration: 60 * 60 * 5 },
+];
 
 export class RewardUseCase {
   constructor(private readonly deps: RewardUseCaseDeps) {}
@@ -207,10 +230,12 @@ export class RewardUseCase {
     item: RewardGrantPlanItem,
   ) {
     const rule = item.ruleSnapshot;
+
     const account = await this.deps.pointAccountRepo.ensureAccountAndLock(tx, {
       userId: user.id,
       pointTypeId: item.pointTypeId,
     });
+
     const idempotencyKey = PointIdempotencyKey.biliGuard({
       sourceId: event.id,
       ruleId: rule.id,
@@ -351,10 +376,12 @@ export class RewardUseCase {
     const displayTotal = unit === '年' ? input.total / 12 : input.total;
     const priceNormalized = guard.priceNormalized * input.total;
     const price = priceNormalized * 1000;
+
     const message =
       input.total === 1
         ? `${uname} 开通了${guard.name}`
         : `${uname} 开通了${guard.name}${displayTotal}${unit}`;
+
     const roomId = this.deps.biliRoom ?? 0;
     const id = `${sendTime}:${guardStartTime}:${roomId}:${input.uid}:${input.guardType}:${price}`;
 
@@ -388,22 +415,15 @@ export class RewardUseCase {
   }
 
   private getManualBiliGuardDuration(price: number) {
-    if (price > 0 && price < 1) return 4;
-    if (price >= 1 && price < 5) return 6;
-    if (price >= 5 && price < 10) return 10;
-    if (price >= 10 && price < 15) return 20;
-    if (price >= 15 && price < 30) return 30;
-    if (price >= 30 && price < 50) return 60;
-    if (price >= 50 && price < 100) return 60 * 2;
-    if (price >= 100 && price < 500) return 60 * 5;
-    if (price >= 500 && price < 1000) return 60 * 30;
-    if (price >= 1000 && price < 2000) return 60 * 60;
-    if (price >= 2000 && price < 5000) return 60 * 60 * 2;
-    if (price >= 5000 && price < 10000) return 60 * 60 * 3;
-    if (price >= 10000 && price < 20000) return 60 * 60 * 4;
-    if (price >= 20000) return 60 * 60 * 5;
+    if (price <= 0) {
+      return 30;
+    }
 
-    return 30;
+    const entry = MANUAL_BILI_GUARD_DURATION_TABLE.find(
+      item => price >= item.min && (item.max === undefined || price < item.max),
+    );
+
+    return entry?.duration ?? 30;
   }
 
   private getManualBiliGuardMeta(guardType: CreateManualBiliGuardEventBody['guardType']) {

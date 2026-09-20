@@ -37,7 +37,9 @@ async function exit(signal: NodeJS.Signals, code = 0) {
 }
 
 function setupKeyboard() {
-  if (!process.stdin.isTTY) return;
+  if (!process.stdin.isTTY) {
+    return;
+  }
 
   process.stdin.setRawMode(true);
   process.stdin.resume();

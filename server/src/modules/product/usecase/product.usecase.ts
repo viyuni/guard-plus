@@ -9,8 +9,8 @@ import type { StockAdjustmentBody } from '@shared/schema/stock';
 
 import type { DbClient, DbTransaction } from '#db';
 import type { InsertProduct, Product, UpdateProduct } from '#db/schema';
-import { ImageUseCase } from '#modules/image';
-import { PointTypeUseCase } from '#modules/point';
+import type { ImageUseCase } from '#modules/image';
+import type { PointTypeUseCase } from '#modules/point';
 
 import {
   ProductInputPolicy,
@@ -23,7 +23,7 @@ import {
   StockMovementPolicy,
   StockPolicy,
 } from '../domain';
-import { ProductRepository, StockMovementRepository } from '../repository';
+import type { ProductRepository, StockMovementRepository } from '../repository';
 import { STOCK_MOVEMENT_SOURCE_TYPE, type ChangeStockInput } from './types';
 
 export interface ProductUseCaseDeps {

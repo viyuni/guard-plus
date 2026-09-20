@@ -1,5 +1,6 @@
 import { SQL } from 'bun';
-import Elysia, { ValidationError } from 'elysia';
+import type Elysia from 'elysia';
+import { ValidationError } from 'elysia';
 
 import { logger } from '#utils/logger';
 

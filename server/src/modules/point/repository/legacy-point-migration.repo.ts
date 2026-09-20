@@ -5,6 +5,22 @@ import type { DbExecutor, DbTransaction } from '#db';
 import { QueryPageBuilder } from '#db/helper';
 import { legacyPointMigrations, type InsertLegacyPointMigration } from '#db/schema';
 
+type ReplayedAtFilter = { isNull: true } | { isNotNull: true } | undefined;
+
+function resolveReplayedAtFilter(
+  status: LegacyPointMigrationPageQuery['status'],
+): ReplayedAtFilter {
+  if (status === 'pending') {
+    return { isNull: true };
+  }
+
+  if (status === 'replayed') {
+    return { isNotNull: true };
+  }
+
+  return undefined;
+}
+
 export class LegacyPointMigrationRepository {
   constructor(private readonly db: DbExecutor) {}
 
@@ -18,12 +34,7 @@ export class LegacyPointMigrationRepository {
       .where({
         biliUid: query.biliUid,
         pointTypeId: query.pointTypeId,
-        replayedAt:
-          query.status === 'pending'
-            ? { isNull: true }
-            : query.status === 'replayed'
-              ? { isNotNull: true }
-              : undefined,
+        replayedAt: resolveReplayedAtFilter(query.status),
       })
       .query((findMany, { where, limit, offset }) =>
         findMany({
@@ -58,6 +69,7 @@ export class LegacyPointMigrationRepository {
         and(eq(legacyPointMigrations.id, migrationId), isNull(legacyPointMigrations.replayedAt)),
       )
       .for('update');
+
     return row ?? null;
   }
 
@@ -69,6 +81,7 @@ export class LegacyPointMigrationRepository {
         and(eq(legacyPointMigrations.id, migrationId), isNull(legacyPointMigrations.replayedAt)),
       )
       .returning();
+
     return row ?? null;
   }
 
@@ -79,6 +92,7 @@ export class LegacyPointMigrationRepository {
         and(eq(legacyPointMigrations.id, migrationId), isNull(legacyPointMigrations.replayedAt)),
       )
       .returning();
+
     return row ?? null;
   }
 }

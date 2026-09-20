@@ -1,6 +1,6 @@
 import type { StockMovementPageQuery } from '@shared/schema/stock';
 
-import { StockMovementRepository } from '../repository';
+import type { StockMovementRepository } from '../repository';
 
 export interface StockMovementUseCaseDeps {
   stockMovementRepo: StockMovementRepository;

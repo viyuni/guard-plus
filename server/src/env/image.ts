@@ -3,12 +3,14 @@ import path from 'node:path';
 import { createEnv } from '@t3-oss/env-core';
 import * as v from 'valibot';
 
+const defaultImageSavePath = path.join(process.cwd(), 'public', 'images');
+
 export const imageEnv = createEnv({
   server: {
     /**
      * 存储图片的路径
      */
-    IMAGE_SAVE_PATH: v.optional(v.string(), path.join(process.cwd(), 'public', 'images')),
+    IMAGE_SAVE_PATH: v.optional(v.string(), defaultImageSavePath),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

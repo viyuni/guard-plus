@@ -1,7 +1,7 @@
 import type { AdminLoginBody } from '@shared/schema/admin';
 
 import { AdminPolicy } from '#apps/admin/modules/admin/domain';
-import { AdminRepository } from '#apps/admin/modules/admin/repository';
+import type { AdminRepository } from '#apps/admin/modules/admin/repository';
 import type { DbExecutor } from '#db';
 import type { AuthUseCase } from '#modules/auth';
 import { InvalidCredentialsError } from '#utils';

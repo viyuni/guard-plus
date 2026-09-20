@@ -18,6 +18,7 @@ const props = withDefaults(
     align: 'center',
   },
 );
+
 const emits = defineEmits<SelectContentEmits>();
 
 const delegatedProps = reactiveOmit(props, 'class');

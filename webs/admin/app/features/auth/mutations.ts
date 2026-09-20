@@ -27,8 +27,10 @@ export const useLogin = defineMutation(() => {
 
         setAuthState();
         invalidateAdminSession();
+
         const redirect =
           typeof route.query.redirect === 'string' ? route.query.redirect : '/app/users';
+
         window.location.assign(redirect);
       }
     },

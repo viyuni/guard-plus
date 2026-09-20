@@ -14,12 +14,18 @@ let db: DbClient;
 const batches: string[] = [];
 
 beforeAll(async () => {
-  if (!testDatabaseUrl) return;
+  if (!testDatabaseUrl) {
+    return;
+  }
+
   db = getTestDatabase();
 });
 
 afterAll(async () => {
-  if (!db) return;
+  if (!db) {
+    return;
+  }
+
   for (const batch of batches) {
     await db.delete(pointTypes).where(like(pointTypes.name, `${batch}%`));
   }

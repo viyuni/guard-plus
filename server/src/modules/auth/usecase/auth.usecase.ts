@@ -54,6 +54,7 @@ export class AuthUseCase {
 
   async signTokenPair(payload: AuthPayload): Promise<AuthTokenPair> {
     const now = Date.now();
+
     const [accessToken, refreshToken] = await Promise.all([
       this.signAccessToken(payload),
       this.signRefreshToken(payload),
@@ -154,6 +155,7 @@ export class AuthUseCase {
     }
 
     const lockValue = nanoid();
+
     const locked = await this.authSessionRepo.acquireRefreshLock(
       payload.role,
       payload.sid,

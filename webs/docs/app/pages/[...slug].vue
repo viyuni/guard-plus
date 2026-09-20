@@ -6,11 +6,12 @@ const slug = computed(() => {
   const raw = Array.isArray(route.params.slug)
     ? String(route.params.slug.join('/'))
     : String(route.params.slug ?? '');
-  return raw ? '/' + raw : '/';
+
+  return raw ? `/${raw}` : '/';
 });
 
 const { data: page } = await useAsyncData(
-  'page-' + locale.value + '-' + slug.value,
+  `page-${locale.value}-${slug.value}`,
   async () => {
     const [enContent, zhContent] = await Promise.all([
       queryCollection('content_en').path(slug.value).first(),

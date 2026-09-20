@@ -44,6 +44,7 @@ describe('event server health', () => {
         durationMs: 100,
       },
     });
+
     const app = createEventServer({ state }, 3700);
 
     const response = await app.handle(new Request('http://localhost/health'));
@@ -71,6 +72,7 @@ describe('event server health', () => {
       },
       loginInvalidSince: 1_000,
     });
+
     const app = createEventServer({ state }, 3700);
 
     const response = await app.handle(new Request('http://localhost/health'));

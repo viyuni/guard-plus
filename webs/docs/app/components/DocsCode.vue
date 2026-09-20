@@ -13,7 +13,11 @@ const copied = ref(false);
 
 async function copy() {
   const text = props.code || preRef.value?.textContent || '';
-  if (!text) return;
+
+  if (!text) {
+    return;
+  }
+
   try {
     await navigator.clipboard.writeText(text);
     copied.value = true;

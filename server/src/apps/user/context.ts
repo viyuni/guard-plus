@@ -51,6 +51,7 @@ const mailerProvider = ripple({}, () => createMailer(userEnv), {
   debugName: 'Mailer',
   dispose: mailer => mailer?.close(),
 });
+
 const emailUseCaseProvider = ripple(
   { mailer: mailerProvider },
   ({ mailer }) =>
@@ -60,6 +61,7 @@ const emailUseCaseProvider = ripple(
     }),
   { debugName: 'EmailUseCase' },
 );
+
 const notifyWorkerProvider = ripple(
   { emailUseCase: emailUseCaseProvider },
   deps => new NotifyWorker(deps),

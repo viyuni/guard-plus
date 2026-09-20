@@ -76,7 +76,9 @@ describeWithDatabase('积分账户真实数据库并发保护', () => {
       where: { userId: user.id, pointTypeId: pointType.id },
     });
 
-    if (!account) throw new Error('seed account failed');
+    if (!account) {
+      throw new Error('seed account failed');
+    }
 
     const results = await runConcurrent(10, index =>
       pointAccountUseCase.adjustBalance(`${prefix}_admin_${index}`, {
@@ -121,6 +123,7 @@ describeWithDatabase('积分账户真实数据库并发保护', () => {
           }),
         ),
       );
+
     const account = await db.query.pointAccounts.findFirst({
       where: { userId: user.id, pointTypeId: pointType.id },
     });
@@ -164,6 +167,7 @@ describeWithDatabase('积分账户真实数据库并发保护', () => {
     const pointType = await seedPointType(`${prefix}_idempotency_conflict_point`);
     const user = await seedUser(`${prefix}_idempotency_conflict_user`);
     const { pointAccountUseCase } = await createDeps();
+
     const input = {
       userId: user.id,
       pointTypeId: pointType.id,
@@ -189,6 +193,7 @@ describeWithDatabase('积分账户真实数据库并发保护', () => {
     const pointType = await seedPointType(`${prefix}_reversal_point`);
     const user = await seedUser(`${prefix}_reversal_user`);
     const { pointTransactionUseCase } = await createDeps();
+
     const grantResult = await grantPoints({
       adminId: `${prefix}_admin`,
       userId: user.id,
@@ -207,6 +212,7 @@ describeWithDatabase('积分账户真实数据库并发保护', () => {
       .select({ total: count() })
       .from(pointTransactions)
       .where(eq(pointTransactions.reversalOfTransactionId, grantResult.transaction.id));
+
     const account = await db.query.pointAccounts.findFirst({
       where: { userId: user.id, pointTypeId: pointType.id },
     });

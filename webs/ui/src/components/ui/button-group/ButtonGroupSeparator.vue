@@ -8,6 +8,7 @@ import type { HTMLAttributes } from 'vue';
 const props = withDefaults(defineProps<SeparatorProps & { class?: HTMLAttributes['class'] }>(), {
   orientation: 'vertical',
 });
+
 const delegatedProps = reactiveOmit(props, 'class');
 </script>
 

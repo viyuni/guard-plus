@@ -16,9 +16,9 @@ import {
   PointConversionRulePairExistsError,
   PointConversionRulePolicy,
 } from '../domain';
-import { PointAccountRepository, PointConversionRuleRepository } from '../repository';
-import { PointBalanceUseCase } from './point-balance.usecase';
-import { PointTypeUseCase } from './point-type.usecase';
+import type { PointAccountRepository, PointConversionRuleRepository } from '../repository';
+import type { PointBalanceUseCase } from './point-balance.usecase';
+import type { PointTypeUseCase } from './point-type.usecase';
 
 export interface PointConversionUseCaseDeps {
   db: DbClient;
@@ -68,6 +68,7 @@ export class PointConversionUseCase {
     await this.assertRulePairAvailable(ruleData.fromPointTypeId, ruleData.toPointTypeId);
 
     const { endAt: _endAt, startAt: _startAt, ...data } = ruleData;
+
     const createData: InsertPointConversionRule = {
       ...data,
       endAt,
@@ -80,6 +81,7 @@ export class PointConversionUseCase {
   async update(pointConversionRuleId: string, ruleData: UpdatePointConversionRuleBody) {
     const current = await this.get(pointConversionRuleId);
     const { startAt, endAt } = ruleData;
+
     const next = {
       ...current,
       ...ruleData,
@@ -103,6 +105,7 @@ export class PointConversionUseCase {
     }
 
     const { endAt: _endAt, startAt: _startAt, ...data } = ruleData;
+
     const updateData: UpdatePointConversionRule = {
       ...data,
       endAt,

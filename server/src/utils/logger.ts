@@ -32,7 +32,9 @@ function createLogger() {
     logger.info(`➜  Local:   ${baseUrl}/`);
 
     // Dev mode print docs url
-    if (sharedEnv.NODE_ENV === 'development') logger.info(`➜  Docs:    ${baseUrl}/openapi`);
+    if (sharedEnv.NODE_ENV === 'development') {
+      logger.info(`➜  Docs:    ${baseUrl}/openapi`);
+    }
   }
 
   function scope(name: string) {

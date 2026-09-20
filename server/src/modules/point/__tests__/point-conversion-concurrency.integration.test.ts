@@ -59,6 +59,7 @@ describeWithDatabase('积分转换真实数据库并发保护', () => {
     const fromAccount = await db.query.pointAccounts.findFirst({
       where: { userId: user.id, pointTypeId: fromPointType.id },
     });
+
     const toAccount = await db.query.pointAccounts.findFirst({
       where: { userId: user.id, pointTypeId: toPointType.id },
     });
@@ -156,12 +157,14 @@ describeWithDatabase('积分转换真实数据库并发保护', () => {
     const otherFromPointType = await seedPointType(`${prefix}_update_name_other_from_point`);
     const otherToPointType = await seedPointType(`${prefix}_update_name_other_to_point`);
     const { pointConversionUseCase } = await createDeps();
+
     const first = await pointConversionUseCase.create({
       name: `${prefix}_first_rule`,
       fromPointTypeId: fromPointType.id,
       toPointTypeId: toPointType.id,
       toAmount: 1,
     });
+
     const second = await pointConversionUseCase.create({
       name: `${prefix}_second_rule`,
       fromPointTypeId: otherFromPointType.id,
@@ -195,6 +198,7 @@ describeWithDatabase('积分转换真实数据库并发保护', () => {
       toPointTypeId: toPointType.id,
       toAmount: 1,
     });
+
     const second = await pointConversionUseCase.create({
       name: `${prefix}_second_pair_rule`,
       fromPointTypeId: otherFromPointType.id,
@@ -220,6 +224,7 @@ describeWithDatabase('积分转换真实数据库并发保护', () => {
     const fromPointType = await seedPointType(`${prefix}_deleted_pair_from_point`);
     const toPointType = await seedPointType(`${prefix}_deleted_pair_to_point`);
     const { pointConversionRuleRepo, pointConversionUseCase } = await createDeps();
+
     const rule = await pointConversionUseCase.create({
       name: `${prefix}_deleted_pair_rule`,
       fromPointTypeId: fromPointType.id,
@@ -249,6 +254,7 @@ describeWithDatabase('积分转换真实数据库并发保护', () => {
     const fromPointType = await seedPointType(`${prefix}_remove_pair_from_point`);
     const toPointType = await seedPointType(`${prefix}_remove_pair_to_point`);
     const { pointConversionUseCase } = await createDeps();
+
     const removed = await createConversionRule(
       `${prefix}_remove`,
       fromPointType.id,
@@ -263,6 +269,7 @@ describeWithDatabase('积分转换真实数据库并发保护', () => {
       toPointTypeId: toPointType.id,
       toAmount: 1,
     });
+
     const rules = await pointConversionUseCase.listManage();
 
     expect(recreated?.id).toBeDefined();
@@ -276,9 +283,11 @@ describeWithDatabase('积分转换真实数据库并发保护', () => {
     const past = new Date(now.getTime() - 60_000);
     const future = new Date(now.getTime() + 60_000);
     const { pointConversionUseCase } = await createDeps();
+
     const pointTypes = await Promise.all(
       Array.from({ length: 8 }, (_, index) => seedPointType(`${prefix}_visible_point_${index}`)),
     );
+
     const [
       visibleFromPointType,
       visibleToPointType,
@@ -299,6 +308,7 @@ describeWithDatabase('积分转换真实数据库并发保护', () => {
         startAt: past,
       },
     );
+
     const disabled = await createConversionRule(
       `${prefix}_disabled`,
       disabledFromPointType!.id,
@@ -307,6 +317,7 @@ describeWithDatabase('积分转换真实数据库并发保护', () => {
         enabled: false,
       },
     );
+
     const notStarted = await createConversionRule(
       `${prefix}_not_started`,
       notStartedFromPointType!.id,
@@ -316,6 +327,7 @@ describeWithDatabase('积分转换真实数据库并发保护', () => {
         startAt: future,
       },
     );
+
     const expired = await createConversionRule(
       `${prefix}_expired`,
       expiredFromPointType!.id,
@@ -358,6 +370,7 @@ describeWithDatabase('积分转换真实数据库并发保护', () => {
   it('积分转换按 1:n 扣减来源积分并增加目标积分', async () => {
     const prefix = newBatch();
     const { pointConversionUseCase } = await createDeps();
+
     const { fromPointType, rule, toPointType, user } = await seedConversionFixture(
       `${prefix}_one_to_many`,
       {
@@ -383,6 +396,7 @@ describeWithDatabase('积分转换真实数据库并发保护', () => {
     const toAccount = await db.query.pointAccounts.findFirst({
       where: { userId: user.id, pointTypeId: toPointType.id },
     });
+
     const fromAccount = await db.query.pointAccounts.findFirst({
       where: { userId: user.id, pointTypeId: fromPointType.id },
     });
@@ -394,6 +408,7 @@ describeWithDatabase('积分转换真实数据库并发保护', () => {
   it('积分转换会校验单次最小和最大转换数量', async () => {
     const prefix = newBatch();
     const { pointConversionUseCase } = await createDeps();
+
     const { rule, user } = await seedConversionFixture(`${prefix}_min_max`, {
       toAmount: 10,
       minConvertAmount: 4,
@@ -424,12 +439,15 @@ describeWithDatabase('积分转换真实数据库并发保护', () => {
   it('积分转换会拒绝停用、未开始和已过期的规则', async () => {
     const prefix = newBatch();
     const { pointConversionUseCase } = await createDeps();
+
     const disabled = await seedConversionFixture(`${prefix}_disabled`, {
       enabled: false,
     });
+
     const future = await seedConversionFixture(`${prefix}_future`, {
       startAt: new Date(Date.now() + 60_000),
     });
+
     const expired = await seedConversionFixture(`${prefix}_expired`, {
       startAt: new Date(Date.now() - 120_000),
       endAt: new Date(Date.now() - 60_000),
@@ -494,9 +512,11 @@ describeWithDatabase('积分转换真实数据库并发保护', () => {
     const fromAccount = await db.query.pointAccounts.findFirst({
       where: { userId: user.id, pointTypeId: fromPointType.id },
     });
+
     const toAccount = await db.query.pointAccounts.findFirst({
       where: { userId: user.id, pointTypeId: toPointType.id },
     });
+
     const [consumeRows] = await db
       .select({ total: count() })
       .from(pointTransactions)
@@ -509,6 +529,7 @@ describeWithDatabase('积分转换真实数据库并发保护', () => {
           }),
         ),
       );
+
     const [grantRows] = await db
       .select({ total: count() })
       .from(pointTransactions)
@@ -577,9 +598,11 @@ describeWithDatabase('积分转换真实数据库并发保护', () => {
     const fromAccount = await db.query.pointAccounts.findFirst({
       where: { userId: user.id, pointTypeId: fromPointType.id },
     });
+
     const toAccount = await db.query.pointAccounts.findFirst({
       where: { userId: user.id, pointTypeId: toPointType.id },
     });
+
     const [conversionRows] = await db
       .select({ total: count() })
       .from(pointTransactions)

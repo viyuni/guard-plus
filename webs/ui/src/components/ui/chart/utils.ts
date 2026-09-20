@@ -22,7 +22,9 @@ interface Constructor<P = any> {
 }
 
 export function componentToString<P>(config: ChartConfig, component: Constructor<P>, props?: P) {
-  if (!isClient) return;
+  if (!isClient) {
+    return;
+  }
 
   // This function will be called once during mount lifecycle
   const id = useId();
@@ -32,7 +34,10 @@ export function componentToString<P>(config: ChartConfig, component: Constructor
     const data = 'data' in _data ? _data.data : _data;
     const serializedKey = `${id}-${serializeKey(data)}`;
     const cachedContent = cache.get(serializedKey);
-    if (cachedContent) return cachedContent;
+
+    if (cachedContent) {
+      return cachedContent;
+    }
 
     const vnode = h<unknown>(component, { ...props, payload: data, config, x });
     const div = document.createElement('div');

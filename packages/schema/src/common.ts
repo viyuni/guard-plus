@@ -141,41 +141,45 @@ export const IdParamSchema = v.object({
   id: v.pipe(v.string('请输入 ID'), v.description('ID')),
 });
 
+const pageValueSchema = v.union([
+  v.number('请输入页码'),
+  v.pipe(
+    v.string('请输入页码'),
+    v.regex(/^-?\d+(\.\d+)?$/, '页码必须是数字'),
+    v.toNumber('页码必须是数字'),
+  ),
+]);
+
+const pageSizeValueSchema = v.union([
+  v.number('请输入每页数量'),
+  v.pipe(
+    v.string('请输入每页数量'),
+    v.regex(/^-?\d+(\.\d+)?$/, '每页数量必须是数字'),
+    v.toNumber('每页数量必须是数字'),
+  ),
+]);
+
+const pageSchema = v.pipe(
+  pageValueSchema,
+  v.integer('页码必须是整数'),
+  v.minValue(1, '页码不能小于 1'),
+  v.description('页码'),
+);
+
+const pageSizeSchema = v.pipe(
+  pageSizeValueSchema,
+  v.integer('每页数量必须是整数'),
+  v.minValue(1, '每页数量不能小于 1'),
+  v.maxValue(50, '每页数量不能超过 50'),
+  v.description('每页数量'),
+);
+
 /**
  * 分页查询参数 Schema
  */
 export const pageQuery = v.object({
-  page: v.optional(
-    v.pipe(
-      v.union([
-        v.number('请输入页码'),
-        v.pipe(
-          v.string('请输入页码'),
-          v.regex(/^-?\d+(\.\d+)?$/, '页码必须是数字'),
-          v.toNumber('页码必须是数字'),
-        ),
-      ]),
-      v.integer('页码必须是整数'),
-      v.minValue(1, '页码不能小于 1'),
-      v.description('页码'),
-    ),
-  ),
-  pageSize: v.optional(
-    v.pipe(
-      v.union([
-        v.number('请输入每页数量'),
-        v.pipe(
-          v.string('请输入每页数量'),
-          v.regex(/^-?\d+(\.\d+)?$/, '每页数量必须是数字'),
-          v.toNumber('每页数量必须是数字'),
-        ),
-      ]),
-      v.integer('每页数量必须是整数'),
-      v.minValue(1, '每页数量不能小于 1'),
-      v.maxValue(50, '每页数量不能超过 50'),
-      v.description('每页数量'),
-    ),
-  ),
+  page: v.optional(pageSchema),
+  pageSize: v.optional(pageSizeSchema),
 });
 
 export type PageQuery = v.InferOutput<typeof pageQuery>;
@@ -183,9 +187,12 @@ export type PageQuery = v.InferOutput<typeof pageQuery>;
 /**
  * 日期范围参数 Schema。
  */
+const startAtSchema = v.pipe(dateish('请输入开始时间'), v.description('开始时间'));
+const endAtSchema = v.pipe(dateish('请输入结束时间'), v.description('结束时间'));
+
 export const dateRange = v.object({
-  startAt: v.nullish(v.pipe(dateish('请输入开始时间'), v.description('开始时间'))),
-  endAt: v.nullish(v.pipe(dateish('请输入结束时间'), v.description('结束时间'))),
+  startAt: v.nullish(startAtSchema),
+  endAt: v.nullish(endAtSchema),
 });
 
 /**
@@ -239,14 +246,17 @@ export const errorResponse = v.object({
   details: v.array(v.string()),
 });
 
+const envEmailSchema = v.pipe(v.string(), v.trim(), v.email());
+const envUrlSchema = v.pipe(v.string(), v.trim(), v.url());
+
 export const envEmails = v.pipe(
   v.string(),
   v.transform(input => input.split(',').filter(Boolean)),
-  v.array(v.pipe(v.string(), v.trim(), v.email())),
+  v.array(envEmailSchema),
 );
 
 export const envOrigins = v.pipe(
   v.string(),
   v.transform(input => input.split(',').filter(Boolean)),
-  v.array(v.pipe(v.string(), v.trim(), v.url())),
+  v.array(envUrlSchema),
 );

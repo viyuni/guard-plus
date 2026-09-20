@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { processIds } from './config';
 import type { CliOptions, ProcessId } from './types';
 
@@ -49,7 +50,9 @@ function parseProcessList(value: string) {
   for (const item of value.split(',')) {
     const id = item.trim().toLowerCase();
 
-    if (!id) continue;
+    if (!id) {
+      continue;
+    }
 
     if (!isProcessId(id)) {
       throw createUnknownProcessError(item);

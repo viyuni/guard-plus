@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { fakerZH_CN as faker } from '@faker-js/faker';
 import { Cyrene } from 'cyrenejs';
 import { seed as drizzleSeed } from 'drizzle-seed';
@@ -98,11 +99,14 @@ function address() {
 const biliUids = array(userCount, index => (100000000 + index).toString());
 const userNames = uniqueArray(userCount, index => `${faker.internet.username()}_${index + 1}`);
 const userEmails = array(userCount, index => `seed-user-${index + 1}@example.com`);
+
 const userPhones = array(
   userCount,
   index => `138${(seedValue * 100000 + index).toString().padStart(8, '0')}`,
 );
+
 const userAddresses = array(userCount, () => address());
+
 const userRemarks = array(userCount, index =>
   faker.helpers.arrayElement([
     '资料完整用户',
@@ -114,9 +118,11 @@ const userRemarks = array(userCount, index =>
     `批量导入样例 ${index + 1}`,
   ]),
 );
+
 const userPhoneHashes = array(userCount, index => `seed-phone-hash-${index + 1}`);
 
 const adminUids = array(adminCount, index => `admin-${(index + 1).toString().padStart(2, '0')}`);
+
 const adminNames = [
   '系统管理员',
   '运营管理员',
@@ -125,6 +131,7 @@ const adminNames = [
   '审计管理员',
   '风控管理员',
 ];
+
 const adminRemarks = ['系统维护', '活动运营', '用户支持', '商品维护', '数据审计', '风险控制'];
 
 const productNames = pointTypeData.flatMap((_pointType, pointTypeIndex) =>
@@ -135,6 +142,7 @@ const productNames = pointTypeData.flatMap((_pointType, pointTypeIndex) =>
     return `${kindName} ${serial.toString().padStart(2, '0')}`;
   }),
 );
+
 const productDescriptions = pointTypeData.flatMap(pointType =>
   array(productsPerPointType, index => {
     const [, kindDescription] = productKinds[index % productKinds.length]!;
@@ -142,7 +150,9 @@ const productDescriptions = pointTypeData.flatMap(pointType =>
     return `${pointType.description}，${kindDescription}`;
   }),
 );
+
 const productCovers = array(productNames.length, index => `/images/seed/products/${index + 1}.png`);
+
 const productDetails = productNames.map((name, index) =>
   [
     `## ${name}`,
@@ -153,27 +163,34 @@ const productDetails = productNames.map((name, index) =>
     '- 用于开发和验收兑换商城列表、详情、库存展示',
   ].join('\n'),
 );
+
 const productDeliveryContents = productNames.map(
   name => `兑换成功：${name}\n测试兑换码：SEED-CODE`,
 );
+
 const productPrices = array(productNames.length, index => 60 + (index % productsPerPointType) * 20);
+
 const productStocks = array(
   productNames.length,
   index => 40 + faker.number.int({ min: 0, max: 260 }) - (index % 8),
 );
+
 const productDeliveryTypes = array(
   productNames.length,
   index => productKinds[index % productKinds.length]![2],
 );
+
 const productSorts = array(productNames.length, index => productNames.length - index);
 
 const stockDeltas = array(stockMovementCount, () =>
   faker.helpers.arrayElement([10, 20, 30, 50, -1, -2]),
 );
+
 const stockBefore = array(stockMovementCount, () => faker.number.int({ min: 20, max: 300 }));
 const stockAfter = stockBefore.map((before, index) => Math.max(0, before + stockDeltas[index]!));
 const stockSourceIds = array(stockMovementCount, index => `seed-stock-${index + 1}`);
 const stockIdempotencyKeys = array(stockMovementCount, index => `seedv2:stock:${index + 1}`);
+
 const stockRemarks = stockDeltas.map(delta =>
   delta > 0 ? '测试数据入库调整' : '测试数据兑换扣减',
 );

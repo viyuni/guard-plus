@@ -45,6 +45,7 @@ const {
   meta,
   isLoading: isTableLoading,
 } = usePageQuery(() => biliGuardEventPageQuery(query.value));
+
 const { mutate: replayBiliGuardReward, isLoading: isReplaying } = useReplayBiliGuardReward();
 const [openEventDetailDialog] = useOverlay(BiliGuardEventDetailDialog);
 const manualCreateDialogOpen = ref(false);

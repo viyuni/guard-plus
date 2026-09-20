@@ -12,24 +12,31 @@ type PointActionsDialogAction = 'conversion' | 'transactions';
 const AuthDialog = defineAsyncComponent(
   () => import('~/features/account/components/AuthDialog.vue'),
 );
+
 const ProfileDialog = defineAsyncComponent(
   () => import('~/features/account/components/ProfileDialog.vue'),
 );
+
 const PasswordDialog = defineAsyncComponent(
   () => import('~/features/account/components/PasswordDialog.vue'),
 );
+
 const OrdersDialog = defineAsyncComponent(
   () => import('~/features/order/components/OrdersDialog.vue'),
 );
+
 const PurchaseDetailDialog = defineAsyncComponent(
   () => import('~/features/order/components/PurchaseDetailDialog.vue'),
 );
+
 const PointActionsDialog = defineAsyncComponent(
   () => import('~/features/point/components/PointActionsDialog.vue'),
 );
+
 const PointConversionDialog = defineAsyncComponent(
   () => import('~/features/point/components/PointConversionDialog.vue'),
 );
+
 const PointTransactionsDialog = defineAsyncComponent(
   () => import('~/features/point/components/PointTransactionsDialog.vue'),
 );

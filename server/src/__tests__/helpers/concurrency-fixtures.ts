@@ -33,12 +33,17 @@ export let db: DbClient;
 
 export function installConcurrencyTestHooks() {
   beforeAll(() => {
-    if (!testDatabaseUrl) return;
+    if (!testDatabaseUrl) {
+      return;
+    }
+
     db = getTestDatabase();
   });
 
   afterEach(async () => {
-    if (!db) return;
+    if (!db) {
+      return;
+    }
 
     try {
       for (const batch of batches) {
@@ -59,7 +64,10 @@ export function newBatch(namespace = 'shared') {
 }
 
 export function expectSeeded<T>(value: T | null | undefined, message: string): T {
-  if (!value) throw new Error(message);
+  if (!value) {
+    throw new Error(message);
+  }
+
   return value;
 }
 
@@ -108,6 +116,7 @@ export async function createDeps() {
 
 export async function seedPointType(name: string) {
   const { pointTypeUseCase } = await createDeps();
+
   const pointType = expectSeeded(
     await pointTypeUseCase.create({
       name,
@@ -121,12 +130,15 @@ export async function seedPointType(name: string) {
 export async function seedUser(name: string, biliUid?: `${number}`) {
   const userBiliUid =
     biliUid ?? (`${Date.now()}${Math.floor(Math.random() * 100_000_000)}` as const);
+
   const { userUseCase } = await createDeps();
+
   const created = await userUseCase.create({
     biliUid: userBiliUid,
     username: name,
     password: 'test_password',
   });
+
   const user = await db.query.users.findFirst({ where: { id: created.id } });
 
   return expectSeeded(user, 'seed user failed');
@@ -141,6 +153,7 @@ export async function seedProduct(input: {
   stock: number;
 }) {
   const { productUseCase } = await createDeps();
+
   const product = expectSeeded(
     await productUseCase.create({
       ...input,
@@ -159,6 +172,7 @@ export async function seedConversionFixture(
   const toPointType = await seedPointType(`${prefix}_to_point`);
   const user = await seedUser(`${prefix}_conversion_user`);
   const { pointConversionUseCase } = await createDeps();
+
   const rule = await pointConversionUseCase.create({
     name: `${prefix}_conversion_rule`,
     fromPointTypeId: fromPointType.id,
@@ -183,6 +197,7 @@ export async function createConversionRule(
   overrides: Partial<CreatePointConversionRuleBody> = {},
 ) {
   const { pointConversionUseCase } = await createDeps();
+
   const rule = await pointConversionUseCase.create({
     name: `${prefix}_conversion_rule`,
     fromPointTypeId,
@@ -201,6 +216,7 @@ export async function createRewardRule(
   overrides: Partial<CreateRewardRuleBody> = {},
 ) {
   const { rewardRuleUseCase } = await createDeps();
+
   const rule = await rewardRuleUseCase.create({
     name: `${prefix}_reward_rule_${crypto.randomUUID().slice(0, 8)}`,
     conditions: {
@@ -276,18 +292,21 @@ async function cleanupBatch(batch: string) {
     .select({ id: users.id })
     .from(users)
     .where(like(users.username, `${batch}%`));
+
   const userIds = batchUsers.map(user => user.id);
 
   const batchPointTypes = await db
     .select({ id: pointTypes.id })
     .from(pointTypes)
     .where(like(pointTypes.name, `${batch}%`));
+
   const pointTypeIds = batchPointTypes.map(pointType => pointType.id);
 
   const batchProducts = await db
     .select({ id: products.id })
     .from(products)
     .where(like(products.name, `${batch}%`));
+
   const productIds = batchProducts.map(product => product.id);
 
   if (userIds.length > 0) {

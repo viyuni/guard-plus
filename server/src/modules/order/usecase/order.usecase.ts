@@ -8,16 +8,12 @@ import type {
 } from '@shared/schema/order';
 
 import type { DbClient } from '#db';
-import {
-  POINT_CHANGE_SOURCE_TYPE,
-  PointIdempotencyKey,
-  PointAccountRepository,
-  PointBalanceUseCase,
-  PointTypeUseCase,
-} from '#modules/point';
-import { ProductPolicy, ProductUseCase, STOCK_MOVEMENT_SOURCE_TYPE } from '#modules/product';
+import type { PointAccountRepository, PointBalanceUseCase, PointTypeUseCase } from '#modules/point';
+import { POINT_CHANGE_SOURCE_TYPE, PointIdempotencyKey } from '#modules/point';
+import type { ProductUseCase } from '#modules/product';
+import { ProductPolicy, STOCK_MOVEMENT_SOURCE_TYPE } from '#modules/product';
 import { StockIdempotencyKey } from '#modules/product';
-import { UserBasicInfoCrypto, UserUseCase } from '#modules/user';
+import type { UserBasicInfoCrypto, UserUseCase } from '#modules/user';
 import { publishOrderCreated, type NewOrderEmailInput } from '#queues';
 
 import {
@@ -27,7 +23,7 @@ import {
   OrderPolicy,
   OrderUpdateFailedError,
 } from '../domain';
-import { OrderRepository } from '../repository';
+import type { OrderRepository } from '../repository';
 
 export interface OrderUseCaseDeps {
   db: DbClient;
@@ -296,6 +292,7 @@ export class OrderUseCase {
 
   async exportOrders(exportData: ExportOrdersBody) {
     const rows = await this.deps.orderRepo.findExportRowsByIds(exportData.ids);
+
     const orderedRows = exportData.ids
       .map(id => rows.find(row => row.id === id))
       .filter(row => row !== undefined);
@@ -371,6 +368,7 @@ export class OrderUseCase {
     }>,
   ) {
     const headers = ['订单号', '用户名', '产品名', '时间', '收货电话', '收货地址'];
+
     const body = rows.map(row => [
       row.orderNo,
       row.username,

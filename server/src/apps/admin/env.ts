@@ -7,6 +7,8 @@ import { redisEnv } from '#env/redis';
 import { sharedEnv } from '#env/shared';
 import { PasswordUtil } from '#utils';
 
+const superAdminPasswordSchema = v.pipe(v.string(), v.regex(/^(?=.*[A-Za-z])(?=.*\d).{8,32}$/));
+
 export const adminEnv = createEnv({
   extends: [sharedEnv, imageEnv, redisEnv],
   server: {
@@ -48,10 +50,7 @@ export const adminEnv = createEnv({
     /**
      * 超级管理员默认密码
      */
-    SUPER_ADMIN_PASSWORD: v.optional(
-      v.pipe(v.string(), v.regex(/^(?=.*[A-Za-z])(?=.*\d).{8,32}$/)),
-      PasswordUtil.generate(),
-    ),
+    SUPER_ADMIN_PASSWORD: v.optional(superAdminPasswordSchema, PasswordUtil.generate()),
 
     /**
      * 超级管理员默认用户名

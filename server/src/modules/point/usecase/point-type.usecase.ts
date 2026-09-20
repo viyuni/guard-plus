@@ -8,7 +8,7 @@ import type { DbExecutor } from '#db';
 import type { ImageUseCase } from '#modules/image';
 
 import { PointTypeNameExistsError, PointTypePolicy } from '../domain';
-import { PointTypeRepository } from '../repository';
+import type { PointTypeRepository } from '../repository';
 
 export interface PointTypeUseCaseDeps {
   pointTypeRepo: PointTypeRepository;
@@ -74,6 +74,7 @@ export class PointTypeUseCase {
     }
 
     const { filename } = await this.deps.imageUseCase.save(body.icon);
+
     const updated = await this.deps.pointTypeRepo.update(pointTypeId, {
       icon: filename,
     });

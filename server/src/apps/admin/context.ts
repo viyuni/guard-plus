@@ -30,6 +30,7 @@ export const { context, container: adminContainer } = await createAppContext({
 const adminRepo = ripple({ db: Database }, ({ db }) => new AdminRepository(db), {
   debugName: 'AdminRepository',
 });
+
 const adminUseCaseProvider = ripple(
   { adminRepo },
   deps =>
@@ -43,11 +44,13 @@ const adminUseCaseProvider = ripple(
     }),
   { debugName: 'AdminUseCase' },
 );
+
 const adminAuthUseCaseProvider = ripple(
   { db: Database, adminRepo, authUseCase },
   deps => new AdminAuthUseCase(deps),
   { debugName: 'AdminAuthUseCase' },
 );
+
 const adminUserUseCaseProvider = ripple(
   { db: Database, pointAccountUseCase, userUseCase, rewardUseCase },
   deps => new AdminUserUseCase(deps),

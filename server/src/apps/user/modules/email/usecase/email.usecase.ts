@@ -3,7 +3,7 @@ import ejs from 'ejs';
 import type { NewOrderEmailInput } from '#queues';
 import { BadRequestError } from '#utils';
 
-import { Mailer } from '../domain';
+import type { Mailer } from '../domain';
 import newOrderTemplate from '../domain/new-order.template.ejs' with { type: 'text' };
 
 export interface EmailUseCaseDeps {
@@ -55,7 +55,9 @@ export class EmailUseCase {
   private formatDateTime(input: Date | string) {
     const date = input instanceof Date ? input : new Date(input);
 
-    if (Number.isNaN(date.getTime())) return String(input);
+    if (Number.isNaN(date.getTime())) {
+      return String(input);
+    }
 
     return new Intl.DateTimeFormat('zh-CN', {
       dateStyle: 'medium',

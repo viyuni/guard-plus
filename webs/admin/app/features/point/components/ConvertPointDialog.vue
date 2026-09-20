@@ -23,6 +23,7 @@ const fromPointTypeName = computed(
     props.conversion.fromPointType?.name ??
     props.conversion.fromPointTypeId,
 );
+
 const toPointTypeName = computed(
   () =>
     props.conversion.toPointTypeName ??

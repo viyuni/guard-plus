@@ -55,10 +55,12 @@ export function useDebouncedPageQuery<TCustom extends object = Record<never, nev
   const shouldPersistPageQuery = options.persistPageQuery ?? true;
   const initialPage = initial?.page ?? 1;
   const initialPageSize = initial?.pageSize ?? 15;
+
   const routePage = useRouteQuery('page', String(initialPage), {
     mode: 'replace',
     transform: Number,
   });
+
   const routePageSize = useRouteQuery('pageSize', String(initialPageSize), {
     mode: 'replace',
     transform: Number,

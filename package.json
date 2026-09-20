@@ -14,6 +14,7 @@
   },
   "devDependencies": {
     "@golar/vue": "catalog:",
+    "@stylistic/eslint-plugin": "^5.10.0",
     "@tsconfig/node24": "catalog:",
     "@typescript/native-preview": "catalog:",
     "bun-types": "catalog:",

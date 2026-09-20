@@ -37,16 +37,14 @@ export class RewardRuleRepository {
   }
 
   async listCandidates(now = new Date(), db: DbExecutor = this.db) {
+    const startedAt = or(isNull(rewardRules.startAt), lte(rewardRules.startAt, now));
+    const notEndedAt = or(isNull(rewardRules.endAt), gt(rewardRules.endAt, now));
+
     return await db
       .select()
       .from(rewardRules)
       .where(
-        and(
-          deletedAtIsNull(rewardRules),
-          eq(rewardRules.enabled, true),
-          or(isNull(rewardRules.startAt), lte(rewardRules.startAt, now)),
-          or(isNull(rewardRules.endAt), gt(rewardRules.endAt, now)),
-        ),
+        and(deletedAtIsNull(rewardRules), eq(rewardRules.enabled, true), startedAt, notEndedAt),
       )
       .orderBy(asc(rewardRules.priority), asc(rewardRules.createdAt));
   }

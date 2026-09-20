@@ -9,9 +9,9 @@ import type { UserUseCase } from '#modules/user';
 import { BadRequestError } from '#utils';
 
 import { POINT_CHANGE_SOURCE_TYPE, PointIdempotencyKey } from '../domain';
-import { LegacyPointMigrationRepository } from '../repository/legacy-point-migration.repo';
-import { PointAccountRepository } from '../repository/point-account.repo';
-import { PointBalanceUseCase } from './point-balance.usecase';
+import type { LegacyPointMigrationRepository } from '../repository/legacy-point-migration.repo';
+import type { PointAccountRepository } from '../repository/point-account.repo';
+import type { PointBalanceUseCase } from './point-balance.usecase';
 import type { PointTypeUseCase } from './point-type.usecase';
 
 export interface PointAccountUseCaseDeps {
@@ -76,6 +76,7 @@ export class PointAccountUseCase {
       tx,
       user.biliUid,
     );
+
     const results = [];
 
     for (const migration of migrations) {
@@ -94,6 +95,7 @@ export class PointAccountUseCase {
       userId: user.id,
       pointTypeId: migration.pointTypeId,
     });
+
     const result = await this.deps.pointBalanceUseCase.changeBalance(tx, account, {
       type: 'grant',
       userId: user.id,
@@ -111,6 +113,7 @@ export class PointAccountUseCase {
       migration.id,
       user.id,
     );
+
     if (!replayed) {
       throw new BadRequestError('旧平台积分迁移状态更新失败');
     }

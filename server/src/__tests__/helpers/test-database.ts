@@ -23,7 +23,9 @@ export async function closeTestDatabase() {
   const globalWithDatabase = globalThis as GlobalWithTestDatabase;
   const db = globalWithDatabase[testDatabaseSymbol];
 
-  if (!db) return;
+  if (!db) {
+    return;
+  }
 
   globalWithDatabase[testDatabaseSymbol] = undefined;
   await db.$client.end();

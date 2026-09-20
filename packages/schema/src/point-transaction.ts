@@ -32,13 +32,16 @@ export const PointTransactionTypeSchema = v.pipe(
 
 export type PointTransactionType = v.InferOutput<typeof PointTransactionTypeSchema>;
 
+const pointTypeIdSchema = v.pipe(v.string('请输入积分类型 ID'), v.description('积分类型 ID'));
+const userIdSchema = v.pipe(v.string('请输入用户 ID'), v.description('用户 ID'));
+
 /**
  * 积分流水分页查询 Query Schema。
  */
 export const TransactionPageQuerySchema = v.object({
   type: v.optional(PointTransactionTypeSchema),
-  pointTypeId: v.optional(v.pipe(v.string('请输入积分类型 ID'), v.description('积分类型 ID'))),
-  userId: v.optional(v.pipe(v.string('请输入用户 ID'), v.description('用户 ID'))),
+  pointTypeId: v.optional(pointTypeIdSchema),
+  userId: v.optional(userIdSchema),
   ...dateRange.entries,
   ...pageQuery.entries,
 });

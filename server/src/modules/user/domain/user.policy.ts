@@ -18,7 +18,11 @@ export class UserPolicy {
   static isAvailable<T extends UserStatusLike>(
     user: T | null | undefined,
   ): user is AvailableUserStatus<T> {
-    return !!user && user.status !== 'banned';
+    if (!user) {
+      return false;
+    }
+
+    return user.status !== 'banned';
   }
 
   // 确保账户未封禁

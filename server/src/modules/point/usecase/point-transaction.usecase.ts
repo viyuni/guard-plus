@@ -7,8 +7,8 @@ import type {
 import type { DbClient } from '#db';
 
 import { POINT_CHANGE_SOURCE_TYPE, PointIdempotencyKey, PointTransactionPolicy } from '../domain';
-import { PointAccountRepository, PointTransactionRepository } from '../repository';
-import { PointBalanceUseCase } from './point-balance.usecase';
+import type { PointAccountRepository, PointTransactionRepository } from '../repository';
+import type { PointBalanceUseCase } from './point-balance.usecase';
 
 export interface PointTransactionUseCaseDeps {
   db: DbClient;

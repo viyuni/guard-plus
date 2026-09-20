@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const reset = '\x1b[0m';
 const mainAnsi = Bun.color('#9CA3AF', 'ansi') ?? '';
 

@@ -14,6 +14,7 @@ import { userRepo } from '#modules/user/context';
 const db = createDatabase('postgres://test:test@localhost:1/di_test');
 const redisOptions: RedisClientOptions = {};
 const redis = createClient(redisOptions);
+
 const options = {
   db,
   redis,
@@ -49,6 +50,7 @@ describe('Cyrene application contexts', () => {
     expect(first.useCases.pointTypeUseCase).not.toBe(second.useCases.pointTypeUseCase);
 
     const findById = spyOn(first.repositories.pointTypeRepo, 'findById').mockResolvedValue(null);
+
     try {
       await expect(first.useCases.pointTypeUseCase.get('missing')).rejects.toThrow();
       expect(findById).toHaveBeenCalledWith('missing');

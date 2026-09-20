@@ -40,6 +40,7 @@ export const AUTH_STATE_COOKIE_OPTIONS = {
 
 export function getAuthStateCookieOptions(apiOrigin: string, webOrigins: string[]) {
   const apiHostname = new URL(apiOrigin).hostname;
+
   const webHostname = webOrigins
     .map(origin => new URL(origin).hostname)
     .filter(hostname => apiHostname === hostname || apiHostname.endsWith(`.${hostname}`))

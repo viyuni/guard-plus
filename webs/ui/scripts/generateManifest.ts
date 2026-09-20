@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -45,7 +46,9 @@ async function scanComponentExports() {
       .filter(([, value]) => typeof value === 'string' && value.endsWith('.vue'))
       .map(([name]) => name);
 
-    if (componentNames.length === 0) continue;
+    if (componentNames.length === 0) {
+      continue;
+    }
 
     result.push({
       exportName,

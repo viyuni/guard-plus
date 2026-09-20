@@ -42,6 +42,42 @@ const ConversionRuleRemarkSchema = v.pipe(
   v.description('备注'),
 );
 
+const fromPointTypeIdSchema = v.pipe(
+  v.string('请输入来源积分类型 ID'),
+  v.description('来源积分类型 ID'),
+);
+
+const toPointTypeIdSchema = v.pipe(
+  v.string('请输入目标积分类型 ID'),
+  v.description('目标积分类型 ID'),
+);
+
+const targetAmountSchema = v.pipe(
+  v.number('请输入目标积分数量'),
+  v.integer('目标积分数量必须是整数'),
+  v.minValue(1, '目标积分数量必须大于 0'),
+  v.maxValue(POSTGRES_INTEGER_MAX, '目标积分数量过大'),
+  v.description('目标积分数量'),
+);
+
+const minConvertAmountSchema = v.pipe(
+  v.number('请输入单次最小转换数量'),
+  v.integer('单次最小转换数量必须是整数'),
+  v.minValue(1, '单次最小转换数量必须大于 0'),
+  v.maxValue(POSTGRES_INTEGER_MAX, '单次最小转换数量过大'),
+  v.description('单次最小转换数量'),
+);
+
+const maxConvertAmountSchema = v.pipe(
+  v.number('请输入单次最大转换数量'),
+  v.integer('单次最大转换数量必须是整数'),
+  v.minValue(1, '单次最大转换数量必须大于 0'),
+  v.maxValue(POSTGRES_INTEGER_MAX, '单次最大转换数量过大'),
+  v.description('单次最大转换数量'),
+);
+
+const enabledSchema = v.pipe(v.boolean('请选择是否启用'), v.description('是否启用'));
+
 /**
  * 创建积分转换规则 Body Schema。
  */
@@ -50,37 +86,15 @@ export const CreatePointConversionRuleSchema = v.object({
   description: v.optional(emptyable(ConversionRuleDescriptionSchema)),
   remark: v.optional(emptyable(ConversionRuleRemarkSchema)),
 
-  fromPointTypeId: v.pipe(v.string('请输入来源积分类型 ID'), v.description('来源积分类型 ID')),
-  toPointTypeId: v.pipe(v.string('请输入目标积分类型 ID'), v.description('目标积分类型 ID')),
+  fromPointTypeId: fromPointTypeIdSchema,
+  toPointTypeId: toPointTypeIdSchema,
 
-  toAmount: v.pipe(
-    v.number('请输入目标积分数量'),
-    v.integer('目标积分数量必须是整数'),
-    v.minValue(1, '目标积分数量必须大于 0'),
-    v.maxValue(POSTGRES_INTEGER_MAX, '目标积分数量过大'),
-    v.description('目标积分数量'),
-  ),
+  toAmount: targetAmountSchema,
 
-  minConvertAmount: v.optional(
-    v.pipe(
-      v.number('请输入单次最小转换数量'),
-      v.integer('单次最小转换数量必须是整数'),
-      v.minValue(1, '单次最小转换数量必须大于 0'),
-      v.maxValue(POSTGRES_INTEGER_MAX, '单次最小转换数量过大'),
-      v.description('单次最小转换数量'),
-    ),
-  ),
-  maxConvertAmount: v.optional(
-    v.pipe(
-      v.number('请输入单次最大转换数量'),
-      v.integer('单次最大转换数量必须是整数'),
-      v.minValue(1, '单次最大转换数量必须大于 0'),
-      v.maxValue(POSTGRES_INTEGER_MAX, '单次最大转换数量过大'),
-      v.description('单次最大转换数量'),
-    ),
-  ),
+  minConvertAmount: v.optional(minConvertAmountSchema),
+  maxConvertAmount: v.optional(maxConvertAmountSchema),
 
-  enabled: v.optional(v.pipe(v.boolean('请选择是否启用'), v.description('是否启用'))),
+  enabled: v.optional(enabledSchema),
   ...dateRange.entries,
 });
 
@@ -94,43 +108,15 @@ export const UpdatePointConversionRuleSchema = v.object({
   description: v.nullish(emptyable(ConversionRuleDescriptionSchema)),
   remark: v.nullish(emptyable(ConversionRuleRemarkSchema)),
 
-  fromPointTypeId: v.optional(
-    v.pipe(v.string('请输入来源积分类型 ID'), v.description('来源积分类型 ID')),
-  ),
-  toPointTypeId: v.optional(
-    v.pipe(v.string('请输入目标积分类型 ID'), v.description('目标积分类型 ID')),
-  ),
+  fromPointTypeId: v.optional(fromPointTypeIdSchema),
+  toPointTypeId: v.optional(toPointTypeIdSchema),
 
-  toAmount: v.optional(
-    v.pipe(
-      v.number('请输入目标积分数量'),
-      v.integer('目标积分数量必须是整数'),
-      v.minValue(1, '目标积分数量必须大于 0'),
-      v.maxValue(POSTGRES_INTEGER_MAX, '目标积分数量过大'),
-      v.description('目标积分数量'),
-    ),
-  ),
+  toAmount: v.optional(targetAmountSchema),
 
-  minConvertAmount: v.nullish(
-    v.pipe(
-      v.number('请输入单次最小转换数量'),
-      v.integer('单次最小转换数量必须是整数'),
-      v.minValue(1, '单次最小转换数量必须大于 0'),
-      v.maxValue(POSTGRES_INTEGER_MAX, '单次最小转换数量过大'),
-      v.description('单次最小转换数量'),
-    ),
-  ),
-  maxConvertAmount: v.nullish(
-    v.pipe(
-      v.number('请输入单次最大转换数量'),
-      v.integer('单次最大转换数量必须是整数'),
-      v.minValue(1, '单次最大转换数量必须大于 0'),
-      v.maxValue(POSTGRES_INTEGER_MAX, '单次最大转换数量过大'),
-      v.description('单次最大转换数量'),
-    ),
-  ),
+  minConvertAmount: v.nullish(minConvertAmountSchema),
+  maxConvertAmount: v.nullish(maxConvertAmountSchema),
 
-  enabled: v.optional(v.pipe(v.boolean('请选择是否启用'), v.description('是否启用'))),
+  enabled: v.optional(enabledSchema),
 
   ...dateRange.entries,
 });

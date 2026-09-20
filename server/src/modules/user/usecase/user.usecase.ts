@@ -9,8 +9,9 @@ import type { DbExecutor } from '#db';
 import { InvalidCredentialsError } from '#utils';
 import { PasswordUtil } from '#utils';
 
-import { UserAlreadyRegisteredError, UserBasicInfoCrypto, UserPolicy } from '../domain';
-import { UserRepository } from '../repository';
+import type { UserBasicInfoCrypto } from '../domain';
+import { UserAlreadyRegisteredError, UserPolicy } from '../domain';
+import type { UserRepository } from '../repository';
 
 export interface UserUseCaseDeps {
   userBasicInfoCrypto: UserBasicInfoCrypto;

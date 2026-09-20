@@ -14,6 +14,7 @@ import { AdminUseCase } from '../usecase';
 
 const testDatabaseUrl = Bun.env.TEST_DATABASE_URL;
 const describeWithDatabase = testDatabaseUrl ? describe : describe.skip;
+
 const testDefaultAdmin = {
   uid: '0721',
   username: 'Admin',
@@ -53,7 +54,10 @@ async function seedAdmin(input: {
     })
     .returning();
 
-  if (!admin) throw new Error('seed admin failed');
+  if (!admin) {
+    throw new Error('seed admin failed');
+  }
+
   return admin;
 }
 
@@ -72,6 +76,7 @@ async function cleanupBatch(batch: string) {
     .select({ id: admins.id })
     .from(admins)
     .where(like(admins.username, `${batch}%`));
+
   const ids = rows.map(row => row.id);
 
   if (ids.length > 0) {
@@ -84,17 +89,25 @@ async function clearAdmins() {
 }
 
 beforeAll(() => {
-  if (!testDatabaseUrl) return;
+  if (!testDatabaseUrl) {
+    return;
+  }
+
   db = getTestDatabase();
 });
 
 beforeEach(async () => {
-  if (!testDatabaseUrl) return;
+  if (!testDatabaseUrl) {
+    return;
+  }
+
   await clearAdmins();
 });
 
 afterEach(async () => {
-  if (!db) return;
+  if (!db) {
+    return;
+  }
 
   try {
     for (const batch of batches) {
@@ -116,6 +129,7 @@ describeWithDatabase('AdminUseCase 真实数据库', () => {
       password: 'password123',
       remark: 'normal',
     });
+
     const row = await db.query.admins.findFirst({
       where: {
         id: created.id,
@@ -129,6 +143,7 @@ describeWithDatabase('AdminUseCase 真实数据库', () => {
   it('超级管理员可以更新管理员 username 和 remark', async () => {
     const batch = newBatch();
     const useCase = createUseCase();
+
     const seeded = await seedAdmin({
       uid: `${Date.now()}06`,
       username: `${batch}_update`,
@@ -149,6 +164,7 @@ describeWithDatabase('AdminUseCase 真实数据库', () => {
   it('管理员可以更新自己的 username 和 remark', async () => {
     const batch = newBatch();
     const useCase = createUseCase();
+
     const seeded = await seedAdmin({
       uid: `${Date.now()}07`,
       username: `${batch}_self`,
@@ -169,6 +185,7 @@ describeWithDatabase('AdminUseCase 真实数据库', () => {
   it('管理员修改密码时会校验旧密码', async () => {
     const batch = newBatch();
     const useCase = createUseCase();
+
     const seeded = await seedAdmin({
       uid: `${Date.now()}10`,
       username: `${batch}_password`,
@@ -200,10 +217,12 @@ describeWithDatabase('AdminUseCase 真实数据库', () => {
   it('更新管理员为重复 username 时会抛出错误', async () => {
     const batch = newBatch();
     const useCase = createUseCase();
+
     const existing = await seedAdmin({
       uid: `${Date.now()}08`,
       username: `${batch}_existing`,
     });
+
     const target = await seedAdmin({
       uid: `${Date.now()}09`,
       username: `${batch}_target`,
@@ -246,6 +265,7 @@ describeWithDatabase('AdminUseCase 真实数据库', () => {
     const batch = newBatch();
     const useCase = createUseCase();
     const existingSuperAdmin = await findSuperAdmin();
+
     if (!existingSuperAdmin) {
       await seedAdmin({
         uid: testDefaultAdmin.uid,
@@ -267,6 +287,7 @@ describeWithDatabase('AdminUseCase 真实数据库', () => {
   it('可以封禁普通管理员', async () => {
     const batch = newBatch();
     const useCase = createUseCase();
+
     const seeded = await seedAdmin({
       uid: `${Date.now()}04`,
       username: `${batch}_ban`,
@@ -274,6 +295,7 @@ describeWithDatabase('AdminUseCase 真实数据库', () => {
     });
 
     const result = await useCase.ban(seeded.id);
+
     const row = await db.query.admins.findFirst({
       where: {
         id: seeded.id,
@@ -291,6 +313,7 @@ describeWithDatabase('AdminUseCase 真实数据库', () => {
   it('不能封禁超级管理员', async () => {
     const batch = newBatch();
     const useCase = createUseCase();
+
     const seeded =
       (await findSuperAdmin()) ??
       (await seedAdmin({

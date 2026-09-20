@@ -34,9 +34,11 @@ const emit = defineEmits<{
 const status = defineModel<BiliRegisterStatus>('status', { default: 'idle' });
 
 const biliRoomId = ref<number>();
+
 const biliRoomUrl = computed(() =>
   biliRoomId.value ? `https://live.bilibili.com/${biliRoomId.value}` : undefined,
 );
+
 const code = ref<string>();
 const expiresAt = ref<string>();
 const remainingSeconds = ref(0);
@@ -46,9 +48,11 @@ const createMutation = useCreateBiliRegisterCode();
 const confirmMutation = useConfirmBiliRegisterCode();
 const createPasswordResetMutation = useCreateBiliPasswordResetCode();
 const confirmPasswordResetMutation = useConfirmBiliPasswordResetCode();
+
 const isCreating = computed(
   () => createMutation.isLoading.value || createPasswordResetMutation.isLoading.value,
 );
+
 const isConfirming = computed(
   () => confirmMutation.isLoading.value || confirmPasswordResetMutation.isLoading.value,
 );
@@ -126,7 +130,9 @@ async function createCode() {
 }
 
 async function confirmCode() {
-  if (!code.value) return;
+  if (!code.value) {
+    return;
+  }
 
   try {
     const data = await (
@@ -152,7 +158,9 @@ async function confirmCode() {
 }
 
 async function copyCode() {
-  if (!code.value) return;
+  if (!code.value) {
+    return;
+  }
 
   try {
     await navigator.clipboard.writeText(code.value);

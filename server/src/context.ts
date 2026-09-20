@@ -176,7 +176,9 @@ export async function createAppContext(options: CreateSharedContextOptions) {
     options.env.API_ORIGIN,
     options.env.WEB_ORIGINS,
   );
+
   const container = await createContainer(options);
+
   const context = new Elysia({
     name: 'SharedContext',
   })

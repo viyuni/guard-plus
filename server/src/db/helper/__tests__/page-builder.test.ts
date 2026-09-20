@@ -59,6 +59,7 @@ describe('QueryPageBuilder', () => {
 
     it('query runner 接收 findMany、where、limit 和 offset', async () => {
       const { db, query, findMany } = createMockRelationalDb([], 0);
+
       const runner = mock((findManyArg, input) =>
         findManyArg({
           where: input.where,

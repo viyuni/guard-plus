@@ -1,10 +1,10 @@
 import type { CreateRewardRuleBody, UpdateRewardRuleBody } from '@shared/schema/reward';
 
 import type { InsertRewardRule, UpdateRewardRule } from '#db/schema';
-import { PointTypeUseCase } from '#modules/point';
+import type { PointTypeUseCase } from '#modules/point';
 
 import { RewardRuleNameExistsError, RewardRuleNotFoundError, RewardRulePolicy } from '../domain';
-import { RewardRuleRepository } from '../repository';
+import type { RewardRuleRepository } from '../repository';
 
 export interface RewardRuleUseCaseDeps {
   pointTypeUseCase: PointTypeUseCase;
@@ -34,6 +34,7 @@ export class RewardRuleUseCase {
     }
 
     const { endAt, startAt, ...data } = ruleData;
+
     const createData: InsertRewardRule = {
       ...data,
       endAt,
@@ -72,6 +73,7 @@ export class RewardRuleUseCase {
     });
 
     const { endAt: _endAt, startAt: _startAt, ...data } = ruleData;
+
     const updateData: UpdateRewardRule = {
       ...data,
       endAt,

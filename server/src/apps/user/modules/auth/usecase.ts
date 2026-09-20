@@ -139,6 +139,7 @@ export class AuthUseCase {
     }
 
     const user = await this.deps.userUseCase.getAvailableByBiliUid(input.biliUid);
+
     const consumed = await this.biliPasswordResetUseCase.consumeChallenge(
       credential.code,
       credential.verifier,

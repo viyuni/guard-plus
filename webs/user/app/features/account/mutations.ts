@@ -76,6 +76,7 @@ export const useConfirmBiliRegisterCode = defineMutation(() => {
       const response = await api.auth.biliRegisterCode.get({
         query: { biliUid },
       });
+
       const { data } = response;
 
       if (!data) {
@@ -107,6 +108,7 @@ export const useConfirmBiliPasswordResetCode = defineMutation(() => {
       const response = await api.auth.passwordResetCode.get({
         query: { biliUid },
       });
+
       const { data } = response;
 
       if (!data) {

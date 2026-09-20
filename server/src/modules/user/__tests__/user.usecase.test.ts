@@ -8,6 +8,7 @@ import { UserUseCase } from '../usecase';
 
 async function createFixture() {
   const passwordHash = await PasswordUtil.hash('old_password');
+
   const user = {
     id: 'authenticated-user-id',
     biliUid: '123456',
@@ -15,11 +16,14 @@ async function createFixture() {
     status: 'active' as const,
     passwordHash,
   };
+
   const findById = mock(async () => user);
+
   const updatePassword = mock(async (_userId: string, nextPasswordHash: string) => ({
     ...user,
     passwordHash: nextPasswordHash,
   }));
+
   const useCase = new UserUseCase({
     userBasicInfoCrypto: {} as UserBasicInfoCrypto,
     userRepo: { findById, updatePassword } as unknown as UserRepository,

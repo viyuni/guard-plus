@@ -15,7 +15,9 @@ function serializeError(error: unknown) {
     };
   }
 
-  if (error == null) return null;
+  if (error == null) {
+    return null;
+  }
 
   return {
     name: 'Error',
@@ -24,7 +26,9 @@ function serializeError(error: unknown) {
 }
 
 function getHeartbeatStatus(heartbeat: DanmuHeartbeatResult | null) {
-  if (!heartbeat) return null;
+  if (!heartbeat) {
+    return null;
+  }
 
   return {
     id: heartbeat.id,
@@ -39,6 +43,7 @@ function getHeartbeatStatus(heartbeat: DanmuHeartbeatResult | null) {
 
 export function getEventServiceStatus(listener: Pick<BliveListener, 'state'>) {
   const state = listener.state;
+
   const healthy =
     state?.status === ReconnectListenerStatus.Connected &&
     state.loginState.status === LoginStatus.LoggedIn &&

@@ -37,7 +37,9 @@ export class BiliRegisterRedisRepository {
   async find(code: string, biliUid: string) {
     const raw = await this.redis.get(this.key(biliUid, code));
 
-    if (!raw) return null;
+    if (!raw) {
+      return null;
+    }
 
     return JSON.parse(raw) as BiliRegisterChallenge;
   }
@@ -52,7 +54,9 @@ export class BiliRegisterRedisRepository {
       arguments: ['match', biliUid, biliName ?? '', new Date().toISOString()],
     });
 
-    if (!raw || typeof raw !== 'string') return null;
+    if (!raw || typeof raw !== 'string') {
+      return null;
+    }
 
     return JSON.parse(raw) as BiliRegisterChallenge;
   }
@@ -67,7 +71,9 @@ export class BiliRegisterRedisRepository {
       arguments: ['consume', verifierHash, biliUid, new Date().toISOString()],
     });
 
-    if (!raw || typeof raw !== 'string') return null;
+    if (!raw || typeof raw !== 'string') {
+      return null;
+    }
 
     return JSON.parse(raw) as BiliRegisterChallenge;
   }

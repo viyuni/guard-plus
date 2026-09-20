@@ -4,7 +4,7 @@ export const useAdminSession = defineQuery(() => {
   const { data, ...rest } = useQuery(adminSessionQuery());
 
   const user = computed(() => data.value?.user);
-  const authenticated = computed(() => !!data.value?.authenticated);
+  const authenticated = computed(() => Boolean(data.value?.authenticated));
 
   return { ...rest, user, authenticated };
 });

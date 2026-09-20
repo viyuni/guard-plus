@@ -13,35 +13,55 @@ export class PointConversionRulePolicy {
     startAt?: Date | null;
     endAt?: Date | null;
   }) {
+    PointConversionRulePolicy.assertDistinctPointTypes(input.fromPointTypeId, input.toPointTypeId);
+    PointConversionRulePolicy.assertPositiveToAmount(input.toAmount);
+    PointConversionRulePolicy.assertConvertAmountRange(
+      input.minConvertAmount,
+      input.maxConvertAmount,
+    );
+    PointConversionRulePolicy.assertTimeRange(input.startAt, input.endAt);
+  }
+
+  private static assertDistinctPointTypes(fromPointTypeId?: string, toPointTypeId?: string) {
     if (
-      input.fromPointTypeId !== undefined &&
-      input.toPointTypeId !== undefined &&
-      input.fromPointTypeId === input.toPointTypeId
+      fromPointTypeId !== undefined &&
+      toPointTypeId !== undefined &&
+      fromPointTypeId === toPointTypeId
     ) {
       throw new PointConversionRuleInvalidError('来源积分类型和目标积分类型不能相同');
     }
+  }
 
-    if (input.toAmount !== undefined && input.toAmount <= 0) {
+  private static assertPositiveToAmount(toAmount?: number) {
+    if (toAmount !== undefined && toAmount <= 0) {
       throw new PointConversionRuleInvalidError('目标积分数量必须大于 0');
     }
+  }
 
+  private static assertConvertAmountRange(
+    minConvertAmount?: number | null,
+    maxConvertAmount?: number | null,
+  ) {
     if (
-      input.minConvertAmount !== undefined &&
-      input.maxConvertAmount !== undefined &&
-      input.minConvertAmount !== null &&
-      input.maxConvertAmount !== null &&
-      input.minConvertAmount > input.maxConvertAmount
+      minConvertAmount === undefined ||
+      maxConvertAmount === undefined ||
+      minConvertAmount === null ||
+      maxConvertAmount === null
     ) {
-      throw new PointConversionRuleInvalidError('最小转换数量不能大于最大转换数量');
+      return;
     }
 
-    if (
-      input.startAt !== undefined &&
-      input.endAt !== undefined &&
-      input.startAt !== null &&
-      input.endAt !== null &&
-      input.startAt >= input.endAt
-    ) {
+    if (minConvertAmount > maxConvertAmount) {
+      throw new PointConversionRuleInvalidError('最小转换数量不能大于最大转换数量');
+    }
+  }
+
+  private static assertTimeRange(startAt?: Date | null, endAt?: Date | null) {
+    if (startAt === undefined || endAt === undefined || startAt === null || endAt === null) {
+      return;
+    }
+
+    if (startAt >= endAt) {
       throw new PointConversionRuleInvalidError('生效时间必须早于失效时间');
     }
   }

@@ -6,6 +6,7 @@ import type { BiliRegisterChallenge } from '../domain';
 import type { BiliRegisterRedisRepository } from '../repository';
 
 const createCodeSuffix = customAlphabet('23456789ABCDEFGHJKLMNPQRSTUVWXYZ', 6);
+
 const createVerifier = customAlphabet(
   '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
   48,
@@ -33,6 +34,7 @@ export class BiliRegisterUseCase {
       const code = `${this.codePrefix}${createCodeSuffix()}`;
       const verifier = createVerifier();
       const now = Date.now();
+
       const challenge: BiliRegisterChallenge = {
         status: 'pending',
         code,
@@ -58,7 +60,9 @@ export class BiliRegisterUseCase {
   }
 
   async getOwnedChallenge(code: string | undefined, verifier: string | undefined, biliUid: string) {
-    if (!code || !verifier) return null;
+    if (!code || !verifier) {
+      return null;
+    }
 
     const normalizedCode = this.normalizeCode(code);
     const challenge = await this.getChallenge(normalizedCode, biliUid);
@@ -85,7 +89,9 @@ export class BiliRegisterUseCase {
   }
 
   async consumeChallenge(code: string, verifier: string | undefined, biliUid: string) {
-    if (!verifier) return null;
+    if (!verifier) {
+      return null;
+    }
 
     return this.deps.biliRegisterRepo.consumeMatched(
       this.normalizeCode(code),

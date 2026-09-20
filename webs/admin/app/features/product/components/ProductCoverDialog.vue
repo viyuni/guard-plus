@@ -17,6 +17,7 @@ const open = defineModel<boolean>('open', { default: false });
 const productCoverCropInput = ref<InstanceType<typeof ProductCoverCropInput>>();
 const updateProductCoverMutation = useUpdateProductCover();
 const { getImageUrl } = useImage();
+
 const currentCoverUrl = computed(() =>
   props.product.cover ? getImageUrl(props.product.cover) : undefined,
 );
