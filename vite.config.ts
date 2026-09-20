@@ -74,6 +74,8 @@ export default defineConfig({
     ],
     rules: {
       'guard-plus/ripple-deps-each-on-own-line': 'error',
+      'guard-plus/ripple-deps-pascal-case': 'error',
+      'guard-plus/ripple-pascal-case': 'error',
       'constructor-super': 'warn',
       'for-direction': 'warn',
       'no-async-promise-executor': 'warn',
