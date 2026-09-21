@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 
-import type { Order } from '#db/schema';
+import type { Order } from '#infrastructure/db/schema';
 
 import { OrderStatusInvalidError } from '../domain';
 import {

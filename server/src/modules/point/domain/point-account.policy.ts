@@ -1,4 +1,4 @@
-import type { PointAccount } from '#db/schema';
+import type { PointAccount } from '#infrastructure/db/schema';
 
 import {
   PointAccountBannedError,

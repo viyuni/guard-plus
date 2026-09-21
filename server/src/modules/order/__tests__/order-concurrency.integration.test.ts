@@ -2,7 +2,7 @@ import { expect, it } from 'bun:test';
 
 import { and, count, eq } from 'drizzle-orm';
 
-import { orders, pointTransactions, productStockMovements } from '#db/schema';
+import { orders, pointTransactions, productStockMovements } from '#infrastructure/db/schema';
 import { OrderIdempotencyKey } from '#modules/order';
 import { PointIdempotencyKey } from '#modules/point';
 import { ProductUnavailableError, StockIdempotencyKey } from '#modules/product';

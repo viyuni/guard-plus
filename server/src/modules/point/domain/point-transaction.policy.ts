@@ -1,4 +1,4 @@
-import type { PointTransaction, PointTransactionType } from '#db/schema';
+import type { PointTransaction, PointTransactionType } from '#infrastructure/db/schema';
 
 import { InvalidPointTransactionDeltaError, PointTransactionAlreadyReversedError } from './errors';
 import { POINT_CHANGE_SOURCE_TYPE } from './types';

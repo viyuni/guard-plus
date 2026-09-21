@@ -1,5 +1,5 @@
-import type { RewardRule } from '#db/schema';
-import { assertTimeRange } from '#utils';
+import type { RewardRule } from '#infrastructure/db/schema';
+import { assertTimeRange } from '#shared';
 
 import { RewardRuleTimeRangeInvalidError } from './errors';
 import type { BiliGuardRewardEvent } from './types';

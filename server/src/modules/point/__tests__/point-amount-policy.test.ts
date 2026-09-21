@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 
-import type { PointConversionRule } from '#db/schema';
+import type { PointConversionRule } from '#infrastructure/db/schema';
 import { assertPositivePointAmount, calculatePointConversionToAmount } from '#modules/point';
 
 function conversionRule(input: Partial<PointConversionRule> = {}): PointConversionRule {

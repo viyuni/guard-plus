@@ -307,11 +307,205 @@ const rippleDepsPascalCase = {
   },
 };
 
+/**
+ * 架构边界规则。
+ *
+ * `server/src` 的顶层目录就是依赖层级：apps → modules → infrastructure →
+ * composition → shared，导入只能顺着这个方向走；另外还有两条模块级约束：
+ * 跨模块只能走 `#modules/<name>` 公共入口，App 之间不能互相导入。
+ *
+ * 判据只看源码里的 `#` 别名导入，因此 relative import 仍留给人工判断
+ * （同一模块内部的 relative import 是允许且推荐的）。
+ */
+
+const SOURCE_LAYERS = {
+  // 同层互相依赖始终允许；这里只列"允许向下的层"。
+  apps: new Set(['modules', 'infrastructure', 'composition', 'shared', 'env']),
+  modules: new Set(['infrastructure', 'composition', 'shared']),
+  infrastructure: new Set(['composition', 'shared']),
+  // composition 声明的令牌必须用基础设施能力的类型（Database: DbClient ...），
+  // 因此允许 composition → infrastructure，但基础设施本身不允许反向依赖 composition。
+  composition: new Set(['infrastructure', 'shared']),
+  shared: new Set(),
+  // env 只是 App Boundary 的配置片段，允许引用基础设施类型与共享工具。
+  env: new Set(['infrastructure', 'composition', 'shared']),
+};
+
+const ALIAS_LAYERS = [
+  ['#apps/', 'apps'],
+  ['#modules/', 'modules'],
+  ['#infrastructure/', 'infrastructure'],
+  ['#composition/', 'composition'],
+  ['#composition', 'composition'],
+  ['#shared/', 'shared'],
+  ['#shared', 'shared'],
+  ['#env/', 'env'],
+  ['#env', 'env'],
+];
+
+/**
+ * 从文件名解析出它所在的架构层。
+ *
+ * @param {unknown} filename
+ */
+function parseSourcePath(filename) {
+  if (typeof filename !== 'string' || filename.length === 0) {
+    return null;
+  }
+
+  const normalized = filename.replaceAll('\\', '/');
+  const match = /(?:^|\/)src\/(.+)$/.exec(normalized);
+  const serverMatch = /(?:^|\/)server\/src\/(.+)$/.exec(normalized);
+  const resolved = serverMatch?.[1] ?? match?.[1];
+
+  if (!resolved) {
+    return null;
+  }
+
+  const segments = resolved.split('/');
+
+  return {
+    layer: segments[0],
+    relative: resolved,
+  };
+}
+
+/**
+ * 解析别名导入属于哪一层。
+ *
+ * @param {string} specifier
+ */
+function resolveAliasLayer(specifier) {
+  for (const [prefix, layer] of ALIAS_LAYERS) {
+    if (specifier === prefix.replace(/\/$/, '') || specifier.startsWith(prefix)) {
+      return layer;
+    }
+  }
+
+  return null;
+}
+
+const architectureImportBoundary = {
+  meta: {
+    type: 'problem',
+    docs: {
+      description: '强制 apps/modules/infrastructure/composition/shared 的单向依赖与模块公共入口',
+    },
+    schema: [],
+    messages: {
+      layerViolation:
+        '{{layer}} 层不允许依赖 {{target}} 层："{{specifier}}" 破坏了 apps → modules → infrastructure → composition → shared 的单向依赖',
+      moduleDeepImport:
+        '跨模块禁止 deep import："{{specifier}}" 只允许该模块内部使用，其他模块请从 "#modules/{{module}}" 默认导出访问能力',
+      appDeepImport: 'App 之间禁止互相导入："{{specifier}}" 只允许在 apps/{{app}} 内部使用',
+      envBoundary: '环境变量只允许在 App Boundary 读取："{{specifier}}" 出现在 {{layer}} 层',
+    },
+  },
+
+  create(context) {
+    const filename = context.filename ?? context.getFilename?.();
+    const source = parseSourcePath(filename);
+
+    if (!source || !SOURCE_LAYERS[source.layer]) {
+      return {};
+    }
+
+    /**
+     * 判断一次别名导入违反了哪条约束。
+     *
+     * @param {string} specifier
+     */
+    function findViolation(specifier) {
+      const targetLayer = resolveAliasLayer(specifier);
+
+      if (!targetLayer) {
+        return null;
+      }
+
+      if (targetLayer === 'env' && source.layer !== 'apps' && source.layer !== 'env') {
+        return {
+          messageId: 'envBoundary',
+          data: {
+            layer: source.layer,
+            specifier,
+          },
+        };
+      }
+
+      const sameLayer = targetLayer === source.layer;
+
+      if (!sameLayer && !SOURCE_LAYERS[source.layer].has(targetLayer)) {
+        return {
+          messageId: 'layerViolation',
+          data: {
+            layer: source.layer,
+            target: targetLayer,
+            specifier,
+          },
+        };
+      }
+
+      const moduleMatch = /^#modules\/([^/]+)\/.+$/.exec(specifier);
+
+      if (moduleMatch && !source.relative.startsWith(`modules/${moduleMatch[1]}/`)) {
+        return {
+          messageId: 'moduleDeepImport',
+          data: {
+            module: moduleMatch[1],
+            specifier,
+          },
+        };
+      }
+
+      const appMatch = /^#apps\/([^/]+)(?:\/.*)?$/.exec(specifier);
+
+      if (appMatch && !source.relative.startsWith(`apps/${appMatch[1]}/`)) {
+        return {
+          messageId: 'appDeepImport',
+          data: {
+            app: appMatch[1],
+            specifier,
+          },
+        };
+      }
+
+      return null;
+    }
+
+    function check(node, specifier) {
+      if (typeof specifier !== 'string' || !specifier.startsWith('#')) {
+        return;
+      }
+
+      const violation = findViolation(specifier);
+
+      if (violation) {
+        context.report({ node, ...violation });
+      }
+    }
+
+    return {
+      ImportDeclaration(node) {
+        check(node, node.source?.value);
+      },
+      ExportNamedDeclaration(node) {
+        if (node.source) {
+          check(node, node.source.value);
+        }
+      },
+      ExportAllDeclaration(node) {
+        check(node, node.source?.value);
+      },
+    };
+  },
+};
+
 const plugin = {
   meta: {
     name: 'guard-plus',
   },
   rules: {
+    'architecture-import-boundary': architectureImportBoundary,
     'ripple-deps-each-on-own-line': rippleDepsEachOnOwnLine,
     'ripple-deps-pascal-case': rippleDepsPascalCase,
     'ripple-pascal-case': ripplePascalCase,

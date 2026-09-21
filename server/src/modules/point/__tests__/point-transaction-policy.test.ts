@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 
-import type { PointTransaction } from '#db/schema';
+import type { PointTransaction } from '#infrastructure/db/schema';
 
 import {
   POINT_CHANGE_SOURCE_TYPE,

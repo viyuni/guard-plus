@@ -1,7 +1,8 @@
 import { envEmails, port } from '@shared/schema';
 import { createEnv } from '@t3-oss/env-core';
-import { token } from 'cyrenejs';
 import * as v from 'valibot';
+
+import type { SmtpMailConfig } from '#infrastructure/mail';
 
 export const smtpEnvShape = {
   NOTIFY_EMAILS: v.optional(envEmails),
@@ -21,23 +22,11 @@ export const smtpEnv = createEnv({
 export type SmtpEnv = typeof smtpEnv;
 
 /**
- * 归一化后的 SMTP 配置。
+ * 把 SMTP 环境变量映射成邮件基础设施需要的技术配置。
  *
- * SMTP 未配置时整体为 undefined，由消费方决定降级行为。
+ * SMTP 未完整配置时返回 undefined，由 App 组合根决定降级实现。
  */
-export interface SmtpConfig {
-  host: string;
-  port: number;
-  user: string;
-  pass: string;
-  from: string;
-  notifyEmails: string[];
-}
-
-/** 邮件模块需要的 SMTP 配置 */
-export const SmtpConfig = token<SmtpConfig | undefined>('SmtpConfig');
-
-export function toSmtpConfig(env: SmtpEnv): SmtpConfig | undefined {
+export function toSmtpMailConfig(env: SmtpEnv): SmtpMailConfig | undefined {
   if (!env.SMTP_HOST || !env.SMTP_PORT || !env.SMTP_USER || !env.SMTP_PASS) {
     return undefined;
   }

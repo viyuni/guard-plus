@@ -1,5 +1,4 @@
 import { createEnv } from '@t3-oss/env-core';
-import { token } from 'cyrenejs';
 import * as v from 'valibot';
 
 const numberish = () => v.pipe(v.union([v.string(), v.number()]), v.transform(Number));
@@ -21,9 +20,3 @@ export const biliEnv = createEnv({
 });
 
 export type BiliEnv = typeof biliEnv;
-
-/** 直播间 ID */
-export const BiliRoom = token<number | undefined>('BiliRoom');
-
-/** 注册码有效期（秒） */
-export const RegisterCodeTtl = token<number>('RegisterCodeTtl');

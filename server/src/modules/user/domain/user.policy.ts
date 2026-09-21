@@ -1,5 +1,5 @@
-import type { User } from '#db/schema';
-import { assertPresent } from '#utils';
+import type { User } from '#infrastructure/db/schema';
+import { assertPresent } from '#shared';
 
 import { UserNotFoundError, UserUnavailableError } from './errors';
 

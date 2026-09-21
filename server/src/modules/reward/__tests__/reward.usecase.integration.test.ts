@@ -1,18 +1,9 @@
 import { afterEach, expect, it, spyOn } from 'bun:test';
 
-import { Cyrene } from 'cyrenejs';
 import { count, eq } from 'drizzle-orm';
 
-import { AdminUserUseCase } from '#apps/admin/modules/user/usecase';
-import { UserAuthUseCase } from '#apps/user/modules/auth/usecase';
-import { Database, PointImageUseCase, Redis, RewardLogger } from '#context/tokens';
-import { pointTransactions } from '#db/schema';
-import { BiliRoom, RegisterCodeTtl } from '#env/bili';
-import { JwtSecret } from '#env/config';
-import { DataSecret } from '#env/shared';
-import { BiliRegisterUseCase } from '#modules/auth';
-import type { BiliRegisterChallenge } from '#modules/auth/domain';
-import { redis } from '#redis';
+import { pointTransactions } from '#infrastructure/db/schema';
+import Auth, { type BiliRegisterChallenge } from '#modules/auth';
 import {
   createDeps,
   createBiliGuardEvent,
@@ -26,6 +17,8 @@ import {
   seedPointType,
   seedUser,
 } from '#test-helpers/concurrency-fixtures';
+import { createTestContainer } from '#test-helpers/test-container';
+import { getTestRedis } from '#test-helpers/test-redis';
 
 import { PointIdempotencyKey } from '../../point';
 import { type BiliGuardRewardEvent, RewardRuleNameExistsError } from '../domain';
@@ -42,19 +35,7 @@ afterEach(async () => {
  * 用真实数据库装配 app 层 provider, 需要替换弹幕验证时再对已解析对象做 spyOn。
  */
 async function createAppUseCases() {
-  const runtime = new Cyrene({
-    providers: { AdminUserUseCase, UserAuthUseCase },
-    bindings: [
-      { token: Database, value: db },
-      { token: Redis, value: redis },
-      { token: DataSecret, value: Bun.env.DATA_SECRET ?? 'test-data-secret' },
-      { token: JwtSecret, value: Bun.env.ADMIN_JWT_SECRET ?? 'test-admin-jwt-secret' },
-      { token: BiliRoom, value: 8315781 },
-      { token: RegisterCodeTtl, value: 300 },
-      { token: RewardLogger, value: undefined },
-      { token: PointImageUseCase, value: undefined },
-    ],
-  });
+  const runtime = createTestContainer({ db, redis: getTestRedis() });
 
   appRuntimes.push(runtime);
 
@@ -113,7 +94,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
     const biliUid = createBiliUid();
     const pointType = await seedPointType(`${prefix}_point`);
     const user = await seedUser(`${prefix}_user`, biliUid);
-    const { RewardUseCase } = await createDeps();
+    const { RewardProcessor: RewardUseCase } = await createDeps();
 
     const rule = await createRewardRule(prefix, pointType.id, {
       points: 20,
@@ -161,7 +142,8 @@ describeWithDatabase('奖励发放真实数据库', () => {
     const biliUid = createBiliUid();
     const pointType = await seedPointType(`${prefix}_point`);
     const user = await seedUser(`${prefix}_user`, biliUid);
-    const { RewardUseCase } = await createDeps();
+    const { ManualRewardUseCase } = await createDeps();
+
     await createRewardRule(prefix, pointType.id, {
       points: 15,
       conditions: {
@@ -171,7 +153,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
     });
     const openedAt = new Date('2026-01-02T03:04:05.000Z');
 
-    const result = await RewardUseCase.createManualBiliGuardEvent({
+    const result = await ManualRewardUseCase.create({
       uid: biliUid,
       uname: `${prefix}_bili_user`,
       total: 2,
@@ -235,7 +217,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
     const ignoredPointType = await seedPointType(`${prefix}_ignored_point`);
     const biliUid = createBiliUid();
     const user = await seedUser(`${prefix}_user`, biliUid);
-    const { RewardUseCase } = await createDeps();
+    const { RewardProcessor: RewardUseCase } = await createDeps();
 
     await createRewardRule(`${prefix}_no_guard_types`, noGuardTypesPointType.id, {
       points: 5,
@@ -308,7 +290,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
     const pointType = await seedPointType(`${prefix}_point`);
     const biliUid = createBiliUid();
     const user = await seedUser(`${prefix}_user`, biliUid);
-    const { RewardUseCase } = await createDeps();
+    const { RewardProcessor: RewardUseCase } = await createDeps();
 
     const rule = await createRewardRule(prefix, pointType.id, {
       conditions: {
@@ -338,7 +320,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
     const activePointType = await seedPointType(`${prefix}_active_point`);
     const biliUid = createBiliUid();
     const user = await seedUser(`${prefix}_user`, biliUid);
-    const { RewardUseCase } = await createDeps();
+    const { RewardProcessor: RewardUseCase } = await createDeps();
     const now = new Date('2026-05-12T12:00:00.000Z');
 
     await createRewardRule(`${prefix}_expired`, expiredPointType.id, {
@@ -382,7 +364,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
     const biliUid = createBiliUid();
     const pointType = await seedPointType(`${prefix}_point`);
     const user = await seedUser(`${prefix}_user`, biliUid);
-    const { RewardUseCase } = await createDeps();
+    const { RewardProcessor: RewardUseCase } = await createDeps();
 
     const rule = await createRewardRule(prefix, pointType.id, {
       points: 20,
@@ -421,7 +403,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
   it('未注册用户事件会记录为 ignored 并保留奖励计划快照', async () => {
     const prefix = newBatch('reward');
     const pointType = await seedPointType(`${prefix}_point`);
-    const { RewardUseCase } = await createDeps();
+    const { RewardProcessor: RewardUseCase } = await createDeps();
 
     const rule = await createRewardRule(prefix, pointType.id, {
       points: 12,
@@ -469,7 +451,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
     const prefix = newBatch('reward');
     const pointType = await seedPointType(`${prefix}_point`);
     const biliUid = createBiliUid();
-    const { RewardUseCase, RewardRuleUseCase } = await createDeps();
+    const { RewardProcessor: RewardUseCase, RewardRuleUseCase } = await createDeps();
 
     const rule = await createRewardRule(prefix, pointType.id, {
       points: 12,
@@ -489,7 +471,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
       points: 99,
     });
     const user = await seedUser(`${prefix}_user`, biliUid);
-    const replayed = await RewardUseCase.replayRewardBiliGuard(event.id);
+    const replayed = await RewardUseCase.replayBiliGuardEvent(event.id);
 
     const account = await db.query.pointAccounts.findFirst({
       where: {
@@ -527,7 +509,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
     const prefix = newBatch('reward');
     const pointType = await seedPointType(`${prefix}_point`);
     const biliUid = createBiliUid();
-    const { RewardUseCase } = await createDeps();
+    const { RewardProcessor: RewardUseCase, RewardReplayUseCase } = await createDeps();
 
     const rule = await createRewardRule(prefix, pointType.id, {
       points: 7,
@@ -544,7 +526,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
     await RewardUseCase.rewardBiliGuard(firstEvent);
     await RewardUseCase.rewardBiliGuard(secondEvent);
     const user = await seedUser(`${prefix}_user`, biliUid);
-    const replayed = await RewardUseCase.replayRewardBiliGuardByUserId(user.id);
+    const replayed = await RewardReplayUseCase.replayByUserId(user.id);
 
     const account = await db.query.pointAccounts.findFirst({
       where: {
@@ -569,7 +551,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
     const pointType = await seedPointType(`${prefix}_point`);
     const biliUid = createBiliUid();
     const { container, runtime } = await createAppUseCases();
-    const { PointAccountUseCase, RewardUseCase } = await createDeps();
+    const { PointAccountUseCase, RewardProcessor: RewardUseCase } = await createDeps();
     const biliRegisterCode = 'U-234567';
     const verifier = 'test-verifier';
 
@@ -589,7 +571,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
           }
         : null;
 
-    const registerUseCase = await runtime.resolve(BiliRegisterUseCase);
+    const registerUseCase = await runtime.resolve(Auth.BiliRegisterUseCase);
 
     spyOn(registerUseCase, 'getOwnedChallenge').mockImplementation(async (code, actualVerifier) =>
       getBiliRegisterChallenge(code, actualVerifier),
@@ -670,7 +652,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
     const pointType = await seedPointType(`${prefix}_point`);
     const biliUid = createBiliUid();
     const { container } = await createAppUseCases();
-    const { PointAccountUseCase, RewardUseCase } = await createDeps();
+    const { PointAccountUseCase, RewardProcessor: RewardUseCase } = await createDeps();
 
     const adminUserUseCase = container.AdminUserUseCase;
 

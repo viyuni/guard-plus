@@ -1,5 +1,5 @@
-import type { PointConversionRule } from '#db/schema';
-import { assertTimeRange } from '#utils';
+import type { PointConversionRule } from '#infrastructure/db/schema';
+import { assertTimeRange } from '#shared';
 
 import { PointConversionRuleInvalidError, PointConversionRuleUnavailableError } from './errors';
 import { assertPositivePointAmount } from './point-amount.policy';

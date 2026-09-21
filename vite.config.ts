@@ -73,6 +73,7 @@ export default defineConfig({
       },
     ],
     rules: {
+      'guard-plus/architecture-import-boundary': 'error',
       'guard-plus/ripple-deps-each-on-own-line': 'error',
       'guard-plus/ripple-deps-pascal-case': 'error',
       'guard-plus/ripple-pascal-case': 'error',

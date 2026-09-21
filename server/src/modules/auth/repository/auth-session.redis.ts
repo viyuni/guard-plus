@@ -1,7 +1,7 @@
 import { type InferInput, ripple } from 'cyrenejs';
 import { nanoid } from 'nanoid';
 
-import { Redis } from '#context/tokens';
+import { Redis } from '#composition/tokens';
 
 import { REFRESH_TOKEN_EXPIRES_IN_SECONDS } from '../constants';
 import type { AuthRole, AuthSession, AuthTokenPair } from '../domain';

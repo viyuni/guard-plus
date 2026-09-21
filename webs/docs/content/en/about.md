@@ -55,12 +55,13 @@ The project is a **Vite+ TypeScript monorepo** containing:
 
 Elysia API apps for admin and user clients, event ingestion, background queues, shared backend modules, Drizzle schema, migrations, and Eden type exports.
 
-- `server/src/apps/admin` — Admin API, admin context, and admin-only route modules
-- `server/src/apps/user` — User API, user context, and user-only route modules
+- `server/src/apps/admin` — Admin HTTP app (config, composition root, `http/` routes, app-only features)
+- `server/src/apps/user` — User HTTP app (same layout)
 - `server/src/apps/event` — Event ingestion runtime
-- `server/src/modules` — Reusable backend modules
-- `server/src/queues` — Background job definitions
-- `server/src/db` — Drizzle client, schema, relations, migrations
+- `server/src/modules` — Reusable business modules, each default-exporting a `defineRipples(...)` manifest
+- `server/src/infrastructure` — db, redis, queue, logger, mail, storage, and HTTP adapters
+- `server/src/composition` — Infrastructure/config tokens and binding helpers
+- `server/src/shared` — Business-agnostic errors and utilities
 
 ### `@shared/schema` — Shared Contracts
 

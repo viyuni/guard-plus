@@ -4,14 +4,27 @@ import { Cyrene } from 'cyrenejs';
 import Elysia from 'elysia';
 import { decodeJwt } from 'jose';
 
-import { Redis } from '#context/tokens';
-import { JwtSecret } from '#env/config';
-import type { RedisClient } from '#redis';
+import { JwtSecret, Redis } from '#composition/tokens';
+import {
+  createAuthCookieOptions,
+  createAuthGuard,
+  getAuthStateCookieOptions,
+} from '#infrastructure/http';
+import type { RedisClient } from '#infrastructure/redis';
 
 import type { AuthTokenPair } from '../domain';
-import { createAuthGuard, getAuthStateCookieOptions } from '../index';
 import { AuthSessionRepo } from '../repository';
 import { AuthUseCase } from '../usecase';
+
+const testAuthCookieOptions = createAuthCookieOptions({
+  apiOrigin: 'https://api.admin.example.com',
+  webOrigins: ['https://admin.example.com'],
+  durations: {
+    accessTokenSeconds: 900,
+    refreshTokenSeconds: 2_592_000,
+    biliRegisterSeconds: 300,
+  },
+});
 
 afterEach(() => {
   setSystemTime();
@@ -44,7 +57,7 @@ async function createAuthUseCase() {
   const refreshLocks = new Set<string>();
 
   const runtime = new Cyrene({
-    providers: { AuthSessionRepo, AuthUseCase },
+    ripples: { AuthSessionRepo, AuthUseCase },
     bindings: [
       // 会话仓库的方法会被下面整体替换, 这里只需要一个占位客户端。
       { token: Redis, value: {} as RedisClient },
@@ -246,7 +259,7 @@ describe('requiredSuperAdminAuth', () => {
       verifyAccessToken: mock(async () => payload),
     } as any;
 
-    const app = new Elysia().use(createAuthGuard(authUseCase)).get(
+    const app = new Elysia().use(createAuthGuard(authUseCase, testAuthCookieOptions)).get(
       '/super',
       ({ auth: { id, role } }) => ({
         id,
@@ -348,7 +361,7 @@ describe('requiredAuth token refresh', () => {
     setSystemTime(loginAt.getTime() + 16 * 60 * 1000);
 
     const app = new Elysia()
-      .use(createAuthGuard(authUseCase))
+      .use(createAuthGuard(authUseCase, testAuthCookieOptions))
       .get('/me', ({ auth }) => auth, { requiredAuth: true });
 
     const response = await app.handle(

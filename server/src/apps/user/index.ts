@@ -1,5 +1,7 @@
-import { logger } from '#utils/logger';
+import { createUserServer } from './server';
 
-import { app } from './server';
+const { app, config, logger } = await createUserServer();
 
-app.compile().listen({}, logger.printUrls);
+app.compile().listen({}, server => {
+  logger.printUrls(server, config.nodeEnv === 'development');
+});

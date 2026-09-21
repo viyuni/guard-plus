@@ -1,4 +1,4 @@
-import { createDatabase, type DbClient } from '#db/client';
+import { createDatabase, type DbClient } from '#infrastructure/db/client';
 
 const testDatabaseUrl = Bun.env.TEST_DATABASE_URL;
 const testDatabaseSymbol = Symbol.for('guard-plus.test.database');

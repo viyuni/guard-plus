@@ -1,4 +1,4 @@
-import type { Product } from '#db/schema';
+import type { Product } from '#infrastructure/db/schema';
 
 import { StockInsufficientError } from './errors';
 

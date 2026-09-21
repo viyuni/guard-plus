@@ -1,8 +1,8 @@
 import type { CreateRewardRuleBody, UpdateRewardRuleBody } from '@shared/schema/reward';
 import { type InferInput, ripple } from 'cyrenejs';
 
-import type { InsertRewardRule, UpdateRewardRule } from '#db/schema';
-import { PointTypeUseCase } from '#modules/point';
+import type { InsertRewardRule, UpdateRewardRule } from '#infrastructure/db/schema';
+import Point from '#modules/point';
 
 import {
   RewardRuleNameExistsError,
@@ -13,10 +13,10 @@ import { RewardRuleRepo } from '../repository';
 
 export const RewardRuleUseCase = ripple(
   {
-    PointTypeUseCase,
+    PointTypeQuery: Point.PointTypeQuery,
     RewardRuleRepo,
   },
-  ({ PointTypeUseCase, RewardRuleRepo }) => {
+  ({ PointTypeQuery, RewardRuleRepo }) => {
     async function get(rewardRuleId: string) {
       const rule = await RewardRuleRepo.findById(rewardRuleId);
 
@@ -31,7 +31,7 @@ export const RewardRuleUseCase = ripple(
       get,
 
       async create(ruleData: CreateRewardRuleBody) {
-        await PointTypeUseCase.getAvailableById(ruleData.pointTypeId);
+        await PointTypeQuery.getAvailableById(ruleData.pointTypeId);
 
         const exists = await RewardRuleRepo.findByName(ruleData.name);
 
@@ -60,7 +60,7 @@ export const RewardRuleUseCase = ripple(
         const current = await get(rewardRuleId);
 
         if (ruleData.pointTypeId) {
-          await PointTypeUseCase.getAvailableById(ruleData.pointTypeId);
+          await PointTypeQuery.getAvailableById(ruleData.pointTypeId);
         }
 
         if (ruleData.name && ruleData.name !== current.name) {

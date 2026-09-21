@@ -19,7 +19,7 @@
     "@valibot/to-json-schema": "^1.8.0",
     "@viyuni/bevent-relay": "0.0.7",
     "bunqueue": "^2.9.5",
-    "cyrenejs": "^0.0.1",
+    "cyrenejs": "^0.0.2",
     "drizzle-orm": "^1.0.0-rc.5-ab785fc",
     "ejs": "^6.0.1",
     "elysia": "^1.4.30",

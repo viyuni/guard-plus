@@ -2,7 +2,7 @@ import { expect, it } from 'bun:test';
 
 import { and, count, eq } from 'drizzle-orm';
 
-import { pointAccounts, pointConversionRules, pointTransactions } from '#db/schema';
+import { pointAccounts, pointConversionRules, pointTransactions } from '#infrastructure/db/schema';
 import { countFulfilled, countRejected, runConcurrent } from '#test-helpers/concurrency';
 import {
   createConversionRule,
@@ -140,10 +140,10 @@ describeWithDatabase('积分转换真实数据库并发保护', () => {
     const prefix = newBatch();
     const first = await seedPointType(`${prefix}_first_point`);
     const second = await seedPointType(`${prefix}_second_point`);
-    const { PointTypeUseCase } = await createDeps();
+    const { PointTypeAdminUseCase } = await createDeps();
 
     await expectRejectsInstanceOf(
-      PointTypeUseCase.update(second.id, {
+      PointTypeAdminUseCase.update(second.id, {
         name: first.name,
       }),
       PointTypeNameExistsError,

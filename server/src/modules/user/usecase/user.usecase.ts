@@ -6,8 +6,8 @@ import type {
 } from '@shared/schema/user';
 import { type InferInput, ripple } from 'cyrenejs';
 
-import type { DbExecutor } from '#db';
-import { InvalidCredentialsError, PasswordUtil } from '#utils';
+import type { DbExecutor } from '#infrastructure/db';
+import { InvalidCredentialsError, PasswordUtil } from '#shared';
 
 import {
   UserAlreadyRegisteredError,

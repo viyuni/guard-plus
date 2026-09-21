@@ -2,7 +2,7 @@ import { expect, it } from 'bun:test';
 
 import { count, eq } from 'drizzle-orm';
 
-import { pointTransactions } from '#db/schema';
+import { pointTransactions } from '#infrastructure/db/schema';
 import { countFulfilled, countRejected, runConcurrent } from '#test-helpers/concurrency';
 import {
   createDeps,

@@ -1,4 +1,4 @@
-import { createIntegerPolicy } from '#utils';
+import { createIntegerPolicy } from '#shared';
 
 import { PointAmountInvalidError } from './errors';
 

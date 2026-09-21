@@ -2,10 +2,10 @@ import type { PointTransactionPageQuery } from '@shared/schema/point-transaction
 import { type InferInput, ripple } from 'cyrenejs';
 import { eq } from 'drizzle-orm';
 
-import { Database } from '#context/tokens';
-import type { DbExecutor, DbTransaction } from '#db';
-import { QueryPageBuilder } from '#db/helper';
-import { pointTransactions, type InsertPointTransaction } from '#db/schema';
+import { Database } from '#composition/tokens';
+import type { DbExecutor, DbTransaction } from '#infrastructure/db';
+import { QueryPageBuilder } from '#infrastructure/db/helper';
+import { pointTransactions, type InsertPointTransaction } from '#infrastructure/db/schema';
 
 import { PointTransactionNotFoundError } from '../domain';
 

@@ -2,12 +2,12 @@ import type { UserPageQuery } from '@shared/schema/user';
 import { ripple, type InferInput } from 'cyrenejs';
 import { and, eq } from 'drizzle-orm';
 
-import { Database } from '#context/tokens';
-import type { DbExecutor } from '#db';
-import { defineSelectColumns, QueryPageBuilder } from '#db/helper';
-import type { InsertUser, UpdateUser } from '#db/schema';
-import { users } from '#db/schema';
-import { BadRequestError } from '#utils';
+import { Database } from '#composition/tokens';
+import type { DbExecutor } from '#infrastructure/db';
+import { defineSelectColumns, QueryPageBuilder } from '#infrastructure/db/helper';
+import type { InsertUser, UpdateUser } from '#infrastructure/db/schema';
+import { users } from '#infrastructure/db/schema';
+import { BadRequestError } from '#shared';
 
 const userSelectCols = defineSelectColumns(
   users,

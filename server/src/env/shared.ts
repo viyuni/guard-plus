@@ -1,7 +1,12 @@
 import { createEnv } from '@t3-oss/env-core';
-import { token } from 'cyrenejs';
 import * as v from 'valibot';
 
+/**
+ * 跨 App 共享的环境变量片段。
+ *
+ * 只在 App Boundary（apps 下各 config.ts）与脚本入口被读取,
+ * 业务模块通过组合层令牌获取已归一化的配置。
+ */
 export const sharedEnv = createEnv({
   server: {
     /**
@@ -25,10 +30,4 @@ export const sharedEnv = createEnv({
 
 export type SharedEnv = typeof sharedEnv;
 
-/**
- * 配置令牌。
- *
- * 模块用 `ripple({ dataSecret: DataSecret }, ...)` 声明自己需要的配置，
- * 具体值由 app 组合根在 `createContainer` 里绑定，模块不再直接读 env。
- */
-export const DataSecret = token<string>('DataSecret');
+export type NodeEnv = SharedEnv['NODE_ENV'];

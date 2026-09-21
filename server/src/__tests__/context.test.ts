@@ -1,98 +1,119 @@
 import { afterAll, describe, expect, spyOn, test } from 'bun:test';
 
-import { DisposedError } from 'cyrenejs';
+import { Cyrene, DisposedError, defineRipples } from 'cyrenejs';
 import Elysia from 'elysia';
 import { createClient, type RedisClientOptions } from 'redis';
 
-import { createEventContainer } from '#apps/event/context';
-import { createAppContext, createContainer } from '#context';
-import type { CreateSharedContextOptions } from '#context';
-import { createDatabase } from '#db/client';
-import type { AppConfig, EventConfig } from '#env/config';
-import { PointTypeRepo, PointTypeUseCase } from '#modules/point';
-import { UserRepo } from '#modules/user';
+import {
+  biliRoomBinding,
+  databaseBinding,
+  dataSecretBinding,
+  loggerBinding,
+  redisBinding,
+  registerCodeTtlBinding,
+} from '#composition';
+import { createDatabase } from '#infrastructure/db';
+import { createLogger } from '#infrastructure/logger';
+import BiliEvent from '#modules/bili-event';
+import Point from '#modules/point';
+import Reward from '#modules/reward';
+import User from '#modules/user';
+
+import { createTestContainer } from './helpers/test-container';
 
 // 只验证依赖组装，不连接数据库或 Redis。
 const db = createDatabase('postgres://test:test@localhost:1/di_test');
 const redisOptions: RedisClientOptions = {};
 const redis = createClient(redisOptions);
-
-const config: AppConfig = {
-  nodeEnv: 'test',
-  dataSecret: 'test',
-  jwtSecret: 'test',
-  biliRoom: 721,
-  registerCodeTtlSeconds: 300,
-  imageSavePath: './tmp/test-images',
-  apiOrigin: 'http://api.test.localhost',
-  webOrigins: ['http://test.localhost'],
-};
-
-const options = {
-  db,
-  redis,
-  config,
-} satisfies CreateSharedContextOptions;
+const logger = createLogger({ level: 'silent', pretty: false });
 
 afterAll(() => db.$client.end());
 
 describe('Cyrene application contexts', () => {
-  test('shares providers inside a container and isolates different containers', async () => {
-    const first = await createContainer(options);
-    const second = await createContainer(options);
-    await using firstRuntime = first.runtime;
-    await using _secondRuntime = second.runtime;
+  test('shares providers inside a runtime and isolates different runtimes', async () => {
+    const first = createTestContainer({ db, redis });
+    const second = createTestContainer({ db, redis });
 
-    expect(await firstRuntime.resolve(UserRepo)).toBe(first.UserRepo);
-    expect(await firstRuntime.resolve(PointTypeUseCase)).toBe(first.PointTypeUseCase);
-    expect(first.UserRepo).not.toBe(second.UserRepo);
-    expect(first.PointTypeUseCase).not.toBe(second.PointTypeUseCase);
+    await using firstRuntime = first;
+    await using _secondRuntime = second;
 
-    const findById = spyOn(first.PointTypeRepo, 'findById').mockResolvedValue(null);
+    const firstContainer = await first.start();
+    const secondContainer = await second.start();
+
+    expect(await first.resolve(Point.PointTypeRepo)).toBe(firstContainer.PointTypeRepo);
+    expect(await first.resolve(Point.PointTypeQuery)).toBe(firstContainer.PointTypeQuery);
+    expect(firstContainer.PointTypeRepo).not.toBe(secondContainer.PointTypeRepo);
+    expect(firstContainer.PointTypeQuery).not.toBe(secondContainer.PointTypeQuery);
+
+    const findById = spyOn(firstContainer.PointTypeRepo, 'findById').mockResolvedValue(null);
 
     try {
-      await expect(first.PointTypeUseCase.get('missing')).rejects.toThrow();
+      await expect(firstContainer.PointTypeQuery.get('missing')).rejects.toThrow();
       expect(findById).toHaveBeenCalledWith('missing');
-      expect(await firstRuntime.resolve(PointTypeRepo)).toBe(first.PointTypeRepo);
+      expect(await firstRuntime.resolve(Point.PointTypeRepo)).toBe(firstContainer.PointTypeRepo);
     } finally {
       findById.mockRestore();
     }
   });
 
   test('starts the event graph without HTTP auth or image configuration', async () => {
-    const eventConfig: EventConfig = {
-      nodeEnv: config.nodeEnv,
-      dataSecret: config.dataSecret,
-      biliRoom: config.biliRoom,
-      registerCodeTtlSeconds: config.registerCodeTtlSeconds,
-    };
+    const eventGraph = defineRipples({
+      BiliEventRepo: BiliEvent.BiliEventRepo,
 
-    const container = await createEventContainer({ db, redis, config: eventConfig });
-    await using runtime = container.runtime;
+      PointAccountRepo: Point.PointAccountRepo,
+      PointBalanceUseCase: Point.PointBalanceUseCase,
+      PointTransactionRepo: Point.PointTransactionRepo,
+      PointTypeQuery: Point.PointTypeQuery,
+      PointTypeRepo: Point.PointTypeRepo,
+
+      RewardProcessor: Reward.RewardProcessor,
+      RewardRuleRepo: Reward.RewardRuleRepo,
+
+      UserBasicInfoCrypto: User.UserBasicInfoCrypto,
+      UserRepo: User.UserRepo,
+      UserUseCase: User.UserUseCase,
+    });
+
+    const runtime = new Cyrene({
+      ripples: eventGraph,
+      bindings: [
+        databaseBinding(db),
+        redisBinding(redis),
+        loggerBinding(logger),
+        dataSecretBinding('test'),
+        biliRoomBinding(721),
+        registerCodeTtlBinding(300),
+      ],
+    });
+
+    await using _runtime = runtime;
+
     const names = runtime.inspect().nodes.map(node => node.name);
 
-    expect(names).toContain('RewardUseCase');
+    expect(names).toContain('RewardProcessor');
     expect(names).not.toContain('JwtSecret');
-    expect(names).not.toContain('ImageUseCase');
+    expect(names).not.toContain('ImageStorage');
     expect(names).not.toContain('ProductUseCase');
-    expect(container.BiliRegisterUseCase).not.toBe(container.BiliPasswordResetUseCase);
   });
 
   test('disposes the runtime when Elysia stops without closing borrowed infrastructure', async () => {
-    const { context, container } = await createAppContext(options);
+    const runtime = createTestContainer({ db, redis });
+    const container = await runtime.start();
+    const context = new Elysia({ name: 'TestContext' }).onStop(() => runtime.dispose());
     const closeDb = spyOn(db.$client, 'end');
     const closeRedis = spyOn(redis, 'destroy');
     const app = new Elysia().use(context).listen(0);
 
     try {
       await app.stop();
-      await expect(container.runtime.resolve(UserRepo)).rejects.toBeInstanceOf(DisposedError);
+      await expect(runtime.resolve(Point.PointTypeRepo)).rejects.toBeInstanceOf(DisposedError);
+      expect(container.PointTypeRepo).toBeDefined();
       expect(closeDb).not.toHaveBeenCalled();
       expect(closeRedis).not.toHaveBeenCalled();
     } finally {
       closeDb.mockRestore();
       closeRedis.mockRestore();
-      await container.runtime.dispose();
+      await runtime.dispose();
     }
   });
 });

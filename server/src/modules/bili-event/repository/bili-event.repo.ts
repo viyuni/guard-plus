@@ -2,16 +2,16 @@ import type { BiliEventPageQuery } from '@shared/schema/reward';
 import { type InferInput, ripple } from 'cyrenejs';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 
-import { Database } from '#context/tokens';
-import type { DbExecutor } from '#db';
-import { QueryPageBuilder } from '#db/helper';
+import { Database } from '#composition/tokens';
+import type { DbExecutor } from '#infrastructure/db';
+import { QueryPageBuilder } from '#infrastructure/db/helper';
 import {
   biliEvents,
   type BiliEventRewardItemSnapshot,
   type BiliEventRewardResultSnapshot,
   type BiliEventStatus,
   type InsertBiliEvent,
-} from '#db/schema';
+} from '#infrastructure/db/schema';
 
 export const BiliEventRepo = ripple(
   {

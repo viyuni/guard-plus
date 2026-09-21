@@ -2,7 +2,7 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:
 
 import { type InferInput, ripple } from 'cyrenejs';
 
-import { DataSecret } from '#env/shared';
+import { DataSecret } from '#composition/tokens';
 
 export interface UserBasicInfo {
   phone?: string | null;

@@ -5,15 +5,15 @@ import type {
 } from '@shared/schema/point-account';
 import { type InferInput, ripple } from 'cyrenejs';
 
-import { Database } from '#context/tokens';
-import type { DbTransaction } from '#db';
-import { UserUseCase } from '#modules/user';
-import { BadRequestError } from '#utils';
+import { Database } from '#composition/tokens';
+import type { DbTransaction } from '#infrastructure/db';
+import User from '#modules/user';
+import { BadRequestError } from '#shared';
 
 import { POINT_CHANGE_SOURCE_TYPE, PointIdempotencyKey } from '../domain';
 import { LegacyPointMigrationRepo, PointAccountRepo } from '../repository';
 import { PointBalanceUseCase } from './point-balance.usecase';
-import { PointTypeUseCase } from './point-type.usecase';
+import { PointTypeQuery } from './point-type-query';
 
 export const PointAccountUseCase = ripple(
   {
@@ -21,15 +21,15 @@ export const PointAccountUseCase = ripple(
     LegacyPointMigrationRepo,
     PointAccountRepo,
     PointBalanceUseCase,
-    PointTypeUseCase,
-    UserUseCase,
+    PointTypeQuery,
+    UserUseCase: User.UserUseCase,
   },
   ({
     Database,
     LegacyPointMigrationRepo,
     PointAccountRepo,
     PointBalanceUseCase,
-    PointTypeUseCase,
+    PointTypeQuery,
     UserUseCase,
   }) => {
     async function replayLegacyMigrationRecord(
@@ -73,7 +73,7 @@ export const PointAccountUseCase = ripple(
       },
 
       async createLegacyMigration(data: CreateLegacyPointMigrationBody) {
-        await PointTypeUseCase.getAvailableById(data.pointTypeId);
+        await PointTypeQuery.getAvailableById(data.pointTypeId);
         const migration = await LegacyPointMigrationRepo.create(data);
 
         if (!migration) {

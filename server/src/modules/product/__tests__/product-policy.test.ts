@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 
-import type { Product } from '#db/schema';
+import type { Product } from '#infrastructure/db/schema';
 
 import {
   isProductAvailable,

@@ -8,13 +8,15 @@ import type {
 } from '@shared/schema/order';
 import { type InferInput, ripple } from 'cyrenejs';
 
-import { Database } from '#context/tokens';
-import { PointAccountRepo, PointBalanceUseCase, PointTypeUseCase } from '#modules/point';
-import { POINT_CHANGE_SOURCE_TYPE, PointIdempotencyKey } from '#modules/point';
-import { assertProductAvailable, STOCK_MOVEMENT_SOURCE_TYPE } from '#modules/product';
-import { StockIdempotencyKey, ProductUseCase } from '#modules/product';
-import { UserBasicInfoCrypto, UserUseCase } from '#modules/user';
-import { publishOrderCreated, type NewOrderEmailInput } from '#queues';
+import { Database } from '#composition/tokens';
+import { publishOrderCreated, type NewOrderEmailInput } from '#infrastructure/queue';
+import Point, { POINT_CHANGE_SOURCE_TYPE, PointIdempotencyKey } from '#modules/point';
+import Product, {
+  STOCK_MOVEMENT_SOURCE_TYPE,
+  StockIdempotencyKey,
+  assertProductAvailable,
+} from '#modules/product';
+import User from '#modules/user';
 
 import {
   OrderIdempotencyKey,
@@ -62,19 +64,19 @@ export const OrderUseCase = ripple(
   {
     Database,
     OrderRepo,
-    PointAccountRepo,
-    PointBalanceUseCase,
-    PointTypeUseCase,
-    ProductUseCase,
-    UserBasicInfoCrypto,
-    UserUseCase,
+    PointAccountRepo: Point.PointAccountRepo,
+    PointBalanceUseCase: Point.PointBalanceUseCase,
+    PointTypeQuery: Point.PointTypeQuery,
+    ProductUseCase: Product.ProductUseCase,
+    UserBasicInfoCrypto: User.UserBasicInfoCrypto,
+    UserUseCase: User.UserUseCase,
   },
   ({
     Database,
     OrderRepo,
     PointAccountRepo,
     PointBalanceUseCase,
-    PointTypeUseCase,
+    PointTypeQuery,
     ProductUseCase,
     UserBasicInfoCrypto,
     UserUseCase,
@@ -121,7 +123,7 @@ export const OrderUseCase = ripple(
             pointTypeId: product.pointTypeId,
           });
 
-          const pointType = await PointTypeUseCase.getAvailableById(product.pointTypeId, tx);
+          const pointType = await PointTypeQuery.getAvailableById(product.pointTypeId, tx);
 
           assertProductAvailable(product);
 

@@ -1,40 +1,16 @@
 import { createListener } from '@viyuni/bevent-relay';
-import type { Guard } from '@viyuni/bevent-relay/events';
-import { Worker } from 'bunqueue/client';
 
-import { db } from '#db';
-import { publishBilibiliGuardEvent } from '#queues';
-import { BILIBILI_EVENT_QUEUE_NAME } from '#queues';
-import { redis } from '#redis';
-import { logger } from '#utils/logger';
-
-import { createEventContainer } from './context';
-import { eventAppConfig, eventEnv } from './env';
+import { createEventApp } from './composition';
+import { eventConfig } from './config';
 import { createEventServer } from './server';
 
-const { runtime, BiliPasswordResetUseCase, BiliRegisterUseCase, RewardUseCase } =
-  await createEventContainer({
-    db,
-    redis,
-    config: eventAppConfig,
-  });
-
-const _worker = new Worker<Guard>(
-  BILIBILI_EVENT_QUEUE_NAME,
-  job => {
-    return RewardUseCase.rewardBiliGuard(job.data);
-  },
-  {
-    embedded: true,
-    concurrency: 5,
-  },
-);
+const { container, logger, runtime } = await createEventApp();
 
 const listener = createListener({
-  roomId: eventAppConfig.biliRoom,
+  roomId: eventConfig.biliRoom,
   cookieSync: {
-    url: eventEnv.VIYUNI_LOGIN_SYNC_URL,
-    password: eventEnv.VIYUNI_LOGIN_SYNC_PASSWORD,
+    url: eventConfig.loginSync.url,
+    password: eventConfig.loginSync.password,
   },
   loginCheck: {
     autoReconnect: true,
@@ -44,40 +20,33 @@ const listener = createListener({
 
 listener.on('event', event => {
   if (event.type === 'guard') {
-    publishBilibiliGuardEvent(event);
-    logger.info(event, 'Bilibili Guard Message');
+    void container.EventHandler.handleGuardEvent(event);
 
     return;
   }
 
   if (event.type === 'message') {
-    BiliRegisterUseCase.matchMessage({
-      code: event.content,
-      biliUid: event.uid.toString(),
-      biliName: event.uname,
-    }).catch(error => logger.error(error, 'Bilibili register message match failed'));
-    BiliPasswordResetUseCase.matchMessage({
-      code: event.content,
-      biliUid: event.uid.toString(),
-      biliName: event.uname,
-    }).catch(error => logger.error(error, 'Bilibili password reset message match failed'));
+    container.EventHandler.handleMessage({
+      content: event.content,
+      uid: event.uid,
+      uname: event.uname,
+    });
 
     return;
   }
 
-  if (eventAppConfig.nodeEnv === 'development') {
+  if (eventConfig.nodeEnv === 'development') {
     logger.info(event, 'Bilibili Event');
   }
 });
 
-createEventServer(listener, eventEnv.EVENT_PORT)
+createEventServer(listener, eventConfig.port)
   .onStop(async () => {
     await listener.stop();
-    await _worker.close();
     await runtime.dispose();
   })
   .compile()
-  .listen({}, logger.printUrls);
+  .listen({}, server => logger.printUrls(server, false));
 
 await listener.start().then(() => {
   logger.info('Bilibili Event Listener started...');

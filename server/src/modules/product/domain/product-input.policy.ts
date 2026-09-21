@@ -1,4 +1,4 @@
-import { assertTimeRange } from '#utils';
+import { assertTimeRange } from '#shared';
 
 import { ProductInvalidInputError } from './errors';
 

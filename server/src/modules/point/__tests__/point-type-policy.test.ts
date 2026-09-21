@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 
-import type { PointType } from '#db/schema';
+import type { PointType } from '#infrastructure/db/schema';
 
 import { shouldEnablePointType, shouldDisablePointType } from '../domain';
 

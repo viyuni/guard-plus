@@ -5,7 +5,7 @@ import type {
 } from '@shared/schema/point-transaction';
 import { type InferInput, ripple } from 'cyrenejs';
 
-import { Database } from '#context/tokens';
+import { Database } from '#composition/tokens';
 
 import {
   POINT_CHANGE_SOURCE_TYPE,

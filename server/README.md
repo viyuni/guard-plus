@@ -6,67 +6,114 @@ This package contains the admin and user API apps, event ingestion runtime, back
 
 ## Structure
 
-- `src/apps/admin`: admin API app, app context, env, and route modules.
-- `src/apps/user`: user API app, app context, env, and route modules.
-- `src/apps/event`: event ingestion runtime.
-- `src/modules`: reusable backend modules shared by admin and user apps.
-- `src/queues`: Bunqueue job definitions and queue exports.
-- `src/db`: Drizzle client, schema, relations, migrations, and seed helpers.
-- `src/utils`: shared backend utilities, errors, logger, and env helpers.
-- `src/context.ts`: shared dependency container, Elysia context wiring, and event container wiring.
+The layering is `apps → modules → infrastructure → composition → shared`, enforced by
+the `guard-plus/architecture-import-boundary` lint rule.
+
+- `src/apps/admin`: admin HTTP app — `config.ts`, `composition.ts`, `server.ts`,
+  `http/` (auth guard, root ripple, route ripples), `features/` (app-only capabilities).
+- `src/apps/user`: user HTTP app — same layout.
+- `src/apps/event`: Bilibili event ingestion runtime plus its `EventHandler` ripple.
+- `src/apps/seed`: development seed script; owns its own Cyrene runtime.
+- `src/modules`: reusable business capabilities (`auth`, `bili-event`, `dashboard`,
+  `order`, `point`, `product`, `reward`, `user`).
+- `src/infrastructure`: `db`, `redis`, `queue`, `logger`, `mail`, `storage`, `http`.
+- `src/composition`: infrastructure/config `token`s and shared binding helpers.
+- `src/shared`: business-agnostic errors and utilities.
+- `src/env`: env schema fragments, read only at the app boundary.
 - `src/eden.ts`: exported Eden app types.
 
 ## Development
 
-### Dependency injection
+### Modules, Ripples and Apps
 
-Module `context.ts` files declare individual Repository and UseCase providers with
-`cyrenejs` `ripple`. A provider definition is PascalCase (`OrderUseCase`) and so is
-every key inside a dependency object, so injections stay shorthand
-(`{ Database, OrderRepo }`); `guard-plus/ripple-pascal-case` and
-`guard-plus/ripple-deps-pascal-case` enforce both. Business classes keep ordinary
-constructor dependencies. `src/context/tokens.ts` holds only infrastructure and
-optional-capability tokens (`Database`, `Redis`, `PointImageUseCase`, `RewardLogger`).
-
-### Environment and configuration
-
-Env validation lives in `src/env/*`, one file per concern. Each file owns both its
-`createEnv` schema and the config `token` that modules inject, so a module never
-imports an env singleton:
-
-- `src/env/shared.ts`: `NODE_ENV`, `LOG_LEVEL`, `DATA_SECRET` (`DataSecret`)
-- `src/env/bili.ts`: `BILI_ROOM`, `BILI_REGISTER_CODE_TTL_SECONDS` (`BiliRoom`, `RegisterCodeTtl`)
-- `src/env/db.ts`, `src/env/redis.ts`: infrastructure clients, read once at the process edge
-- `src/env/image.ts`: `IMAGE_SAVE_PATH` (`ImageSavePath`)
-- `src/env/smtp.ts`: SMTP settings (`SmtpConfig`, `undefined` when unconfigured)
-- `src/env/config.ts`: the normalized `AppConfig` / `EventConfig` contract plus the
-  app-level `JwtSecret`, `ApiOrigin`, and `WebOrigins` tokens
-
-Modules request config exactly like any other dependency:
+Each module exposes exactly one public entry, `src/modules/<name>/index.ts`:
 
 ```ts
-export const ImageUseCase = ripple({ imageSavePath: ImageSavePath }, ({ imageSavePath }) => {
-  // ...
+export default defineRipples({
+  UserBasicInfoCrypto,
+  UserRepo,
+  UserUseCase,
 });
 ```
 
-Each app maps its prefixed env to the normalized config once, in
-`src/apps/<app>/env.ts` (for example `ADMIN_JWT_SECRET -> jwtSecret`), and exports
-`adminAppConfig` / `userAppConfig` / `eventAppConfig`. Only that mapping knows the
-env prefixes; downstream code depends on generic tokens.
+The default export is the module's Ripple Manifest — it is the only way another
+module may reach its injectable capabilities:
 
-`createContainer({ db, redis, config })`, `createEventContainer({ db, redis, config })`,
-and `createAppContext(...)` are asynchronous and bind the config fields to tokens.
-Each call owns an isolated Cyrene runtime; providers share instances only within that
-runtime. The returned container exposes every provider by its export name, plus `runtime`.
-HTTP contexts dispose the runtime on Elysia stop; scripts and tests must dispose it
-explicitly or use `await using`. Externally bound DB/Redis clients remain owned by the
-caller. `src/utils/logger.ts`, `src/db`, and `src/redis` still read their env at the
-process edge, before any container exists.
+```ts
+import User, { UserNotFoundError } from '#modules/user';
 
-Event and seed entrypoints use smaller graphs without HTTP authentication or image
-configuration. Add new providers to the owning module and compose them at the app
-boundary; routes consume decorated instances instead of creating UseCases.
+export const OrderUseCase = ripple(
+  {
+    UserUseCase: User.UserUseCase,
+  },
+  ({ UserUseCase }) => {
+    // ...
+  },
+);
+```
+
+Named exports carry the static domain API (errors, policies, types). Deep imports
+such as `#modules/user/repository` are rejected by lint, so module internals stay
+refactorable.
+
+Every runnable app owns one Composition Root and one Cyrene runtime:
+`createAdminApp()`, `createUserApp()`, `createEventApp()`. The composition root lists
+every node explicitly (no scanning, no `providersOf`) and uses
+`new Cyrene({ ripples, bindings })`.
+
+### Dependency injection
+
+Provider definitions use cyrenejs `ripple`. A provider definition is PascalCase
+(`OrderUseCase`) and so is every dependency key, so injections stay shorthand
+(`{ Database, OrderRepo }`); `guard-plus/ripple-pascal-case` and
+`guard-plus/ripple-deps-pascal-case` enforce both. Cross-module keys are qualified
+through the manifest (`UserUseCase: User.UserUseCase`). Business classes keep ordinary
+constructor dependencies.
+
+`src/composition/tokens.ts` holds only infrastructure and configuration tokens
+(`Database`, `Redis`, `Logger`, `Mailer`, `ImageStorage`, `JwtSecret`, `ApiOrigin`,
+`WebOrigins`, `DataSecret`, `BiliRoom`, `RegisterCodeTtl`, `ImageSavePath`).
+`src/composition/bindings.ts` exposes **one factory per token**; a composition root
+calls only the ones its graph actually resolves, so no app prepares a value for a
+token it never uses:
+
+```ts
+bindings: [
+  databaseBinding(db),
+  redisBinding(redis),
+  loggerBinding(logger),
+  dataSecretBinding(config.dataSecret),
+  biliRoomBinding(config.biliRoom),
+  registerCodeTtlBinding(config.registerCodeTtlSeconds),
+],
+```
+
+Optional capabilities are modelled as explicit implementations instead of
+`T | undefined`: `Mailer` always resolves (an unconfigured SMTP degrades to a no-op
+sender) and `PointTypeQuery` / `PointTypeAdminUseCase` split read-only from
+admin-only needs.
+
+### Environment and configuration
+
+Env validation lives in `src/env/*`, one file per concern. Only App Boundaries read
+env: `src/apps/<app>/config.ts` composes the shared fragments with `extends: [...]`
+(an app validates only the concerns it uses) and maps prefixed variables to a
+normalized config object (for example `ADMIN_JWT_SECRET -> jwtSecret`). Each concern
+also owns its env→infrastructure mapping (`toRedisConnectionOptions`,
+`toSmtpMailConfig`), so that translation exists once instead of once per app.
+Modules never read env; they depend on tokens, and the composition root binds concrete
+values or implementations.
+
+Externally created DB/Redis clients are owned by the app composition root, which also
+closes them if startup fails. Runtime instances are disposed when the Elysia app stops
+(`app.onStop(() => runtime.dispose())`); scripts use `await using`.
+
+### HTTP layer
+
+All Elysia code lives under `src/apps/*/http/` plus the shared adapter kit in
+`src/infrastructure/http/` (auth guard, cookie helpers, error mapping, health, OpenAPI).
+Route ripples declare their use cases as dependencies and are composed by the app's
+`http/root.ts` (`AdminHttp` / `UserHttp`). Module code never imports Elysia.
 
 ```bash
 vpr @server/app#dev:admin

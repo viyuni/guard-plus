@@ -125,13 +125,15 @@ vpr @server/app#typecheck
 
 后端包为 [`@server/app`](./server/)，位于 `server/`。
 
-- [`server/src/apps/admin`](./server/src/apps/admin/)：管理员 API 应用、管理员上下文、环境变量工具及管理员专属路由模块。
-- [`server/src/apps/user`](./server/src/apps/user/)：用户 API 应用、用户上下文、环境变量工具及用户专属路由模块。
+- [`server/src/apps/admin`](./server/src/apps/admin/)：管理员 HTTP 应用，含配置、组合根、`http/` 路由与应用专属 `features/`。
+- [`server/src/apps/user`](./server/src/apps/user/)：用户 HTTP 应用，结构同上。
 - [`server/src/apps/event`](./server/src/apps/event/)：直播事件接入运行时。
-- [`server/src/modules`](./server/src/modules/)：由多个应用和队列共享的可复用后端业务模块。
-- [`server/src/queues`](./server/src/queues/)：Bunqueue 后台任务定义。
-- [`server/src/db`](./server/src/db/)：Drizzle 客户端、数据库 Schema、关系、迁移及种子数据脚本。
-- [`server/src/context.ts`](./server/src/context.ts)：共享依赖容器、Elysia 上下文和事件容器配置。
+- [`server/src/apps/seed`](./server/src/apps/seed/)：开发种子脚本及其组合根。
+- [`server/src/modules`](./server/src/modules/)：可复用业务能力，每个模块只有一个公共入口并默认导出 `defineRipples(...)`。
+- [`server/src/infrastructure`](./server/src/infrastructure/)：db、redis、queue、logger、mail、storage 与 HTTP 适配器。
+- [`server/src/composition`](./server/src/composition/)：基础设施与配置令牌及绑定辅助函数。
+- [`server/src/shared`](./server/src/shared/)：与业务无关的错误与工具函数。
+- [`server/src/env`](./server/src/env/)：环境变量 Schema 片段，只在 App Boundary 读取。
 - [`server/src/eden.ts`](./server/src/eden.ts)：供 Web 包使用的 Eden 类型导出入口。
 
 ## Database tasks

@@ -1,8 +1,8 @@
 import { type InferInput, ripple } from 'cyrenejs';
 
-import type { DbTransaction } from '#db';
-import type { PointAccount, PointTransaction } from '#db/schema';
-import { UserUseCase } from '#modules/user';
+import type { DbTransaction } from '#infrastructure/db';
+import type { PointAccount, PointTransaction } from '#infrastructure/db/schema';
+import User from '#modules/user';
 
 import {
   type ChangeBalanceInput,
@@ -16,16 +16,16 @@ import {
   assertPointTransactionDeltaMatchesType,
 } from '../domain';
 import { PointAccountRepo, PointTransactionRepo } from '../repository';
-import { PointTypeUseCase } from './point-type.usecase';
+import { PointTypeQuery } from './point-type-query';
 
 export const PointBalanceUseCase = ripple(
   {
     PointAccountRepo,
     PointTransactionRepo,
-    PointTypeUseCase,
-    UserUseCase,
+    PointTypeQuery,
+    UserUseCase: User.UserUseCase,
   },
-  ({ PointAccountRepo, PointTransactionRepo, PointTypeUseCase, UserUseCase }) => {
+  ({ PointAccountRepo, PointTransactionRepo, PointTypeQuery, UserUseCase }) => {
     function assertAccountMatchesInput(account: PointAccount, input: ChangeBalanceInput) {
       if (account.userId !== input.userId || account.pointTypeId !== input.pointTypeId) {
         throw new PointAccountMismatchError();
@@ -81,7 +81,7 @@ export const PointBalanceUseCase = ripple(
         }
 
         // 获取积分类型, 用于存快照
-        const pointType = await PointTypeUseCase.getAvailableById(input.pointTypeId, tx);
+        const pointType = await PointTypeQuery.getAvailableById(input.pointTypeId, tx);
 
         // 获取用户
         const user = await UserUseCase.getAvailableById(input.userId, tx);

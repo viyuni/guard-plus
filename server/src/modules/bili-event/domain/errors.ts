@@ -1,4 +1,4 @@
-import { InternalServerError, NotFoundError } from '#utils';
+import { InternalServerError, NotFoundError } from '#shared';
 
 export class BiliEventNotFoundError extends NotFoundError {
   override code = 'BILI_EVENT_NOT_FOUND';

@@ -1,10 +1,10 @@
 import type { StockMovementPageQuery } from '@shared/schema/stock';
 import { type InferInput, ripple } from 'cyrenejs';
 
-import { Database } from '#context/tokens';
-import type { DbExecutor } from '#db';
-import { QueryPageBuilder } from '#db/helper';
-import { productStockMovements, type InsertProductStockMovement } from '#db/schema';
+import { Database } from '#composition/tokens';
+import type { DbExecutor } from '#infrastructure/db';
+import { QueryPageBuilder } from '#infrastructure/db/helper';
+import { productStockMovements, type InsertProductStockMovement } from '#infrastructure/db/schema';
 
 export const StockMovementRepo = ripple(
   {

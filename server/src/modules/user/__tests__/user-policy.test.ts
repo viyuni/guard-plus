@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 
-import type { User } from '#db/schema';
+import type { User } from '#infrastructure/db/schema';
 
 import { UserUnavailableError } from '../domain';
 import { assertUserAvailable, isUserAvailable } from '../domain';

@@ -2,7 +2,7 @@ import { expect, it } from 'bun:test';
 
 import { count, eq } from 'drizzle-orm';
 
-import { productStockMovements } from '#db/schema';
+import { productStockMovements } from '#infrastructure/db/schema';
 import { countFulfilled, countRejected, runConcurrent } from '#test-helpers/concurrency';
 import {
   createDeps,

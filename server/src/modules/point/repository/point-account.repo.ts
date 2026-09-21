@@ -1,9 +1,9 @@
 import { type InferInput, ripple } from 'cyrenejs';
 import { and, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 
-import { Database } from '#context/tokens';
-import type { DbExecutor, DbTransaction } from '#db';
-import { pointAccounts } from '#db/schema';
+import { Database } from '#composition/tokens';
+import type { DbExecutor, DbTransaction } from '#infrastructure/db';
+import { pointAccounts } from '#infrastructure/db/schema';
 
 import {
   PointAccountEnsureFailedError,

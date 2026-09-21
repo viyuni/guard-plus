@@ -120,13 +120,15 @@ vpr @server/app#typecheck
 
 The backend package is `@server/app` in `server/`.
 
-- `server/src/apps/admin`: admin API app, admin context, env helpers, and admin-only route modules.
-- `server/src/apps/user`: user API app, user context/env, and user-only route modules.
+- `server/src/apps/admin`: admin HTTP app — config, composition root, Elysia routes under `http/`, app-only `features/`.
+- `server/src/apps/user`: user HTTP app — same layout.
 - `server/src/apps/event`: event ingestion runtime.
-- `server/src/modules`: reusable backend modules shared by apps and queues.
-- `server/src/queues`: Bunqueue job definitions.
-- `server/src/db`: Drizzle client, schema, relations, migrations, and seed scripts.
-- `server/src/context.ts`: shared dependency container, Elysia context wiring, and event container wiring.
+- `server/src/apps/seed`: development seed script and its composition root.
+- `server/src/modules`: reusable business capabilities, each with a single public entry exporting `defineRipples(...)`.
+- `server/src/infrastructure`: db, redis, queue, logger, mail, storage, and the HTTP adapter kit.
+- `server/src/composition`: infrastructure/config tokens and binding helpers.
+- `server/src/shared`: business-agnostic errors and utilities.
+- `server/src/env`: env schema fragments, read only at app boundaries.
 - `server/src/eden.ts`: Eden type export surface consumed by web packages.
 
 ## Database tasks

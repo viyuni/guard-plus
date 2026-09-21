@@ -8,11 +8,10 @@ import type {
 import type { StockAdjustmentBody } from '@shared/schema/stock';
 import { type InferInput, ripple } from 'cyrenejs';
 
-import { Database } from '#context/tokens';
-import type { DbTransaction } from '#db';
-import type { InsertProduct, Product, UpdateProduct } from '#db/schema';
-import { ImageUseCase } from '#modules/image';
-import { PointTypeUseCase } from '#modules/point';
+import { Database, ImageStorage } from '#composition/tokens';
+import type { DbTransaction } from '#infrastructure/db';
+import type { InsertProduct, Product, UpdateProduct } from '#infrastructure/db/schema';
+import Point from '#modules/point';
 
 import {
   ProductCodeExistsError,
@@ -35,12 +34,12 @@ import { STOCK_MOVEMENT_SOURCE_TYPE, type ChangeStockInput } from './types';
 export const ProductUseCase = ripple(
   {
     Database,
-    ImageUseCase,
-    PointTypeUseCase,
+    ImageStorage,
+    PointTypeQuery: Point.PointTypeQuery,
     ProductRepo,
     StockMovementRepo,
   },
-  ({ Database, ImageUseCase, PointTypeUseCase, ProductRepo, StockMovementRepo }) => {
+  ({ Database, ImageStorage, PointTypeQuery, ProductRepo, StockMovementRepo }) => {
     /**
      * 获取商品信息
      */
@@ -146,7 +145,7 @@ export const ProductUseCase = ripple(
        * 创建商品
        */
       async create(productData: CreateProductBody) {
-        await PointTypeUseCase.getAvailableById(productData.pointTypeId);
+        await PointTypeQuery.getAvailableById(productData.pointTypeId);
         assertProductPrice(productData.price);
         assertProductStock(productData.stock);
         const { startAt, endAt } = productData;
@@ -174,7 +173,7 @@ export const ProductUseCase = ripple(
         const current = await get(productId);
 
         if (productData.pointTypeId) {
-          await PointTypeUseCase.getAvailableById(productData.pointTypeId);
+          await PointTypeQuery.getAvailableById(productData.pointTypeId);
         }
 
         if (
@@ -211,7 +210,7 @@ export const ProductUseCase = ripple(
        */
       async updateCover(productId: string, body: ProductCoverUploadBody) {
         await get(productId);
-        const { filename } = await ImageUseCase.save(body.cover);
+        const { filename } = await ImageStorage.save(body.cover);
 
         return ProductRepo.update(productId, {
           cover: filename,

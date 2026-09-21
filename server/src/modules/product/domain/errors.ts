@@ -1,4 +1,4 @@
-import { AppError, BadRequestError, ConflictError, NotFoundError } from '#utils';
+import { AppError, BadRequestError, ConflictError, NotFoundError } from '#shared';
 
 export class ProductNotFoundError extends NotFoundError {
   override code = 'PRODUCT_NOT_FOUND';

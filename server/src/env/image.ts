@@ -1,7 +1,6 @@
 import path from 'node:path';
 
 import { createEnv } from '@t3-oss/env-core';
-import { token } from 'cyrenejs';
 import * as v from 'valibot';
 
 const defaultImageSavePath = path.join(process.cwd(), 'public', 'images');
@@ -18,6 +17,3 @@ export const imageEnv = createEnv({
 });
 
 export type ImageEnv = typeof imageEnv;
-
-/** 图片存储路径 */
-export const ImageSavePath = token<string>('ImageSavePath');

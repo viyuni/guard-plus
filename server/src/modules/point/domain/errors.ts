@@ -4,7 +4,7 @@ import {
   ConflictError,
   InternalServerError,
   NotFoundError,
-} from '#utils';
+} from '#shared';
 
 /**
  * 积分类型不存在

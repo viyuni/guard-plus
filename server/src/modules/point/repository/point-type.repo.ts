@@ -1,9 +1,14 @@
 import { type InferInput, ripple } from 'cyrenejs';
 import { eq, sql } from 'drizzle-orm';
 
-import { Database } from '#context/tokens';
-import type { DbExecutor } from '#db';
-import { pointTypes, type InsertPointType, type PointType, type UpdatePointType } from '#db/schema';
+import { Database } from '#composition/tokens';
+import type { DbExecutor } from '#infrastructure/db';
+import {
+  pointTypes,
+  type InsertPointType,
+  type PointType,
+  type UpdatePointType,
+} from '#infrastructure/db/schema';
 
 export const PointTypeRepo = ripple(
   {

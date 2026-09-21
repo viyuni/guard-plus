@@ -4,7 +4,7 @@ import type { CreatePointConversionRuleBody } from '@shared/schema/point-convers
 import type { CreateRewardRuleBody } from '@shared/schema/reward';
 import { and, inArray, like } from 'drizzle-orm';
 
-import type { DbClient } from '#db';
+import type { DbClient } from '#infrastructure/db';
 import {
   orders,
   biliEvents,
@@ -16,16 +16,16 @@ import {
   productStockMovements,
   rewardRules,
   users,
-} from '#db/schema';
-import { redis } from '#redis';
+} from '#infrastructure/db/schema';
 
-import { createContainer } from '../../context';
 import type { BiliGuardRewardEvent } from '../../modules/reward';
+import { createTestContainer } from './test-container';
 import { getTestDatabase } from './test-database';
+import { getTestRedis } from './test-redis';
 
 const testDatabaseUrl = Bun.env.TEST_DATABASE_URL;
 const batches = new Set<string>();
-const runtimes = new Set<Awaited<ReturnType<typeof createContainer>>['runtime']>();
+const runtimes = new Set<{ dispose: () => Promise<void> }>();
 
 export const describeWithDatabase = testDatabaseUrl ? describe : describe.skip;
 
@@ -86,37 +86,25 @@ export async function expectRejectsInstanceOf<T extends Error>(
 }
 
 export async function createDeps() {
-  const { runtime, ...providers } = await createContainer({
-    db,
-    redis,
-    config: {
-      nodeEnv: 'test',
-      dataSecret: 'test',
-      jwtSecret: 'test',
-      biliRoom: 721,
-      registerCodeTtlSeconds: 300,
-      imageSavePath: '',
-      apiOrigin: 'http://api.test.localhost',
-      webOrigins: ['http://test.localhost'],
-    },
-  });
+  const runtime = createTestContainer({ db, redis: getTestRedis() });
+  const container = await runtime.start();
 
   runtimes.add(runtime);
 
-  return providers;
+  return container;
 }
 
 export async function seedPointType(name: string) {
-  const { PointTypeUseCase } = await createDeps();
+  const { PointTypeAdminUseCase } = await createDeps();
 
   const pointType = expectSeeded(
-    await PointTypeUseCase.create({
+    await PointTypeAdminUseCase.create({
       name,
     }),
     'seed point type failed',
   );
 
-  return expectSeeded(await PointTypeUseCase.enable(pointType.id), 'seed point type failed');
+  return expectSeeded(await PointTypeAdminUseCase.enable(pointType.id), 'seed point type failed');
 }
 
 export async function seedUser(name: string, biliUid?: `${number}`) {

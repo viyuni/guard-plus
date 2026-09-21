@@ -2,10 +2,16 @@ import type { OrderPageQuery } from '@shared/schema/order';
 import { type InferInput, ripple } from 'cyrenejs';
 import { and, eq, inArray } from 'drizzle-orm';
 
-import { Database } from '#context/tokens';
-import type { DbExecutor, DbTransaction } from '#db';
-import { QueryPageBuilder } from '#db/helper';
-import { orders, users, type InsertOrder, type OrderStatus, type UpdateOrder } from '#db/schema';
+import { Database } from '#composition/tokens';
+import type { DbExecutor, DbTransaction } from '#infrastructure/db';
+import { QueryPageBuilder } from '#infrastructure/db/helper';
+import {
+  orders,
+  users,
+  type InsertOrder,
+  type OrderStatus,
+  type UpdateOrder,
+} from '#infrastructure/db/schema';
 
 function buildManageWhere(query: OrderPageQuery) {
   return {

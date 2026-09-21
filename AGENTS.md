@@ -36,7 +36,7 @@ For imports that cross workspace package boundaries, prefer real package names:
 - `@web/admin`, `@web/user`, `@web/ui`
 - `@shared/schema`
 
-Use `#...` imports only as TypeScript path aliases for code inside the current project/package. Inside `server/`, use aliases such as `#apps/*`, `#context`, `#db`, `#db/*`, `#modules/*`, and `#utils/*` for local backend internals.
+Use `#...` imports only as TypeScript path aliases for code inside the current project/package. Inside `server/`, use aliases such as `#apps/*`, `#modules/*`, `#infrastructure/*`, `#composition`, `#composition/*`, `#shared`, `#shared/*`, and `#env/*` for local backend internals. Cross-module imports must go through the module's public entry (`#modules/<name>`), never a deep path.
 
 <!-- PROJECT IMPORTS END -->
 

@@ -1,5 +1,5 @@
-import type { PointType } from '#db/schema';
-import { assertPresent } from '#utils';
+import type { PointType } from '#infrastructure/db/schema';
+import { assertPresent } from '#shared';
 
 import { PointTypeNotFoundError, PointTypeUnavailableError } from './errors';
 

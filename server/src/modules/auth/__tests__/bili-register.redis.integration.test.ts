@@ -4,9 +4,8 @@ import { createHash } from 'node:crypto';
 import { Cyrene } from 'cyrenejs';
 import { createClient } from 'redis';
 
-import { Redis } from '#context/tokens';
-import { RegisterCodeTtl } from '#env/bili';
-import type { RedisClient } from '#redis';
+import { Redis, RegisterCodeTtl } from '#composition/tokens';
+import type { RedisClient } from '#infrastructure/redis';
 
 import type { BiliRegisterRedisRepository } from '../repository';
 import { BiliPasswordResetRepo, BiliRegisterRepo } from '../repository';
@@ -67,7 +66,7 @@ beforeEach(async () => {
   await redis.connect();
 
   const runtime = new Cyrene({
-    providers: {
+    ripples: {
       BiliPasswordResetRepo,
       BiliPasswordResetUseCase,
       BiliRegisterRepo,

@@ -1,4 +1,4 @@
-import type { ProductStockMovementType } from '#db/schema';
+import type { ProductStockMovementType } from '#infrastructure/db/schema';
 
 import { InvalidStockMovementDeltaError } from './errors';
 

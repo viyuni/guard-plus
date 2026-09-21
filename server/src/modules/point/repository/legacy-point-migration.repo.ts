@@ -2,10 +2,10 @@ import type { LegacyPointMigrationPageQuery } from '@shared/schema/point-account
 import { type InferInput, ripple } from 'cyrenejs';
 import { and, eq, isNull } from 'drizzle-orm';
 
-import { Database } from '#context/tokens';
-import type { DbExecutor, DbTransaction } from '#db';
-import { QueryPageBuilder } from '#db/helper';
-import { legacyPointMigrations, type InsertLegacyPointMigration } from '#db/schema';
+import { Database } from '#composition/tokens';
+import type { DbExecutor, DbTransaction } from '#infrastructure/db';
+import { QueryPageBuilder } from '#infrastructure/db/helper';
+import { legacyPointMigrations, type InsertLegacyPointMigration } from '#infrastructure/db/schema';
 
 type ReplayedAtFilter = { isNull: true } | { isNotNull: true } | undefined;
 

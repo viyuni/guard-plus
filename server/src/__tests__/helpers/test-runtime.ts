@@ -1,18 +1,26 @@
 import { Cyrene } from 'cyrenejs';
-import type { DependencyEntries } from 'cyrenejs';
+import type { DependencyEntries, ValidRipples } from 'cyrenejs';
 import { createClient, type RedisClientOptions } from 'redis';
 
-import { Database, PointImageUseCase, Redis, RewardLogger } from '#context/tokens';
-import type { DbClient } from '#db';
-import { BiliRoom, RegisterCodeTtl } from '#env/bili';
-import { JwtSecret } from '#env/config';
-import { DataSecret } from '#env/shared';
+import {
+  biliRoomBinding,
+  databaseBinding,
+  dataSecretBinding,
+  jwtSecretBinding,
+  loggerBinding,
+  redisBinding,
+  registerCodeTtlBinding,
+} from '#composition';
+import type { DbClient } from '#infrastructure/db';
+import { createLogger } from '#infrastructure/logger';
 
 /**
- * 测试用的依赖装配入口。
+ * 测试用的最小依赖装配入口。
  *
  * 只提供占位基础设施与配置, 不建立真实连接:
  * 需要真实数据时由调用方替换已解析对象上的方法, 或改用集成测试夹具。
+ *
+ * 这里只绑当前用例真正可达的令牌 —— 没有邮件能力就不会去绑 `Mailer`。
  */
 const database = {} as DbClient;
 const redisOptions: RedisClientOptions = {};
@@ -23,21 +31,20 @@ export interface TestRuntimeOptions {
   database?: DbClient;
 }
 
-export function createTestRuntime<T extends DependencyEntries>(
-  providers: T,
+export function createTestRuntime<const T extends DependencyEntries>(
+  ripples: T & ValidRipples<T>,
   options: TestRuntimeOptions = {},
 ) {
   return new Cyrene({
-    providers,
+    ripples,
     bindings: [
-      { token: Database, value: options.database ?? database },
-      { token: Redis, value: redis },
-      { token: DataSecret, value: 'test-data-secret' },
-      { token: JwtSecret, value: 'test-jwt-secret' },
-      { token: BiliRoom, value: options.biliRoom ?? 1 },
-      { token: RegisterCodeTtl, value: 300 },
-      { token: RewardLogger, value: undefined },
-      { token: PointImageUseCase, value: undefined },
+      databaseBinding(options.database ?? database),
+      redisBinding(redis),
+      loggerBinding(createLogger({ level: 'silent', pretty: false })),
+      dataSecretBinding('test-data-secret'),
+      jwtSecretBinding('test-jwt-secret'),
+      biliRoomBinding(options.biliRoom ?? 1),
+      registerCodeTtlBinding(300),
     ],
   });
 }

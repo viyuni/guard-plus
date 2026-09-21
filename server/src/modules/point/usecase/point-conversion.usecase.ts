@@ -5,8 +5,11 @@ import type {
 } from '@shared/schema/point-conversion';
 import { type InferInput, ripple } from 'cyrenejs';
 
-import { Database } from '#context/tokens';
-import type { InsertPointConversionRule, UpdatePointConversionRule } from '#db/schema';
+import { Database } from '#composition/tokens';
+import type {
+  InsertPointConversionRule,
+  UpdatePointConversionRule,
+} from '#infrastructure/db/schema';
 
 import {
   POINT_CHANGE_SOURCE_TYPE,
@@ -21,7 +24,7 @@ import {
 } from '../domain';
 import { PointAccountRepo, PointConversionRuleRepo } from '../repository';
 import { PointBalanceUseCase } from './point-balance.usecase';
-import { PointTypeUseCase } from './point-type.usecase';
+import { PointTypeQuery } from './point-type-query';
 
 export const PointConversionUseCase = ripple(
   {
@@ -29,14 +32,14 @@ export const PointConversionUseCase = ripple(
     PointAccountRepo,
     PointBalanceUseCase,
     PointConversionRuleRepo,
-    PointTypeUseCase,
+    PointTypeQuery,
   },
   ({
     Database,
     PointAccountRepo,
     PointBalanceUseCase,
     PointConversionRuleRepo,
-    PointTypeUseCase,
+    PointTypeQuery,
   }) => {
     // 确保积分类型可用
     async function assertPointTypesAvailable(fromPointTypeId: string, toPointTypeId: string) {
@@ -45,8 +48,8 @@ export const PointConversionUseCase = ripple(
       }
 
       await Promise.all([
-        PointTypeUseCase.getAvailableById(fromPointTypeId),
-        PointTypeUseCase.getAvailableById(toPointTypeId),
+        PointTypeQuery.getAvailableById(fromPointTypeId),
+        PointTypeQuery.getAvailableById(toPointTypeId),
       ]);
     }
 

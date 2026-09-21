@@ -1,15 +1,15 @@
 import { type InferInput, ripple } from 'cyrenejs';
 import { and, asc, eq, gt, isNull, lte, or } from 'drizzle-orm';
 
-import { Database } from '#context/tokens';
-import type { DbExecutor } from '#db';
-import { deletedAtIsNull } from '#db/helper';
+import { Database } from '#composition/tokens';
+import type { DbExecutor } from '#infrastructure/db';
+import { deletedAtIsNull } from '#infrastructure/db/helper';
 import {
   rewardRules,
   type InsertRewardRule,
   type RewardRule,
   type UpdateRewardRule,
-} from '#db/schema';
+} from '#infrastructure/db/schema';
 
 export const RewardRuleRepo = ripple(
   {

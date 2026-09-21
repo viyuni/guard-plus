@@ -2,8 +2,8 @@ import { type InferInput, ripple } from 'cyrenejs';
 import { SignJWT, jwtVerify } from 'jose';
 import { nanoid } from 'nanoid';
 
-import { JwtSecret } from '#env/config';
-import { UnauthorizedError } from '#utils';
+import { JwtSecret } from '#composition/tokens';
+import { UnauthorizedError } from '#shared';
 
 import { ACCESS_TOKEN_EXPIRES_IN_SECONDS, REFRESH_TOKEN_EXPIRES_IN_SECONDS } from '../constants';
 import type { AuthPayload, AuthRole, AuthTokenPair } from '../domain';

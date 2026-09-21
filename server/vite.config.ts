@@ -12,8 +12,8 @@ const inputs = {
   dbPush: [
     'drizzle/**',
     'drizzle.config.ts',
-    'src/db/schema/**',
-    'src/db/relations.ts',
+    'src/infrastructure/db/schema/**',
+    'src/infrastructure/db/relations.ts',
     'package.json',
     'bunfig.toml',
   ],
@@ -28,6 +28,7 @@ export default defineConfig({
       eden: './src/eden.ts',
     },
     dts: {
+      eager: true,
       emitDtsOnly: true,
     },
     clean: false,
@@ -93,7 +94,7 @@ export default defineConfig({
       },
       'db:seed': {
         cache: false,
-        command: bunEnv('./src/db/seed.ts'),
+        command: bunEnv('./src/apps/seed/index.ts'),
         dependsOn: ['db:push'],
       },
       'db:studio': {

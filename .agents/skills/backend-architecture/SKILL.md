@@ -14,43 +14,58 @@ Use these rules for backend work in this repo. Prefer the current lightweight mo
 - Bun runtime APIs where already used
 - Valibot schemas from `@shared/schema`
 - One backend workspace package: `@server/app` in `server/`
-- Lightweight module architecture
-- Background workers use Bunqueue and live under `server/src/queues`
+- Cyrene (`cyrenejs`) for the explicit dependency graph
+- Background workers use Bunqueue and live under `server/src/infrastructure/queue`
 
 ## Current Layout
+
+Layering is `apps → modules → infrastructure → composition → shared`. The
+`guard-plus/architecture-import-boundary` lint rule enforces it, including the
+"cross-module imports go through the module public entry" rule.
 
 ```txt
 server/
   src/
     apps/
-      admin/          admin HTTP app, app context, env, routes
-        modules/      admin-only route modules and app-only use cases
-        utils/        admin env/helpers
-      event/          event ingestion app
-      user/           user HTTP app, app context, env, routes
-        modules/      user-only route modules and app-only use cases
-        env.ts        user env
-    db/               Drizzle client, schema, relations, seed/migrate helpers
-    modules/          reusable backend modules shared by admin/user apps
-    queues/           Bunqueue job definitions and queue exports
-    redis/            Redis client lifecycle helpers
-    utils/            shared backend utilities, errors, logger, env helpers
-    context.ts        shared container and Elysia context wiring
+      admin/          admin HTTP app
+        http/         auth guard, root ripple, routes/
+        features/     admin-only capabilities (admin, auth, user)
+        config.ts     ADMIN_* env -> AdminConfig
+        composition.ts createAdminApp() (Composition Root + Cyrene runtime)
+        server.ts     Elysia assembly (createAdminServer)
+      user/           user HTTP app (same layout)
+      event/          event ingestion runtime (config/composition/handler/server)
+      seed/           development seed script + its own runtime
+    modules/          reusable business capabilities
+      <name>/         domain/, repository/, usecase/, index.ts (Ripple Manifest)
+    infrastructure/   db/, redis/, queue/, logger/, mail/, storage/, http/
+    composition/      tokens.ts (infrastructure + config tokens), bindings.ts
+    shared/           errors/, utils/  (business-agnostic)
+    env/              createEnv fragments, read only at app boundaries
     eden.ts           Eden type export surface
 ```
 
-Use `server/src/modules/*` for reusable business capability code. Use `server/src/apps/{admin,user}/modules/*` for HTTP routes and app-specific orchestration. Use `server/src/apps/event` only for event ingestion/runtime concerns. Use `server/src/queues` for background queue definitions.
+Use `server/src/modules/*` for reusable business capability code. Use
+`server/src/apps/{admin,user}/http/routes/*` for Elysia route ripples and
+`server/src/apps/{admin,user}/features/*` for app-only capabilities. Use
+`server/src/apps/event` only for event ingestion/runtime concerns. Use
+`server/src/infrastructure/queue` for background queue definitions.
 
-Use `server/src/redis` for the Redis client lifecycle (`createRedisClient`, `redis`, `closeRedis`, `pingRedis`). Keep Redis-backed business persistence rules, keys, and serializers inside the owning module repositories, such as `server/src/modules/auth/repository/*`.
+`server/src/infrastructure/redis` exposes `createRedisClient(options, logger?)`; the
+client instance is created and owned by the app composition root, and Redis-backed
+business persistence rules, keys, and serializers stay inside the owning module
+repositories, such as `server/src/modules/auth/repository/*`.
 
 ## Core Flow
 
 ```txt
-App route module(index.ts) -> appContext/appRuntimeContext -> shared createAppContext/createContainer -> UseCase -> Repository -> DB
-Event app/queue -> createEventContainer/createContainer -> UseCase -> Repository -> DB
+App route ripple -> Composition Root (create*App) -> Cyrene runtime -> UseCase -> Repository -> DB
+Event app -> createEventApp() -> EventHandler ripple -> RewardProcessor/queue -> UseCase -> Repository -> DB
 ```
 
-Use a small `domain/` folder for reusable business rules, errors, and domain-only types. Keep domain code dependency-light: no Elysia, env/config, route schemas, context imports, or database client instances.
+Use a small `domain/` folder for reusable business rules, errors, and domain-only
+types. Keep domain code dependency-light: no Elysia, env/config, route schemas, or
+database client instances.
 
 ## Module Shape
 
@@ -69,12 +84,30 @@ modules/{module}/
   usecase/
     {module}.usecase.ts
     index.ts       barrel export
-  index.ts         barrel export for domain, repository, usecase
+  index.ts         Ripple Manifest (default export) + static domain API (named exports)
 ```
 
-Small capability modules may expose only the folders/files they need. Keep each `index.ts` as a barrel export; do not hide dependency construction in module barrels.
+Small capability modules may expose only the folders/files they need.
 
-App route modules under `server/src/apps/{admin,user}/modules/{module}` usually expose an Elysia plugin from `index.ts`. If an app-only flow needs extra logic, keep its app-only errors/use cases beside the route module.
+Each module has exactly one public entry, `modules/{module}/index.ts`:
+
+```ts
+export default defineRipples({
+  UserBasicInfoCrypto,
+  UserRepo,
+  UserUseCase,
+});
+```
+
+The default export is the only way another module reaches its injectable
+capabilities (`User.UserUseCase`); named exports carry the static domain API. Deep
+imports (`#modules/user/repository`) are rejected by lint. Do not add provider
+discovery helpers such as `providersOf` or `Object.entries(module)` scanning.
+
+App route ripples live under `server/src/apps/{admin,user}/http/routes/*` and are
+composed by the app's `http/root.ts` (`AdminHttp` / `UserHttp`). App-only business
+capabilities live under `server/src/apps/{admin,user}/features/*`, each with its own
+`index.ts` manifest.
 
 ## Shared Module Rules
 
@@ -82,66 +115,60 @@ Modules under `server/src/modules/*` are reusable backend building blocks, not H
 
 Shared modules should:
 
-- Export domain policies, errors, repositories, use cases, and helpers that can be reused by both app servers.
-- Accept dependency instances through constructors or dependency objects.
-- Keep environment-specific choices in the caller or in `server/src/context.ts`.
-- Be wired together from `server/src/context.ts` via `createContainer({ db, env })`.
-- Be exposed to routes through `createAppContext({ db, env })`, which returns `{ container, context }`.
-- Be exposed to event ingestion through `createEventContainer({ db, env })` when the event runtime needs a smaller dependency graph.
+- Export domain policies, errors, repositories, use cases, and helpers that can be reused by more than one app.
+- Declare dependencies as `ripple` inputs using composition tokens (`#composition/tokens`) and other modules' manifest entries.
+- Stay HTTP-free and env-free: no Elysia, no `process.env`, no `Bun.env`.
+- Be composed by each app's Composition Root, which binds the concrete implementations.
 
 Shared modules must not:
 
-- Create or expose admin/user business routes.
-- Create or export per-module Elysia app instances for business APIs.
-- Import app-specific infrastructure such as `#apps/admin/env`, `#apps/user/env`, or app route modules.
-- Decide URL prefixes, route metadata, or app-specific auth policy.
-- Instantiate app-specific dependencies when those instances can be passed in by the consuming app.
+- Create or expose app business routes.
+- Create or export per-module Elysia app instances.
+- Import `#apps/*`.
+- Read environment variables directly.
+- Favour `token<X | undefined>` to paper over different app dependency graphs; split the capability instead (for example `PointTypeQuery` vs `PointTypeAdminUseCase`).
 
-## App Context Rules
+## Composition Root Rules
 
-`server/src/context.ts` owns shared dependency wiring:
+Each runnable app owns one Composition Root and one Cyrene runtime, created in
+`server/src/apps/<app>/composition.ts`:
 
-- Instantiate reusable repositories and use cases once per app DB/env.
-- Return a plain `container` with repositories and use cases for tests and app-specific use cases.
-- Return one shared Elysia `context` plugin that installs common guards/macros and decorates shared use cases.
-- Return a separate `createEventContainer` for event ingestion when auth/app HTTP decoration is not needed.
-- Keep app route paths and app-specific route metadata out of shared context.
+- Read the app config from `apps/<app>/config.ts` (the only place that knows the env prefix).
+- Create the infrastructure the app owns (`createDatabase`, `createRedisClient`) and close it if startup fails.
+- Bind one token at a time with the per-token factories from `#composition`
+  (`databaseBinding`, `redisBinding`, `jwtSecretBinding`, ...); list exactly the tokens
+  this app's graph needs. Do not add grouping helpers such as `createBaseBindings` —
+  a group forces every app to prepare values for tokens it never resolves.
+- List every ripple explicitly in a `defineRipples({...})` graph — no scanning.
+- Run app-specific startup work (for example `initDefaultAdmin`) in the composition root.
 
-`server/src/apps/{admin,user}/context.ts` owns app dependency wiring:
-
-- Import app-local env and root `db`.
-- Call `createAppContext({ db, env })`.
-- Create app-only repositories/use cases such as admin auth.
-- Export `appRuntimeContext` for the root app to mount exactly once.
-- Export type-only `appContext` for business route modules to get decorated context inference.
-- Register app-only startup hooks or error maps when needed.
-
-Route modules should use the type-only `appContext` and be mounted by the root app after `appRuntimeContext`.
-
-`server/src/apps/event` owns event HTTP/runtime wiring. It should import only the env, root `db`, shared container factory, queue/use case dependencies, and event-specific route/runtime setup it needs.
+`server/src/apps/<app>/server.ts` assembles Elysia (cors, error mapping, static
+assets, OpenAPI, the `*Http` root ripple) and attaches `app.onStop(() => runtime.dispose())`.
+`server/src/apps/event` uses its own minimal graph: only the ripples the event chain
+needs, not whole module spreads.
 
 ## Database Rules
 
-Database client creation, Drizzle schema definitions, relations, migrations, seed scripts, and inferred table types live in `server/src/db`.
+Database client creation, Drizzle schema definitions, relations, migrations, seed scripts, and inferred table types live in `server/src/infrastructure/db`.
 
 Use local aliases inside the server package:
 
-- Import `db`, `createDatabase`, `DbClient`, `DbTransaction`, and `DbExecutor` from `#db`.
-- Import table objects and Drizzle inferred table types from `#db/schema`.
-- Add new tables, enums, relations, and inferred table types in `server/src/db/schema/*`, export them from `server/src/db/schema/index.ts`, and update `server/src/db/relations.ts` when relations are needed.
-- Reusable modules should accept `DbExecutor`, `DbClient`, or `DbTransaction` from callers instead of importing the root `db` singleton.
+- Import `createDatabase`, `DbClient`, `DbTransaction`, and `DbExecutor` from `#infrastructure/db`.
+- Import table objects and Drizzle inferred table types from `#infrastructure/db/schema`.
+- Import query helpers from `#infrastructure/db/helper`.
+- Add new tables, enums, relations, and inferred table types in `server/src/infrastructure/db/schema/*`, export them from `schema/index.ts`, and update `server/src/infrastructure/db/relations.ts` when relations are needed.
+- Reusable modules receive `DbClient`/`DbTransaction` through the `Database` token or as method parameters; there is no root `db` singleton.
 
 Do not define Drizzle schemas, database clients, or table model types inside app modules when they belong to the shared database schema.
 
 ## Queue Rules
 
-Queue definitions live in `server/src/queues`.
+Queue definitions live in `server/src/infrastructure/queue`.
 
 Queues should:
 
 - Keep queue names, payload typing, and processor registration close to the queue file.
-- Delegate business behavior to use cases from `createContainer` or `createEventContainer`.
-- Accept env, logger, and use case dependencies through explicit setup functions when practical.
+- Delegate business behavior to module use cases (for example `RewardProcessor`).
 - Use shared schemas/types for queue payloads when the payload is also an external contract.
 
 Queues must not:
@@ -152,12 +179,12 @@ Queues must not:
 
 ## Route Rules
 
-Routes live in app-server module `index.ts` files under `server/src/apps/{admin,user}/modules/*`. Event app routes, if any, live under `server/src/apps/event`.
+Routes live in app HTTP route ripples under `server/src/apps/{admin,user}/http/routes/*`. Event app routes, if any, live under `server/src/apps/event`.
 
 Routes should:
 
 - Define Elysia route paths and HTTP schemas.
-- Call decorated use cases, for example `({ body, userUseCase }) => userUseCase.update(body)`.
+- Declare use cases as `ripple` dependencies and call them directly, for example `({ body, UserUseCase }) => UserUseCase.update(body)`.
 - Use shared request/response schemas from `@shared/schema`.
 - Use route metadata such as `details.summary` when useful.
 - Use auth guards/macros such as `{ requiredAuth: true }` when the route requires identity.
@@ -181,20 +208,24 @@ Repositories should not import shared request schemas or shared input types. Con
 
 ## UseCase Rules
 
-Use one UseCase class per module by default, such as `UserUseCase` or `RewardRuleUseCase`.
+Use one Ripple per cohesive dependency set, such as `UserUseCase` or `RewardRuleUseCase`.
+Split when a single use case mixes reads, writes, event processing, admin operations,
+manual operations, replay, and logging into one large dependency list — see
+`RewardProcessor` / `RewardQuery` / `ManualRewardUseCase` / `RewardReplayUseCase` and
+`PointTypeQuery` / `PointTypeAdminUseCase`.
 
 UseCases should:
 
-- Accept required collaborators through the constructor, usually as a dependency object.
-- Accept `DbClient` only when the use case itself must open transactions or construct transaction-scoped repositories.
+- Be defined with `ripple({ ...inputs }, ({ ...inputs }) => ({ ...methods }))`, taking collaborators through the injected inputs object.
+- Take the `Database` token only when the use case itself must open transactions.
 - Own transactions for business actions that write or require consistency.
 - Prefer passing `tx` as the final optional `db` parameter to repositories/use cases inside transactions.
-- Receive normal repositories, policies, cross-module use cases, logger instances, and helpers from a `deps` object.
+- Receive repositories, policies, cross-module use cases, and the `Logger` token from the inputs object.
 - Coordinate repository calls and application services.
 - Accept route input types from shared schemas in `@shared/schema`.
 - Throw shared or module-specific `AppError` subclasses.
 - Return API-ready plain objects when that keeps routes thin.
-- Use instance methods only. Do not add static use case methods.
+- Never read env; configuration arrives through composition tokens.
 - When a method can optionally accept an override `DbExecutor`, place that optional dependency at the end of the parameter list.
 - When a method must run inside a transaction, make `tx` the first required parameter and do not provide a root-db default.
 
@@ -206,17 +237,16 @@ Repositories wrap Drizzle access only.
 
 Repositories should:
 
-- Accept `DbExecutor` from `#db` when the repository can run against either the root client or a transaction client.
-- Accept `DbTransaction` from `#db` when the repository must only be used inside a transaction.
-- Use Drizzle query builders and schema objects from `#db/schema`.
-- Use repository parameter types from `#db/schema` when those types directly describe table insert/update/select shapes.
+- Be defined with `ripple({ Database, ... }, ...)` and use the injected executor as the default.
+- Accept `DbExecutor` when the repository can run against either the root client or a transaction client.
+- Accept `DbTransaction` when the repository must only be used inside a transaction.
+- Use Drizzle query builders and schema objects from `#infrastructure/db/schema`.
 - Encapsulate common persistence filters such as `isNull(deletedAt)`.
 - Return database records, `null`, or simple persistence results.
-- Use instance methods only. Do not add static repository methods.
-- Put optional `db` override parameters last and default them to `this.db` when the repository stores a default executor.
+- Put optional `db` override parameters last and default them to the injected executor.
 - For repository methods that require row locks or transactional consistency, make `tx` the first required parameter.
 
-Repositories must not import Elysia, app env, route schemas, JWT/auth route code, or request input types from `@shared/schema`. Repositories must not open transactions, make permission decisions, hash passwords, sign tokens, or orchestrate business workflows.
+Repositories must not import Elysia, env, route schemas, JWT/auth route code, or request input types from `@shared/schema`. Repositories must not open transactions, make permission decisions, hash passwords, sign tokens, or orchestrate business workflows.
 
 ## Domain Rules
 
@@ -228,27 +258,27 @@ Domain code should:
 - Keep pure business logic close to the module.
 - Throw module-specific errors from `domain/errors.ts`.
 - Accept plain domain/database records and primitive values.
-- Export through `domain/index.ts`, then through the module root `index.ts`.
+- Export through `domain/index.ts`, then re-export statically from the module root `index.ts`.
 
-Domain code must not import Elysia, app env, app-local infrastructure, route schemas, context, or DB clients. It must not open transactions or query the database.
+Domain code must not import Elysia, env, infrastructure, route schemas, or DB clients. It must not open transactions or query the database.
 
 ## Error Rules
 
-Shared module errors live in `domain/errors.ts`. App-only module errors may live beside the app module.
+Shared module errors live in `domain/errors.ts`. App-only feature errors may live beside the app feature.
 
-Create specific errors by extending shared base errors from `#utils/errors`, override `code`, and provide a useful Chinese default message when the user-facing API needs one.
+Create specific errors by extending shared base errors from `#shared`, override `code`, and provide a useful Chinese default message when the user-facing API needs one.
 
-Register error maps in the app context or root app where Elysia needs to know about them. Use shared errors directly for generic cases.
+Register error maps in the route ripple where Elysia needs to know about them (`.error(AdminErrors)`). Use shared errors directly for generic cases.
 
 ## Auth Rules
 
-Use the shared auth module and app context instead of implementing auth in routes.
+Use the shared auth module plus the HTTP adapter kit instead of implementing auth in routes.
 
-- Shared auth helpers live in `server/src/modules/auth`.
-- Shared context installs the auth guard with `createAuthGuard(authUseCase)`.
-- Protect routes with `{ requiredAuth: true }`.
-- Read the resolved identity from route context according to the guard contract.
-- Keep admin/user login differences in app-specific auth modules.
+- Auth capabilities (session repo, JWT use cases, register/password-reset flows) live in `server/src/modules/auth`.
+- `server/src/infrastructure/http/auth-guard.ts` provides `createAuthGuard(authUseCase, cookieOptions)`; cookie names and durations come from `auth-cookies.ts` and the auth module's static constants.
+- Each app's `http/auth.ts` defines its guard ripple (and cookie-options ripple) by injecting `Auth.AuthUseCase`.
+- Protect routes with `{ requiredAuth: true }` / `{ requiredAdminAuth: true }` / `{ requiredSuperAdminAuth: true }`.
+- Keep admin/user login differences in the app features (`apps/*/features/auth`).
 
 ## Transaction Rules
 
@@ -263,11 +293,11 @@ Do not call another use case that opens a nested transaction unless the behavior
 Inside `server/`, use the server aliases from `server/tsconfig.json`:
 
 - `#apps/*` for app-local code.
-- `#context` for the shared app context/container.
-- `#db` and `#db/*` for database client, schema, relations, and helpers.
-- `#modules/*` for reusable backend modules.
-- `#redis` and `#redis/*` for Redis client lifecycle helpers.
-- `#utils` and `#utils/*` for backend utilities.
+- `#modules/*` for reusable backend modules (only the public entry `#modules/<name>` across module boundaries).
+- `#infrastructure/*` for db, redis, queue, logger, mail, storage, and the HTTP adapter kit.
+- `#composition` and `#composition/*` for tokens and binding helpers.
+- `#shared` and `#shared/*` for business-agnostic errors and utilities.
+- `#env/*` for env schema fragments (app boundaries, composition, and infra types only).
 
 Use `@shared/schema` or its package subpath exports for shared request/response schemas and types across packages.
 
@@ -277,30 +307,37 @@ Use `#...` imports only inside the current package. Do not use deep relative pat
 
 Prefer type-only imports for types. Keep local module imports relative when importing siblings within the same module folder.
 
+The lint rule `guard-plus/architecture-import-boundary` enforces the layer direction
+(`apps → modules → infrastructure → composition → shared`), the module public entry,
+app isolation, and "env only at app boundaries".
+
 ## Naming
 
 ```txt
-Route/plugin export: camelCase module name, e.g. admin, user
-Context exports: appRuntimeContext and appContext
-Shared container exports: createContainer and createAppContext
-UseCase class: {Module}UseCase
-Repository class: {Module}Repository
-Policy class: {Module}Policy
+Module manifest: default export of modules/<name>/index.ts (defineRipples)
+Route ripple export: PascalCase + Routes, e.g. AdminRoutes, PointTypeRoutes
+HTTP root ripple: PascalCase + Http, e.g. AdminHttp, UserHttp
+Guard ripple: PascalCase + Guard, e.g. AdminAuthGuard
+Composition root: create<App>App, e.g. createAdminApp
+HTTP server factory: create<App>Server, e.g. createAdminServer
+UseCase/Ripple: {Module}UseCase, {Module}Query, {Module}Processor, {Module}Repo
+Policy: {Module}Policy
 Error class: Specific PascalCase + Error
-Decorate key: camelCase and explicit use case name when clearer, e.g. userUseCase
-Elysia name: PascalCase descriptive name, e.g. AdminAppContextTypeOnly, SharedContext
+Elysia name: PascalCase descriptive and unique within the app, e.g. AdminAuthRoute
 ```
 
 ## Decision Heuristics
 
-- If code is HTTP-specific, keep it in `server/src/apps/{admin,user}/modules/{module}/index.ts`.
-- If code wires app env, root db, app-only use cases, or app-only startup hooks, keep it in `server/src/apps/{admin,user}/context.ts`.
-- If code wires event ingestion or event runtime dependencies, keep it in `server/src/apps/event`.
-- If code defines a background job/queue processor, keep it in `server/src/queues`.
-- If code wires reusable repositories/use cases, keep it in `server/src/context.ts`.
-- If code describes a business action, keep it in `usecase/{module}.usecase.ts`.
-- If code is a Drizzle read/write, keep it in `repository/{module}.repo.ts`.
-- If code is a reusable business rule with no DB/HTTP dependency, keep it in `domain/{module}.policy.ts`.
+- If code is HTTP-specific, keep it in `server/src/apps/{admin,user}/http/` (routes, guard, root ripple).
+- If code is app-only business logic, keep it in `server/src/apps/{admin,user}/features/*`.
+- If code wires app config, the runtime graph, or app-only startup, keep it in `server/src/apps/<app>/composition.ts` / `config.ts`.
+- If code defines a background job/queue processor payload, keep it in `server/src/infrastructure/queue`; the processing logic belongs to a module ripple (for example `RewardProcessor`).
+- If code describes a business action, keep it in `modules/<name>/usecase/*`.
+- If code is a Drizzle read/write, keep it in `modules/<name>/repository/*`.
+- If code is a reusable business rule with no DB/HTTP dependency, keep it in `modules/<name>/domain/*`.
+- If code is technical infrastructure, keep it in `server/src/infrastructure/*`.
+- If code is an infrastructure or config token (or a shared binding helper), keep it in `server/src/composition/*`.
+- If code is business-agnostic and widely shared, keep it in `server/src/shared/*`.
 - If code is shared schema or API contract, keep it in `packages/schema/src/*`.
 
 ## Validation

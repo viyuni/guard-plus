@@ -3,10 +3,15 @@ import type { ProductPageQuery } from '@shared/schema/product';
 import { type InferInput, ripple } from 'cyrenejs';
 import { and, eq, gte, lte, sql } from 'drizzle-orm';
 
-import { Database } from '#context/tokens';
-import type { DbExecutor, DbTransaction } from '#db';
-import { deletedAtIsNull, QueryPageBuilder } from '#db/helper';
-import { products, type InsertProduct, type ProductStatus, type UpdateProduct } from '#db/schema';
+import { Database } from '#composition/tokens';
+import type { DbExecutor, DbTransaction } from '#infrastructure/db';
+import { deletedAtIsNull, QueryPageBuilder } from '#infrastructure/db/helper';
+import {
+  products,
+  type InsertProduct,
+  type ProductStatus,
+  type UpdateProduct,
+} from '#infrastructure/db/schema';
 
 import {
   assertPositiveStockAmount,
