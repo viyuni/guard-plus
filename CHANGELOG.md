@@ -1,3 +1,15 @@
+## v1.0.0-beta.1
+
+[compare changes](https://github.com/viyuni/guard-plus/compare/v0.0.1-beta.8...v1.0.0-beta.1)
+
+### 💅 Refactors
+
+- **server:** Adopt Cyrene application runtimes ([#20](https://github.com/viyuni/guard-plus/pull/20))
+
+### ❤️ Contributors
+
+- Byc ([@YanChenBai](https://github.com/YanChenBai))
+
 ## v0.0.1-beta.8
 
 [compare changes](https://github.com/viyuni/guard-plus/compare/v0.0.1-beta.7...v0.0.1-beta.8)
