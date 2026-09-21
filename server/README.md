@@ -19,7 +19,7 @@ the `guard-plus/architecture-import-boundary` lint rule.
 - `src/infrastructure`: `db`, `redis`, `queue`, `logger`, `mail`, `storage`, `http`.
 - `src/composition`: infrastructure/config `token`s and shared binding helpers.
 - `src/shared`: business-agnostic errors and utilities.
-- `src/env`: env schema fragments, read only at the app boundary.
+- `src/config`: pure env schema fragments, imported only by each app's `config.ts`.
 - `src/eden.ts`: exported Eden app types.
 
 ## Development
@@ -95,14 +95,13 @@ admin-only needs.
 
 ### Environment and configuration
 
-Env validation lives in `src/env/*`, one file per concern. Only App Boundaries read
-env: `src/apps/<app>/config.ts` composes the shared fragments with `extends: [...]`
-(an app validates only the concerns it uses) and maps prefixed variables to a
-normalized config object (for example `ADMIN_JWT_SECRET -> jwtSecret`). Each concern
-also owns its env→infrastructure mapping (`toRedisConnectionOptions`,
-`toSmtpMailConfig`), so that translation exists once instead of once per app.
-Modules never read env; they depend on tokens, and the composition root binds concrete
-values or implementations.
+Environment schemas live in `src/config/*`, one pure field fragment per concern. They
+do not read `process.env` or depend on infrastructure types. Each
+`src/apps/<app>/config.ts` is the app's configuration boundary: it composes only the
+fragments that app needs, validates `process.env`, and maps environment names to the
+app's normalized infrastructure options and semantic config. Modules never read env;
+they depend on tokens, and the composition root binds concrete values or
+implementations.
 
 Externally created DB/Redis clients are owned by the app composition root, which also
 closes them if startup fails. Runtime instances are disposed when the Elysia app stops

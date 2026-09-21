@@ -1,20 +1,28 @@
+import path from 'node:path';
+
 import { bilibiliUid, envOrigins, port } from '@shared/schema';
 import { createEnv } from '@t3-oss/env-core';
 import * as v from 'valibot';
 
-import { biliEnv } from '#env/bili';
-import { dbEnv } from '#env/db';
-import { imageEnv } from '#env/image';
-import { redisEnv, toRedisConnectionOptions } from '#env/redis';
-import { type NodeEnv, sharedEnv } from '#env/shared';
+import { biliEnv } from '#config/bili';
+import { databaseEnv } from '#config/database';
+import { imageEnv } from '#config/image';
+import { redisEnv } from '#config/redis';
+import { type NodeEnv, sharedEnv } from '#config/shared';
 import type { RedisConnectionOptions } from '#infrastructure/redis';
 import { PasswordUtil } from '#shared';
 
+const defaultImageSavePath = path.join(process.cwd(), 'public', 'images');
 const superAdminPasswordSchema = v.pipe(v.string(), v.regex(/^(?=.*[A-Za-z])(?=.*\d).{8,32}$/));
 
 export const adminEnv = createEnv({
-  extends: [sharedEnv, dbEnv, biliEnv, imageEnv, redisEnv],
   server: {
+    ...sharedEnv,
+    ...databaseEnv,
+    ...biliEnv,
+    ...imageEnv,
+    ...redisEnv,
+
     /**
      * 管理员服务端口
      */
@@ -84,11 +92,17 @@ export const adminConfig: AdminConfig = {
   logLevel: adminEnv.LOG_LEVEL,
   dataSecret: adminEnv.DATA_SECRET,
   databaseUrl: adminEnv.DATABASE_URL,
-  redis: toRedisConnectionOptions(adminEnv),
+  redis: {
+    url: adminEnv.REDIS_URL,
+    password: adminEnv.REDIS_PASSWORD,
+    connectionTimeoutMs: adminEnv.REDIS_CONNECTION_TIMEOUT_MS,
+    idleTimeoutMs: adminEnv.REDIS_IDLE_TIMEOUT_MS,
+    maxRetries: adminEnv.REDIS_MAX_RETRIES,
+  },
   jwtSecret: adminEnv.ADMIN_JWT_SECRET,
   biliRoom: adminEnv.BILI_ROOM,
   registerCodeTtlSeconds: adminEnv.BILI_REGISTER_CODE_TTL_SECONDS,
-  imageSavePath: adminEnv.IMAGE_SAVE_PATH,
+  imageSavePath: adminEnv.IMAGE_SAVE_PATH ?? defaultImageSavePath,
   apiOrigin: adminEnv.ADMIN_API_ORIGIN,
   webOrigins: adminEnv.ADMIN_WEB_ORIGINS,
   port: adminEnv.ADMIN_PORT,

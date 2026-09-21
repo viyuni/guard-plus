@@ -128,7 +128,7 @@ The backend package is `@server/app` in `server/`.
 - `server/src/infrastructure`: db, redis, queue, logger, mail, storage, and the HTTP adapter kit.
 - `server/src/composition`: infrastructure/config tokens and binding helpers.
 - `server/src/shared`: business-agnostic errors and utilities.
-- `server/src/env`: env schema fragments, read only at app boundaries.
+- `server/src/config`: pure env schema fragments, imported only by app config boundaries.
 - `server/src/eden.ts`: Eden type export surface consumed by web packages.
 
 ## Database tasks

@@ -133,7 +133,7 @@ vpr @server/app#typecheck
 - [`server/src/infrastructure`](./server/src/infrastructure/)：db、redis、queue、logger、mail、storage 与 HTTP 适配器。
 - [`server/src/composition`](./server/src/composition/)：基础设施与配置令牌及绑定辅助函数。
 - [`server/src/shared`](./server/src/shared/)：与业务无关的错误与工具函数。
-- [`server/src/env`](./server/src/env/)：环境变量 Schema 片段，只在 App Boundary 读取。
+- [`server/src/config`](./server/src/config/)：纯环境变量 Schema 片段，只由 App 配置边界导入。
 - [`server/src/eden.ts`](./server/src/eden.ts)：供 Web 包使用的 Eden 类型导出入口。
 
 ## Database tasks

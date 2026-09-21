@@ -2,15 +2,19 @@ import { port } from '@shared/schema';
 import { createEnv } from '@t3-oss/env-core';
 import * as v from 'valibot';
 
-import { biliEnv } from '#env/bili';
-import { dbEnv } from '#env/db';
-import { redisEnv, toRedisConnectionOptions } from '#env/redis';
-import { type NodeEnv, sharedEnv } from '#env/shared';
+import { biliEnv } from '#config/bili';
+import { databaseEnv } from '#config/database';
+import { redisEnv } from '#config/redis';
+import { type NodeEnv, sharedEnv } from '#config/shared';
 import type { RedisConnectionOptions } from '#infrastructure/redis';
 
 export const eventEnv = createEnv({
-  extends: [sharedEnv, dbEnv, biliEnv, redisEnv],
   server: {
+    ...sharedEnv,
+    ...databaseEnv,
+    ...biliEnv,
+    ...redisEnv,
+
     EVENT_PORT: v.optional(port(), 3700),
     VIYUNI_LOGIN_SYNC_URL: v.string(),
     VIYUNI_LOGIN_SYNC_PASSWORD: v.string(),
@@ -40,7 +44,13 @@ export const eventConfig: EventConfig = {
   logLevel: eventEnv.LOG_LEVEL,
   dataSecret: eventEnv.DATA_SECRET,
   databaseUrl: eventEnv.DATABASE_URL,
-  redis: toRedisConnectionOptions(eventEnv),
+  redis: {
+    url: eventEnv.REDIS_URL,
+    password: eventEnv.REDIS_PASSWORD,
+    connectionTimeoutMs: eventEnv.REDIS_CONNECTION_TIMEOUT_MS,
+    idleTimeoutMs: eventEnv.REDIS_IDLE_TIMEOUT_MS,
+    maxRetries: eventEnv.REDIS_MAX_RETRIES,
+  },
   biliRoom: eventEnv.BILI_ROOM,
   registerCodeTtlSeconds: eventEnv.BILI_REGISTER_CODE_TTL_SECONDS,
   port: eventEnv.EVENT_PORT,

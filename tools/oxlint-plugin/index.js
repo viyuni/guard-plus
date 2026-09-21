@@ -320,15 +320,15 @@ const rippleDepsPascalCase = {
 
 const SOURCE_LAYERS = {
   // 同层互相依赖始终允许；这里只列"允许向下的层"。
-  apps: new Set(['modules', 'infrastructure', 'composition', 'shared', 'env']),
+  apps: new Set(['modules', 'infrastructure', 'composition', 'shared', 'config']),
   modules: new Set(['infrastructure', 'composition', 'shared']),
   infrastructure: new Set(['composition', 'shared']),
   // composition 声明的令牌必须用基础设施能力的类型（Database: DbClient ...），
   // 因此允许 composition → infrastructure，但基础设施本身不允许反向依赖 composition。
   composition: new Set(['infrastructure', 'shared']),
   shared: new Set(),
-  // env 只是 App Boundary 的配置片段，允许引用基础设施类型与共享工具。
-  env: new Set(['infrastructure', 'composition', 'shared']),
+  // config 只包含无运行时副作用的环境变量 Schema 片段。
+  config: new Set(),
 };
 
 const ALIAS_LAYERS = [
@@ -339,8 +339,7 @@ const ALIAS_LAYERS = [
   ['#composition', 'composition'],
   ['#shared/', 'shared'],
   ['#shared', 'shared'],
-  ['#env/', 'env'],
-  ['#env', 'env'],
+  ['#config/', 'config'],
 ];
 
 /**
@@ -398,7 +397,8 @@ const architectureImportBoundary = {
       moduleDeepImport:
         '跨模块禁止 deep import："{{specifier}}" 只允许该模块内部使用，其他模块请从 "#modules/{{module}}" 默认导出访问能力',
       appDeepImport: 'App 之间禁止互相导入："{{specifier}}" 只允许在 apps/{{app}} 内部使用',
-      envBoundary: '环境变量只允许在 App Boundary 读取："{{specifier}}" 出现在 {{layer}} 层',
+      configBoundary:
+        '环境变量 Schema 只允许由 apps/<app>/config.ts 导入："{{specifier}}" 出现在 {{relative}}',
     },
   },
 
@@ -422,11 +422,15 @@ const architectureImportBoundary = {
         return null;
       }
 
-      if (targetLayer === 'env' && source.layer !== 'apps' && source.layer !== 'env') {
+      if (
+        targetLayer === 'config' &&
+        source.layer !== 'config' &&
+        !/^apps\/[^/]+\/config\.ts$/.test(source.relative)
+      ) {
         return {
-          messageId: 'envBoundary',
+          messageId: 'configBoundary',
           data: {
-            layer: source.layer,
+            relative: source.relative,
             specifier,
           },
         };
