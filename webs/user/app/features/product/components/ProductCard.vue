@@ -3,6 +3,8 @@ import { ShoppingCart } from 'lucide-vue-next';
 
 import type { Product } from '~/features/product';
 
+import ProductImagePreview from './ProductImagePreview.vue';
+
 const props = defineProps<{
   product: Product;
   isBuying?: boolean;
@@ -32,30 +34,13 @@ const isBuyDisabled = computed(
 
 <template>
   <article class="group rounded-xl">
-    <div
-      class="relative aspect-square w-full overflow-hidden rounded-2xl transition-shadow duration-200 group-hover:shadow-xl"
-    >
-      <img
-        class="pointer-events-none block size-full object-cover object-center select-none"
-        :src="coverUrl"
-        :alt="product.name"
-        loading="lazy"
-        draggable="false"
-      />
-      <div
-        v-if="shouldShowReviewOverlay"
-        class="pointer-events-none absolute inset-0 grid place-items-center bg-white/55 backdrop-blur-[1px]"
-        aria-hidden="true"
-      >
-        <img
-          class="block size-3/8 object-contain object-center select-none"
-          :src="underReviewOverlayUrl"
-          alt=""
-          loading="lazy"
-          draggable="false"
-        />
-      </div>
-    </div>
+    <ProductImagePreview
+      :src="coverUrl"
+      :alt="product.name"
+      :product-id="product.id"
+      :show-review-overlay="shouldShowReviewOverlay"
+      :review-overlay-src="underReviewOverlayUrl"
+    />
 
     <div class="flex items-end gap-2 px-1.5 py-2">
       <div class="min-w-0 flex-1">
