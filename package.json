@@ -10,7 +10,7 @@
   ],
   "type": "module",
   "scripts": {
-    "prepare": "vp config"
+    "prepare": "vp config && skills-npm"
   },
   "devDependencies": {
     "@stylistic/eslint-plugin": "^5.10.0",
