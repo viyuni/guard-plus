@@ -4,7 +4,7 @@ import { type InferInput, ripple } from 'cyrenejs';
 import { BiliRoom } from '#composition/tokens';
 
 import type { BiliGuardRewardEvent } from '../domain';
-import { RewardProcessor } from './reward-processor';
+import { BiliGuardRewardUseCase } from './bili-guard-reward.usecase';
 
 /**
  * 手动大航海事件时长表。
@@ -73,9 +73,9 @@ function getManualBiliGuardMeta(guardType: CreateManualBiliGuardEventBody['guard
 export const ManualRewardUseCase = ripple(
   {
     BiliRoom,
-    RewardProcessor,
+    BiliGuardRewardUseCase,
   },
-  ({ BiliRoom, RewardProcessor }) => {
+  ({ BiliGuardRewardUseCase, BiliRoom }) => {
     function buildManualBiliGuardEvent(
       input: CreateManualBiliGuardEventBody,
     ): BiliGuardRewardEvent {
@@ -129,7 +129,7 @@ export const ManualRewardUseCase = ripple(
 
     return {
       create(input: CreateManualBiliGuardEventBody) {
-        return RewardProcessor.rewardBiliGuard(buildManualBiliGuardEvent(input));
+        return BiliGuardRewardUseCase.rewardBiliGuard(buildManualBiliGuardEvent(input));
       },
     };
   },

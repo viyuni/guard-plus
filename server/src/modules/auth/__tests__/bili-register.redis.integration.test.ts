@@ -14,6 +14,7 @@ import {
   BiliPasswordResetUseCase,
   BiliRegisterUseCase,
 } from '../usecase/bili-register.usecase';
+import { BiliVerificationMatcher } from '../usecase/bili-verification.matcher';
 
 const testRedisUrl = Bun.env.TEST_REDIS_URL;
 const describeWithRedis = testRedisUrl ? describe : describe.skip;
@@ -22,6 +23,7 @@ const ttlSeconds = 60;
 let redis: RedisClient;
 let repo: BiliRegisterRedisRepository;
 let useCase: BiliRegisterUseCase;
+let matcher: BiliVerificationMatcher;
 let resetRepo: BiliRegisterRedisRepository;
 let resetUseCase: BiliRegisterUseCase;
 const runtimes: Array<{ dispose: () => Promise<void> }> = [];
@@ -42,8 +44,8 @@ async function createMatchedChallenge() {
 
   expect(challenge.code).toStartWith(BILI_REGISTER_CODE_PREFIX);
 
-  const matched = await useCase.matchMessage({
-    code: challenge.code.toLowerCase(),
+  const matched = await matcher.matchMessage({
+    content: challenge.code.toLowerCase(),
     biliUid,
     biliName: 'tester',
   });
@@ -71,6 +73,7 @@ beforeEach(async () => {
       BiliPasswordResetUseCase,
       BiliRegisterRepo,
       BiliRegisterUseCase,
+      BiliVerificationMatcher,
     },
     bindings: [
       { token: Redis, value: redis },
@@ -84,6 +87,7 @@ beforeEach(async () => {
 
   repo = container.BiliRegisterRepo;
   useCase = container.BiliRegisterUseCase;
+  matcher = container.BiliVerificationMatcher;
   resetRepo = container.BiliPasswordResetRepo;
   resetUseCase = container.BiliPasswordResetUseCase;
 });
@@ -110,8 +114,8 @@ describeWithRedis('BiliRegisterRedisRepository 真实 Redis', () => {
     const { challenge } = await useCase.createChallenge(expectedBiliUid);
     createdKeys.add(redisKey(expectedBiliUid, challenge.code));
 
-    const mismatched = await useCase.matchMessage({
-      code: challenge.code,
+    const mismatched = await matcher.matchMessage({
+      content: challenge.code,
       biliUid: `uid-${crypto.randomUUID()}`,
       biliName: 'attacker',
     });
@@ -122,8 +126,8 @@ describeWithRedis('BiliRegisterRedisRepository 真实 Redis', () => {
       expectedBiliUid,
     });
 
-    const matched = await useCase.matchMessage({
-      code: challenge.code,
+    const matched = await matcher.matchMessage({
+      content: challenge.code,
       biliUid: expectedBiliUid,
       biliName: 'tester',
     });

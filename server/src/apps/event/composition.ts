@@ -18,7 +18,11 @@ import Reward from '#modules/reward';
 import User from '#modules/user';
 
 import { eventConfig } from './config';
-import { EventHandler } from './handler';
+import { BiliGuardConsumer, BiliVerificationConsumer } from './consumers';
+import { createEventHealthServer } from './http';
+import { EventService } from './service';
+import { createBilibiliSource } from './source';
+import { BiliGuardWorker } from './workers';
 
 /**
  * Event App 的最小依赖图。
@@ -31,8 +35,7 @@ const EventAppRipples = defineRipples({
 
   BiliPasswordResetRepo: Auth.BiliPasswordResetRepo,
   BiliRegisterRepo: Auth.BiliRegisterRepo,
-  BiliPasswordResetUseCase: Auth.BiliPasswordResetUseCase,
-  BiliRegisterUseCase: Auth.BiliRegisterUseCase,
+  BiliVerificationMatcher: Auth.BiliVerificationMatcher,
 
   PointAccountRepo: Point.PointAccountRepo,
   PointBalanceUseCase: Point.PointBalanceUseCase,
@@ -47,7 +50,8 @@ const EventAppRipples = defineRipples({
   UserRepo: User.UserRepo,
   UserUseCase: User.UserUseCase,
 
-  EventHandler,
+  BiliGuardConsumer,
+  BiliVerificationConsumer,
 });
 
 /**
@@ -82,14 +86,31 @@ export async function createEventApp() {
   try {
     const container = await runtime.start();
 
-    return {
-      config,
-      container,
+    const worker = new BiliGuardWorker(
+      {
+        biliEventRepo: container.BiliEventRepo,
+        logger,
+        rewardProcessor: container.RewardProcessor,
+      },
+      config.worker,
+    );
+
+    const source = createBilibiliSource(config, {
+      guardConsumer: container.BiliGuardConsumer,
+      logger,
+      verificationConsumer: container.BiliVerificationConsumer,
+      wakeGuardWorker: () => worker.wake(),
+    });
+
+    return new EventService({
       db,
+      healthServer: createEventHealthServer(source, config.port),
       logger,
       redis,
       runtime,
-    };
+      source,
+      worker,
+    });
   } catch (error) {
     await runtime.dispose();
     redis.destroy();
@@ -99,4 +120,4 @@ export async function createEventApp() {
   }
 }
 
-export type EventAppRuntime = Awaited<ReturnType<typeof createEventApp>>;
+export type EventApp = Awaited<ReturnType<typeof createEventApp>>;

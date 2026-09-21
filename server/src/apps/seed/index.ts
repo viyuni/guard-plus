@@ -450,6 +450,7 @@ async function seedBiliGuardRewardEvents(targetDb: DbClient) {
       PointTransactionRepo: Point.PointTransactionRepo,
       PointTypeQuery: Point.PointTypeQuery,
       PointTypeRepo: Point.PointTypeRepo,
+      BiliGuardRewardUseCase: Reward.BiliGuardRewardUseCase,
       RewardProcessor: Reward.RewardProcessor,
       RewardRuleRepo: Reward.RewardRuleRepo,
       UserBasicInfoCrypto: User.UserBasicInfoCrypto,
@@ -466,7 +467,7 @@ async function seedBiliGuardRewardEvents(targetDb: DbClient) {
   const reward = await runtime.start();
 
   for (const event of seedBiliGuardEvents) {
-    await reward.RewardProcessor.rewardBiliGuard(event);
+    await reward.BiliGuardRewardUseCase.rewardBiliGuard(event);
   }
 }
 

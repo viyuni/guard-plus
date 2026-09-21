@@ -5,7 +5,7 @@ import BiliEventModule from '#modules/bili-event';
 import UserModule from '#modules/user';
 
 import { getErrorSnapshot } from '../domain';
-import { RewardProcessor } from './reward-processor';
+import { BiliGuardRewardUseCase } from './bili-guard-reward.usecase';
 
 /**
  * 奖励回放编排。
@@ -15,13 +15,13 @@ import { RewardProcessor } from './reward-processor';
 export const RewardReplayUseCase = ripple(
   {
     BiliEventRepo: BiliEventModule.BiliEventRepo,
+    BiliGuardRewardUseCase,
     Logger,
-    RewardProcessor,
     UserUseCase: UserModule.UserUseCase,
   },
-  ({ BiliEventRepo, Logger, RewardProcessor, UserUseCase }) => ({
+  ({ BiliEventRepo, BiliGuardRewardUseCase, Logger, UserUseCase }) => ({
     replayBiliGuardEvent(biliEventId: string) {
-      return RewardProcessor.replayBiliGuardEvent(biliEventId);
+      return BiliGuardRewardUseCase.replayBiliGuardEvent(biliEventId);
     },
 
     async replayByUserId(userId: string) {
@@ -34,7 +34,7 @@ export const RewardReplayUseCase = ripple(
           results.push({
             biliEventId: biliEvent.biliEventId,
             succeeded: true,
-            result: await RewardProcessor.replayBiliGuardEvent(biliEvent.biliEventId),
+            result: await BiliGuardRewardUseCase.replayBiliGuardEvent(biliEvent.biliEventId),
           });
         } catch (error) {
           const errorSnapshot = getErrorSnapshot(error);

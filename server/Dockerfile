@@ -12,7 +12,7 @@ FROM base AS db-push
 
 WORKDIR /app/server
 
-CMD ["bunx", "drizzle-kit", "push"]
+CMD ["sh", "-c", "bunx drizzle-kit push && bun run src/apps/db-upgrade/index.ts"]
 
 FROM base AS admin-server
 

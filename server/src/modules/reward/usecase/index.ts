@@ -1,3 +1,4 @@
+export * from './bili-guard-reward.usecase';
 export * from './manual-reward.usecase';
 export * from './reward-processor';
 export * from './reward-query';

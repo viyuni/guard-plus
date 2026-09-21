@@ -76,9 +76,9 @@ export function getEventServiceStatus(listener: Pick<BliveListener, 'state'>) {
   };
 }
 
-export function createEventServer(listener: Pick<BliveListener, 'state'>, port: number) {
+export function createEventHealthServer(listener: Pick<BliveListener, 'state'>, port: number) {
   return new Elysia({
-    name: 'EventServer',
+    name: 'EventHealthServer',
     serve: {
       port,
       reusePort: true,
@@ -88,6 +88,7 @@ export function createEventServer(listener: Pick<BliveListener, 'state'>, port: 
       '/health',
       ({ set }) => {
         const result = getEventServiceStatus(listener);
+
         set.status = result.healthy ? 200 : 503;
         return result;
       },
@@ -104,6 +105,7 @@ export function createEventServer(listener: Pick<BliveListener, 'state'>, port: 
     )
     .head('/health', ({ set }) => {
       const result = getEventServiceStatus(listener);
+
       set.status = result.healthy ? 200 : 503;
     });
 }

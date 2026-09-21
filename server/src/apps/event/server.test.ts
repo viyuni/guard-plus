@@ -7,7 +7,7 @@ import {
   ReconnectListenerStatus,
 } from '@viyuni/bevent-relay';
 
-import { createEventServer, getEventServiceStatus } from './server';
+import { createEventHealthServer, getEventServiceStatus } from './http';
 
 function createState(overrides: Partial<ListenerStateSnapshot> = {}): ListenerStateSnapshot {
   return {
@@ -45,7 +45,7 @@ describe('event server health', () => {
       },
     });
 
-    const app = createEventServer({ state }, 3700);
+    const app = createEventHealthServer({ state }, 3700);
 
     const response = await app.handle(new Request('http://localhost/health'));
     const body = (await response.json()) as EventServiceStatus;
@@ -73,7 +73,7 @@ describe('event server health', () => {
       loginInvalidSince: 1_000,
     });
 
-    const app = createEventServer({ state }, 3700);
+    const app = createEventHealthServer({ state }, 3700);
 
     const response = await app.handle(new Request('http://localhost/health'));
     const body = (await response.json()) as EventServiceStatus;

@@ -1,6 +1,6 @@
 import type { BiliEventPageQuery } from '@shared/schema/reward';
 import { type InferInput, ripple } from 'cyrenejs';
-import { and, asc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNotNull, lt, lte, or, sql } from 'drizzle-orm';
 
 import { Database } from '#composition/tokens';
 import type { DbExecutor } from '#infrastructure/db';
@@ -27,6 +27,10 @@ export const BiliEventRepo = ripple(
         lastErrorCode?: string | null;
         lastErrorMessage?: string | null;
         processedAt?: Date | null;
+        claimedBy?: string | null;
+        claimedAt?: Date | null;
+        leaseUntil?: Date | null;
+        nextRetryAt?: Date | null;
       },
       executor: DbExecutor,
     ) {
@@ -40,6 +44,124 @@ export const BiliEventRepo = ripple(
     }
 
     return {
+      async enqueueBiliGuard(
+        input: Pick<InsertBiliEvent, 'biliEventId' | 'biliUid' | 'occurredAt' | 'eventSnapshot'>,
+        executor: DbExecutor = Database,
+      ) {
+        const [event] = await executor
+          .insert(biliEvents)
+          .values({
+            ...input,
+            status: 'pending',
+          })
+          .onConflictDoNothing({
+            target: biliEvents.biliEventId,
+          })
+          .returning();
+
+        return event ?? null;
+      },
+
+      async claimNextBiliGuard(input: {
+        claimId: string;
+        leaseUntil: Date;
+        maxRetries: number;
+        now: Date;
+      }) {
+        return Database.transaction(async tx => {
+          const retryIsDue = and(
+            isNotNull(biliEvents.nextRetryAt),
+            lte(biliEvents.nextRetryAt, input.now),
+          );
+
+          const failedCanRetry = and(
+            eq(biliEvents.status, 'failed'),
+            lt(biliEvents.retryCount, input.maxRetries),
+            retryIsDue,
+          );
+
+          const leaseExpired = and(
+            isNotNull(biliEvents.leaseUntil),
+            lte(biliEvents.leaseUntil, input.now),
+          );
+
+          const interrupted = and(eq(biliEvents.status, 'processing'), leaseExpired);
+          const claimable = or(eq(biliEvents.status, 'pending'), failedCanRetry, interrupted);
+
+          const [candidate] = await tx
+            .select({ id: biliEvents.id })
+            .from(biliEvents)
+            .where(and(eq(biliEvents.eventType, 'biliGuard'), claimable))
+            .orderBy(asc(biliEvents.createdAt))
+            .limit(1)
+            .for('update', { skipLocked: true });
+
+          if (!candidate) {
+            return null;
+          }
+
+          const [claimed] = await tx
+            .update(biliEvents)
+            .set({
+              status: 'processing',
+              claimedBy: input.claimId,
+              claimedAt: input.now,
+              leaseUntil: input.leaseUntil,
+              nextRetryAt: null,
+              processedAt: null,
+            })
+            .where(eq(biliEvents.id, candidate.id))
+            .returning();
+
+          return claimed ?? null;
+        });
+      },
+
+      async saveClaimedRewardPlan(
+        biliEventId: string,
+        claimId: string,
+        rewardItemSnapshots: BiliEventRewardItemSnapshot[],
+        executor: DbExecutor = Database,
+      ) {
+        const [event] = await executor
+          .update(biliEvents)
+          .set({
+            rewardItemSnapshots,
+            rewardPlanCreatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(biliEvents.biliEventId, biliEventId),
+              eq(biliEvents.status, 'processing'),
+              eq(biliEvents.claimedBy, claimId),
+            ),
+          )
+          .returning();
+
+        return event ?? null;
+      },
+
+      async renewClaim(
+        biliEventId: string,
+        claimId: string,
+        leaseUntil: Date,
+        executor: DbExecutor = Database,
+      ) {
+        const [event] = await executor
+          .update(biliEvents)
+          .set({ leaseUntil })
+          .where(
+            and(
+              eq(biliEvents.biliEventId, biliEventId),
+              eq(biliEvents.status, 'processing'),
+              eq(biliEvents.claimedBy, claimId),
+            ),
+          )
+          .returning({ id: biliEvents.id });
+
+        return event !== undefined;
+      },
+
       async findByBiliEventId(biliEventId: string, executor: DbExecutor = Database) {
         return await executor.query.biliEvents.findFirst({
           where: {
@@ -121,6 +243,7 @@ export const BiliEventRepo = ripple(
           .values({
             ...input,
             status: 'processing',
+            rewardPlanCreatedAt: new Date(),
             rewardResultSnapshots: [],
           })
           .onConflictDoNothing({
@@ -132,16 +255,27 @@ export const BiliEventRepo = ripple(
       },
 
       async markProcessing(biliEventId: string, executor: DbExecutor = Database) {
-        return await updateStatus(
-          biliEventId,
-          {
+        const [event] = await executor
+          .update(biliEvents)
+          .set({
             status: 'processing',
             lastErrorCode: null,
             lastErrorMessage: null,
             processedAt: null,
-          },
-          executor,
-        );
+            claimedBy: null,
+            claimedAt: null,
+            leaseUntil: null,
+            nextRetryAt: null,
+          })
+          .where(
+            and(
+              eq(biliEvents.biliEventId, biliEventId),
+              inArray(biliEvents.status, ['failed', 'ignored']),
+            ),
+          )
+          .returning();
+
+        return event ?? null;
       },
 
       async markIgnored(
@@ -161,6 +295,10 @@ export const BiliEventRepo = ripple(
             lastErrorCode: input.lastErrorCode,
             lastErrorMessage: input.lastErrorMessage,
             processedAt: new Date(),
+            claimedBy: null,
+            claimedAt: null,
+            leaseUntil: null,
+            nextRetryAt: null,
           },
           executor,
         );
@@ -183,6 +321,10 @@ export const BiliEventRepo = ripple(
             lastErrorCode: null,
             lastErrorMessage: null,
             processedAt: new Date(),
+            claimedBy: null,
+            claimedAt: null,
+            leaseUntil: null,
+            nextRetryAt: null,
           },
           executor,
         );
@@ -204,8 +346,113 @@ export const BiliEventRepo = ripple(
             lastErrorCode: input.lastErrorCode,
             lastErrorMessage: input.lastErrorMessage,
             processedAt: new Date(),
+            claimedBy: null,
+            claimedAt: null,
+            leaseUntil: null,
           })
           .where(eq(biliEvents.biliEventId, biliEventId))
+          .returning();
+
+        return event ?? null;
+      },
+
+      async markClaimSucceeded(
+        biliEventId: string,
+        claimId: string,
+        input: {
+          userId: string;
+          rewardResultSnapshots: BiliEventRewardResultSnapshot[];
+        },
+        executor: DbExecutor = Database,
+      ) {
+        const [event] = await executor
+          .update(biliEvents)
+          .set({
+            status: 'succeeded',
+            userId: input.userId,
+            rewardResultSnapshots: input.rewardResultSnapshots,
+            lastErrorCode: null,
+            lastErrorMessage: null,
+            processedAt: new Date(),
+            claimedBy: null,
+            claimedAt: null,
+            leaseUntil: null,
+            nextRetryAt: null,
+          })
+          .where(
+            and(
+              eq(biliEvents.biliEventId, biliEventId),
+              eq(biliEvents.status, 'processing'),
+              eq(biliEvents.claimedBy, claimId),
+            ),
+          )
+          .returning();
+
+        return event ?? null;
+      },
+
+      async markClaimIgnored(
+        biliEventId: string,
+        claimId: string,
+        input: { lastErrorCode: string; lastErrorMessage: string },
+        executor: DbExecutor = Database,
+      ) {
+        const [event] = await executor
+          .update(biliEvents)
+          .set({
+            status: 'ignored',
+            userId: null,
+            rewardResultSnapshots: [],
+            lastErrorCode: input.lastErrorCode,
+            lastErrorMessage: input.lastErrorMessage,
+            processedAt: new Date(),
+            claimedBy: null,
+            claimedAt: null,
+            leaseUntil: null,
+            nextRetryAt: null,
+          })
+          .where(
+            and(
+              eq(biliEvents.biliEventId, biliEventId),
+              eq(biliEvents.status, 'processing'),
+              eq(biliEvents.claimedBy, claimId),
+            ),
+          )
+          .returning();
+
+        return event ?? null;
+      },
+
+      async markClaimFailed(
+        biliEventId: string,
+        claimId: string,
+        input: {
+          lastErrorCode: string;
+          lastErrorMessage: string;
+          nextRetryAt: Date;
+        },
+        executor: DbExecutor = Database,
+      ) {
+        const [event] = await executor
+          .update(biliEvents)
+          .set({
+            status: 'failed',
+            retryCount: sql`${biliEvents.retryCount} + 1`,
+            lastErrorCode: input.lastErrorCode,
+            lastErrorMessage: input.lastErrorMessage,
+            processedAt: new Date(),
+            claimedBy: null,
+            claimedAt: null,
+            leaseUntil: null,
+            nextRetryAt: input.nextRetryAt,
+          })
+          .where(
+            and(
+              eq(biliEvents.biliEventId, biliEventId),
+              eq(biliEvents.status, 'processing'),
+              eq(biliEvents.claimedBy, claimId),
+            ),
+          )
           .returning();
 
         return event ?? null;

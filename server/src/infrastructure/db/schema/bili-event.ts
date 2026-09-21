@@ -7,6 +7,7 @@ import type { RewardRule } from './reward-rules';
 import { users } from './user';
 
 export const biliEventStatusEnum = pgEnum('bili_event_status', [
+  'pending',
   'processing',
   'succeeded',
   'failed',
@@ -42,10 +43,15 @@ export const biliEvents = pgTable(
     occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),
     status: biliEventStatusEnum('status').notNull(),
     retryCount: integer('retry_count').notNull().default(0),
+    claimedBy: text('claimed_by'),
+    claimedAt: timestamp('claimed_at', { withTimezone: true }),
+    leaseUntil: timestamp('lease_until', { withTimezone: true }),
+    nextRetryAt: timestamp('next_retry_at', { withTimezone: true }),
     lastErrorCode: text('last_error_code'),
     lastErrorMessage: text('last_error_message'),
     processedAt: timestamp('processed_at', { withTimezone: true }),
     eventSnapshot: jsonb('event_snapshot').notNull(),
+    rewardPlanCreatedAt: timestamp('reward_plan_created_at', { withTimezone: true }),
     rewardItemSnapshots: jsonb('reward_item_snapshots')
       .notNull()
       .$type<BiliEventRewardItemSnapshot[]>()
@@ -61,6 +67,7 @@ export const biliEvents = pgTable(
     index('bili_events_bili_uid_idx').on(t.biliUid),
     index('bili_events_user_id_idx').on(t.userId),
     index('bili_events_status_idx').on(t.status),
+    index('bili_events_claim_idx').on(t.status, t.nextRetryAt, t.leaseUntil, t.createdAt),
     index('bili_events_occurred_at_idx').on(t.occurredAt),
   ],
 );

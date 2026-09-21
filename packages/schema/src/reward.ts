@@ -33,7 +33,7 @@ export type BiliEventIdParams = v.InferOutput<typeof BiliEventIdParamsSchema>;
 export const BiliEventPageQuerySchema = v.object({
   keyword: v.optional(keyword),
   status: v.optional(
-    v.picklist(['processing', 'succeeded', 'failed', 'ignored'], '请选择有效的事件状态'),
+    v.picklist(['pending', 'processing', 'succeeded', 'failed', 'ignored'], '请选择有效的事件状态'),
   ),
   ...dateRange.entries,
   ...pageQuery.entries,

@@ -12,14 +12,9 @@ import type { DbClient } from './index';
 export async function migrate(db: DbClient, logger: Pick<AppLogger, 'info'>) {
   logger.info('Running migrations...');
 
-  try {
-    await startMigrate(db, {
-      migrationsFolder: fileURLToPath(new URL('../../drizzle', import.meta.url)),
-    });
+  await startMigrate(db, {
+    migrationsFolder: fileURLToPath(new URL('../../../drizzle', import.meta.url)),
+  });
 
-    logger.info('Migrations completed!');
-  } catch (err) {
-    console.error('Migration failed!', err);
-    process.exit(1);
-  }
+  logger.info('Migrations completed!');
 }

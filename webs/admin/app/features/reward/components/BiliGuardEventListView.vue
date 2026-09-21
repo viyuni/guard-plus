@@ -51,6 +51,7 @@ const [openEventDetailDialog] = useOverlay(BiliGuardEventDetailDialog);
 const manualCreateDialogOpen = ref(false);
 
 const statusLabel: Record<string, string> = {
+  pending: '待处理',
   processing: '处理中',
   succeeded: '成功',
   failed: '失败',
@@ -92,6 +93,7 @@ function formatDateTime(value: Date | string | number | null | undefined) {
         <Input placeholder="搜索事件 ID / UID" v-model:model-value.trim="keyword" />
         <NativeSelect v-model:model-value="status">
           <NativeSelectOption value="">事件状态</NativeSelectOption>
+          <NativeSelectOption value="pending">待处理</NativeSelectOption>
           <NativeSelectOption value="processing">处理中</NativeSelectOption>
           <NativeSelectOption value="succeeded">成功</NativeSelectOption>
           <NativeSelectOption value="failed">失败</NativeSelectOption>

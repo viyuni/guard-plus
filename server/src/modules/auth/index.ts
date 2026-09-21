@@ -1,7 +1,12 @@
 import { defineRipples } from 'cyrenejs';
 
 import { AuthSessionRepo, BiliPasswordResetRepo, BiliRegisterRepo } from './repository';
-import { AuthUseCase, BiliPasswordResetUseCase, BiliRegisterUseCase } from './usecase';
+import {
+  AuthUseCase,
+  BiliPasswordResetUseCase,
+  BiliRegisterUseCase,
+  BiliVerificationMatcher,
+} from './usecase';
 
 export {
   ACCESS_TOKEN_EXPIRES_IN_SECONDS,
@@ -28,4 +33,5 @@ export default defineRipples({
   AuthUseCase,
   BiliRegisterUseCase,
   BiliPasswordResetUseCase,
+  BiliVerificationMatcher,
 });

@@ -22,12 +22,6 @@ const createVerifier = customAlphabet(
   48,
 );
 
-export interface BiliRegisterMatchInput {
-  code: string;
-  biliUid: string;
-  biliName?: string;
-}
-
 interface BiliRegisterUseCaseDeps {
   biliRegisterRepo: BiliRegisterRedisRepository;
   codePrefix: string;
@@ -43,16 +37,12 @@ function createBiliRegisterUseCase({
   codePrefix,
   ttlSeconds,
 }: BiliRegisterUseCaseDeps) {
-  function normalizeCode(code: string) {
-    return code.trim().toUpperCase();
-  }
-
   function hashVerifier(verifier: string) {
     return createHash('sha256').update(verifier).digest('hex');
   }
 
   async function getChallenge(code: string, biliUid: string) {
-    return biliRegisterRepo.find(normalizeCode(code), biliUid);
+    return biliRegisterRepo.find(normalizeBiliVerificationCode(code), biliUid);
   }
 
   return {
@@ -93,7 +83,7 @@ function createBiliRegisterUseCase({
         return null;
       }
 
-      const normalizedCode = normalizeCode(code);
+      const normalizedCode = normalizeBiliVerificationCode(code);
       const challenge = await getChallenge(normalizedCode, biliUid);
 
       if (
@@ -107,22 +97,16 @@ function createBiliRegisterUseCase({
       return challenge;
     },
 
-    async matchMessage(input: BiliRegisterMatchInput) {
-      const code = normalizeCode(input.code);
-
-      if (!code.startsWith(codePrefix)) {
-        return null;
-      }
-
-      return biliRegisterRepo.matchPending(code, input.biliUid, input.biliName);
-    },
-
     async consumeChallenge(code: string, verifier: string | undefined, biliUid: string) {
       if (!verifier) {
         return null;
       }
 
-      return biliRegisterRepo.consumeMatched(normalizeCode(code), biliUid, hashVerifier(verifier));
+      return biliRegisterRepo.consumeMatched(
+        normalizeBiliVerificationCode(code),
+        biliUid,
+        hashVerifier(verifier),
+      );
     },
   };
 }
@@ -140,6 +124,10 @@ export const BiliRegisterUseCase = ripple(
     }),
   { debugName: 'BiliRegisterUseCase' },
 );
+
+export function normalizeBiliVerificationCode(code: string) {
+  return code.trim().toUpperCase();
+}
 
 export const BiliPasswordResetUseCase = ripple(
   {
