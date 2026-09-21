@@ -69,7 +69,7 @@
     "@vee-validate/valibot": "catalog:",
     "@vueuse/core": "catalog:",
     "class-variance-authority": "catalog:",
-    "cn": "^0.3.0",
+    "cn": "^0.3.2",
     "leafer-ui": "catalog:",
     "lucide-vue-next": "catalog:",
     "reka-ui": "catalog:",

@@ -16,7 +16,7 @@
     "@tanstack/vue-table": "catalog:",
     "@vueuse/core": "catalog:",
     "@web/ui": "workspace:*",
-    "better-sqlite3": "^12.11.1",
+    "better-sqlite3": "^13.0.3",
     "class-variance-authority": "catalog:",
     "lucide-vue-next": "catalog:",
     "markdown-exit": "catalog:",
