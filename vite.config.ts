@@ -14,19 +14,16 @@ export default defineConfig({
         command: ['vpr @server/app#build:types', 'vp fmt', 'vp lint', 'vpr typecheck'],
       },
       typecheck: {
-        command: 'golar typecheck',
+        command: 'vpr -r typecheck',
       },
       'typecheck:schema': {
         command: 'vpr --filter "@shared/schema" typecheck',
       },
       'typecheck:server': {
-        command: 'vpr --concurrency-limit 1 --filter "@server/*" typecheck',
+        command: 'vpr --filter "@server/*" typecheck',
       },
       'typecheck:web': {
-        command: [
-          'vpr @server/app#build:types',
-          'vpr --concurrency-limit 1 --filter "@web/*" typecheck',
-        ],
+        command: ['vpr @server/app#build:types', 'vpr --filter "@web/*" typecheck'],
       },
       test: {
         command: 'vpr -r test',
@@ -52,6 +49,7 @@ export default defineConfig({
     sortPackageJson: true,
     arrowParens: 'avoid',
     embeddedLanguageFormatting: 'auto',
+    printWidth: 100,
     ignorePatterns: [
       '**/node_modules/**',
       '**/dist/**',
@@ -60,8 +58,25 @@ export default defineConfig({
     ],
   },
   lint: {
-    plugins: ['unicorn', 'typescript', 'oxc', 'vue', 'import', 'vitest', 'node'],
+    jsPlugins: [
+      {
+        name: 'guard-plus',
+        specifier: './tools/oxlint-plugin/index.js',
+      },
+      {
+        name: 'vite-plus',
+        specifier: 'vite-plus/oxlint-plugin',
+      },
+      {
+        name: 'stylistic',
+        specifier: '@stylistic/eslint-plugin',
+      },
+    ],
     rules: {
+      'guard-plus/architecture-import-boundary': 'error',
+      'guard-plus/ripple-deps-each-on-own-line': 'error',
+      'guard-plus/ripple-deps-pascal-case': 'error',
+      'guard-plus/ripple-pascal-case': 'error',
       'constructor-super': 'warn',
       'for-direction': 'warn',
       'no-async-promise-executor': 'warn',
@@ -166,6 +181,70 @@ export default defineConfig({
       'unicorn/no-useless-spread': 'warn',
       'unicorn/prefer-set-size': 'warn',
       'unicorn/prefer-string-starts-ends-with': 'warn',
+      'vite-plus/prefer-vite-plus-imports': 'error',
+      'typescript/switch-exhaustiveness-check': 'error',
+      'typescript/consistent-type-imports': 'error',
+      'unicorn/switch-case-braces': 'error',
+      'default-case-last': 'allow',
+      'no-return-assign': 'error',
+      'no-implicit-coercion': 'error',
+      'prefer-template': 'error',
+      'prefer-const': 'error',
+      'no-sequences': 'error',
+      'no-console': [
+        'error',
+        {
+          allow: ['warn', 'error'],
+        },
+      ],
+
+      curly: 'error',
+
+      // return 后不要再套 else
+      'no-else-return': 'error',
+
+      // 避免 else { if (...) }
+      'no-lonely-if': 'error',
+
+      // 禁止嵌套三元
+      'no-nested-ternary': 'error',
+
+      // 去掉无意义三元
+      'no-unneeded-ternary': 'error',
+
+      // 最大块嵌套层级
+      'max-depth': ['warn', { max: 4 }],
+
+      // 圈复杂度
+      complexity: ['warn', { max: 12 }],
+
+      // foo(bar(baz(qux()))) 这种调用嵌套
+      'unicorn/max-nested-calls': ['warn', { max: 3 }],
+
+      'stylistic/padding-line-between-statements': [
+        'error',
+        {
+          blankLine: 'always',
+          prev: '*',
+          next: 'block-like',
+        },
+        {
+          blankLine: 'always',
+          prev: 'block-like',
+          next: '*',
+        },
+        {
+          blankLine: 'always',
+          prev: '*',
+          next: ['multiline-const', 'multiline-let', 'multiline-var'],
+        },
+
+        {
+          blankLine: 'always',
+          prev: ['multiline-const', 'multiline-let', 'multiline-var'],
+          next: '*',
+        },
+      ],
     },
     settings: {
       jsdoc: {

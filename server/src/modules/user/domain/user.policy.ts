@@ -1,4 +1,5 @@
-import type { User } from '#db/schema';
+import type { User } from '#infrastructure/db/schema';
+import { assertPresent } from '#shared';
 
 import { UserNotFoundError, UserUnavailableError } from './errors';
 
@@ -14,35 +15,40 @@ type AvailableUserStatus<T extends UserStatusLike> = T & {
   status: Exclude<T['status'], 'banned'>;
 };
 
-export class UserPolicy {
-  static isAvailable<T extends UserStatusLike>(
-    user: T | null | undefined,
-  ): user is AvailableUserStatus<T> {
-    return !!user && user.status !== 'banned';
+/**
+ * 用户是否可用（未封禁）。
+ *
+ * 泛型保留入参的精确类型，使带关联查询的行在断言后不丢失额外字段。
+ */
+export function isUserAvailable<T extends UserStatusLike>(
+  user: T | null | undefined,
+): user is AvailableUserStatus<T> {
+  if (!user) {
+    return false;
   }
 
-  // 确保账户未封禁
-  static assertAvailable<T extends UserStatusLike>(
-    user: T | null | undefined,
-  ): asserts user is AvailableUserStatus<T> {
-    if (!UserPolicy.isAvailable(user)) {
-      throw new UserUnavailableError();
-    }
-  }
+  return user.status !== 'banned';
+}
 
-  static assertAvailableExists<T extends UserStatusLike>(
-    user: T | null | undefined,
-  ): asserts user is AvailableUserStatus<T> {
-    UserPolicy.assertExists(user);
-    UserPolicy.assertAvailable(user);
+// 确保账户未封禁
+export function assertUserAvailable<T extends UserStatusLike>(
+  user: T | null | undefined,
+): asserts user is AvailableUserStatus<T> {
+  if (!isUserAvailable(user)) {
+    throw new UserUnavailableError();
   }
+}
 
-  /**
-   * 确保账户存在
-   */
-  static assertExists<T>(user: T | null | undefined): asserts user is T {
-    if (!user) {
-      throw new UserNotFoundError();
-    }
-  }
+/**
+ * 确保账户存在
+ */
+export function assertUserExists<T>(user: T | null | undefined): asserts user is T {
+  assertPresent(user, () => new UserNotFoundError());
+}
+
+export function assertUserAvailableExists<T extends UserStatusLike>(
+  user: T | null | undefined,
+): asserts user is AvailableUserStatus<T> {
+  assertUserExists(user);
+  assertUserAvailable(user);
 }

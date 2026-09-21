@@ -1,4 +1,5 @@
-import type { PointType } from '#db/schema';
+import type { PointType } from '#infrastructure/db/schema';
+import { assertPresent } from '#shared';
 
 import { PointTypeNotFoundError, PointTypeUnavailableError } from './errors';
 
@@ -6,37 +7,37 @@ export type AvailablePointType = PointType & {
   status: 'active';
 };
 
-export class PointTypePolicy {
-  static isAvailable(pointType: PointType | null | undefined): pointType is AvailablePointType {
-    return pointType?.status === 'active';
-  }
+export function isPointTypeAvailable(
+  pointType: PointType | null | undefined,
+): pointType is AvailablePointType {
+  return pointType?.status === 'active';
+}
 
-  static assertExists(pointType: PointType | null | undefined): asserts pointType is PointType {
-    if (!pointType) {
-      throw new PointTypeNotFoundError();
-    }
-  }
+export function assertPointTypeExists(
+  pointType: PointType | null | undefined,
+): asserts pointType is PointType {
+  assertPresent(pointType, () => new PointTypeNotFoundError());
+}
 
-  static assertAvailable(
-    pointType: PointType | null | undefined,
-  ): asserts pointType is AvailablePointType {
-    if (!PointTypePolicy.isAvailable(pointType)) {
-      throw new PointTypeUnavailableError();
-    }
+export function assertPointTypeAvailable(
+  pointType: PointType | null | undefined,
+): asserts pointType is AvailablePointType {
+  if (!isPointTypeAvailable(pointType)) {
+    throw new PointTypeUnavailableError();
   }
+}
 
-  static assertAvailableExists(
-    pointType: PointType | null | undefined,
-  ): asserts pointType is AvailablePointType {
-    PointTypePolicy.assertExists(pointType);
-    PointTypePolicy.assertAvailable(pointType);
-  }
+export function assertPointTypeAvailableExists(
+  pointType: PointType | null | undefined,
+): asserts pointType is AvailablePointType {
+  assertPointTypeExists(pointType);
+  assertPointTypeAvailable(pointType);
+}
 
-  static shouldEnable(pointType: PointType) {
-    return pointType.status !== 'active';
-  }
+export function shouldEnablePointType(pointType: PointType) {
+  return pointType.status !== 'active';
+}
 
-  static shouldDisable(pointType: PointType) {
-    return pointType.status !== 'disabled';
-  }
+export function shouldDisablePointType(pointType: PointType) {
+  return pointType.status !== 'disabled';
 }

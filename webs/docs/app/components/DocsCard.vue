@@ -9,7 +9,10 @@ const props = defineProps<{
 }>();
 
 const IconComponent = computed(() => {
-  if (!props.icon) return null;
+  if (!props.icon) {
+    return null;
+  }
+
   return (LucideIcons as Record<string, any>)[props.icon] ?? null;
 });
 </script>

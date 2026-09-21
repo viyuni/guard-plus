@@ -15,6 +15,7 @@ const { handleSubmit, meta, resetForm } = useForm<UpdateUserPasswordBody>({
   validationSchema: toTypedSchema(UserUpdatePasswordSchema),
   initialValues: createDefaultValues(),
 });
+
 const { isLoading } = updatePasswordMutation;
 
 function createDefaultValues(): UpdateUserPasswordBody {
@@ -30,7 +31,9 @@ const onSubmit = handleSubmit(async values => {
 });
 
 watch(open, isOpen => {
-  if (!isOpen) resetForm({ values: createDefaultValues() });
+  if (!isOpen) {
+    resetForm({ values: createDefaultValues() });
+  }
 });
 </script>
 

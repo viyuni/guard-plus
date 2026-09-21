@@ -36,6 +36,7 @@ const open = ref(false);
 const keyword = ref('');
 const page = ref(1);
 const debouncedKeyword = refDebounced(keyword, 150);
+
 const query = computed(() => ({
   keyword: debouncedKeyword.value.trim() || undefined,
   page: page.value,
@@ -48,9 +49,11 @@ const { data } = useQuery(() => userPageQuery(query.value));
 const users = computed(() => data.value?.items ?? []);
 const meta = computed(() => data.value?.meta);
 const selectedUser = computed(() => users.value.find(user => user.id === model.value));
+
 const selectedUserLabel = computed(() =>
   selectedUser.value ? `${selectedUser.value.biliUid} - ${selectedUser.value.username}` : undefined,
 );
+
 const totalPages = computed(() =>
   Math.max(1, Math.ceil((meta.value?.total ?? 0) / (meta.value?.pageSize ?? props.pageSize))),
 );

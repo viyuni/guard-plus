@@ -1,12 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
 import { createHash } from 'node:crypto';
 
+import { Cyrene } from 'cyrenejs';
 import { createClient } from 'redis';
 
-import type { RedisClient } from '#redis';
+import { Redis, RegisterCodeTtl } from '#composition/tokens';
+import type { RedisClient } from '#infrastructure/redis';
 
-import { BiliRegisterRedisRepository } from '../repository';
-import { BiliRegisterUseCase } from '../usecase/bili-register.usecase';
+import type { BiliRegisterRedisRepository } from '../repository';
+import { BiliPasswordResetRepo, BiliRegisterRepo } from '../repository';
+import {
+  BILI_REGISTER_CODE_PREFIX,
+  BiliPasswordResetUseCase,
+  BiliRegisterUseCase,
+} from '../usecase/bili-register.usecase';
+import { BiliVerificationMatcher } from '../usecase/bili-verification.matcher';
 
 const testRedisUrl = Bun.env.TEST_REDIS_URL;
 const describeWithRedis = testRedisUrl ? describe : describe.skip;
@@ -15,6 +23,10 @@ const ttlSeconds = 60;
 let redis: RedisClient;
 let repo: BiliRegisterRedisRepository;
 let useCase: BiliRegisterUseCase;
+let matcher: BiliVerificationMatcher;
+let resetRepo: BiliRegisterRedisRepository;
+let resetUseCase: BiliRegisterUseCase;
+const runtimes: Array<{ dispose: () => Promise<void> }> = [];
 const createdKeys = new Set<string>();
 
 function redisKey(biliUid: string, code: string, purpose = 'register') {
@@ -30,10 +42,10 @@ async function createMatchedChallenge() {
   const { challenge, verifier } = await useCase.createChallenge(biliUid);
   createdKeys.add(redisKey(biliUid, challenge.code));
 
-  expect(challenge.code).toStartWith(BiliRegisterUseCase.codePrefix);
+  expect(challenge.code).toStartWith(BILI_REGISTER_CODE_PREFIX);
 
-  const matched = await useCase.matchMessage({
-    code: challenge.code.toLowerCase(),
+  const matched = await matcher.matchMessage({
+    content: challenge.code.toLowerCase(),
     biliUid,
     biliName: 'tester',
   });
@@ -48,20 +60,42 @@ async function createMatchedChallenge() {
 }
 
 beforeEach(async () => {
-  if (!testRedisUrl) return;
+  if (!testRedisUrl) {
+    return;
+  }
 
   redis = createClient({ url: testRedisUrl });
   await redis.connect();
 
-  repo = new BiliRegisterRedisRepository(redis, ttlSeconds);
-  useCase = new BiliRegisterUseCase({
-    biliRegisterRepo: repo,
-    ttlSeconds,
+  const runtime = new Cyrene({
+    ripples: {
+      BiliPasswordResetRepo,
+      BiliPasswordResetUseCase,
+      BiliRegisterRepo,
+      BiliRegisterUseCase,
+      BiliVerificationMatcher,
+    },
+    bindings: [
+      { token: Redis, value: redis },
+      { token: RegisterCodeTtl, value: ttlSeconds },
+    ],
   });
+
+  runtimes.push(runtime);
+
+  const container = await runtime.start();
+
+  repo = container.BiliRegisterRepo;
+  useCase = container.BiliRegisterUseCase;
+  matcher = container.BiliVerificationMatcher;
+  resetRepo = container.BiliPasswordResetRepo;
+  resetUseCase = container.BiliPasswordResetUseCase;
 });
 
 afterEach(async () => {
-  if (!redis) return;
+  if (!redis) {
+    return;
+  }
 
   try {
     for (const key of createdKeys) {
@@ -69,6 +103,7 @@ afterEach(async () => {
     }
   } finally {
     createdKeys.clear();
+    await Promise.all(runtimes.splice(0).map(runtime => runtime.dispose()));
     await redis.close();
   }
 });
@@ -79,8 +114,8 @@ describeWithRedis('BiliRegisterRedisRepository 真实 Redis', () => {
     const { challenge } = await useCase.createChallenge(expectedBiliUid);
     createdKeys.add(redisKey(expectedBiliUid, challenge.code));
 
-    const mismatched = await useCase.matchMessage({
-      code: challenge.code,
+    const mismatched = await matcher.matchMessage({
+      content: challenge.code,
       biliUid: `uid-${crypto.randomUUID()}`,
       biliName: 'attacker',
     });
@@ -91,8 +126,8 @@ describeWithRedis('BiliRegisterRedisRepository 真实 Redis', () => {
       expectedBiliUid,
     });
 
-    const matched = await useCase.matchMessage({
-      code: challenge.code,
+    const matched = await matcher.matchMessage({
+      content: challenge.code,
       biliUid: expectedBiliUid,
       biliName: 'tester',
     });
@@ -185,6 +220,7 @@ describeWithRedis('BiliRegisterRedisRepository 真实 Redis', () => {
       verifier,
       challenge.expectedBiliUid,
     );
+
     const stored = await repo.find(challenge.code, challenge.expectedBiliUid);
 
     expect(missingIdentityConsumed).toBeNull();
@@ -196,12 +232,7 @@ describeWithRedis('BiliRegisterRedisRepository 真实 Redis', () => {
 
   it('注册与密码重置使用独立 Redis key，不能跨流程读取', async () => {
     const biliUid = `uid-${crypto.randomUUID()}`;
-    const resetRepo = new BiliRegisterRedisRepository(redis, ttlSeconds, 'password-reset');
-    const resetUseCase = new BiliRegisterUseCase({
-      biliRegisterRepo: resetRepo,
-      codePrefix: 'P-',
-      ttlSeconds,
-    });
+
     const { challenge } = await resetUseCase.createChallenge(biliUid);
     createdKeys.add(redisKey(biliUid, challenge.code, 'password-reset'));
 

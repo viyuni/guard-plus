@@ -32,7 +32,9 @@ export class ProcessManager {
       this.serviceStartTimer = setTimeout(() => {
         this.serviceStartTimer = undefined;
 
-        if (this.exiting) return;
+        if (this.exiting) {
+          return;
+        }
 
         this.registerProcesses(serviceConfigs.map(config => this.startProcess(config)));
       }, 1000);
@@ -40,7 +42,9 @@ export class ProcessManager {
   }
 
   async exitAll(signal: NodeJS.Signals = 'SIGTERM', code = 0) {
-    if (this.exiting) return;
+    if (this.exiting) {
+      return;
+    }
 
     this.exiting = true;
 
@@ -64,7 +68,9 @@ export class ProcessManager {
 
       await this.stopApps('SIGTERM');
 
-      if (this.exiting) return;
+      if (this.exiting) {
+        return;
+      }
 
       this.startApps();
 
@@ -113,10 +119,14 @@ export class ProcessManager {
   private async watchUnexpectedExit(managed: ManagedProcess) {
     const code = await managed.proc.exited.catch(() => 1);
 
-    if (this.restarting || this.exiting) return;
+    if (this.restarting || this.exiting) {
+      return;
+    }
 
     // 主动停止的进程已经从当前列表移除
-    if (!this.processes.includes(managed)) return;
+    if (!this.processes.includes(managed)) {
+      return;
+    }
 
     errorMain(`${managed.config.name} exited with code ${code}`);
 
@@ -133,7 +143,9 @@ export class ProcessManager {
 
     const graceful = await Promise.race([exited, Bun.sleep(3000).then(() => false)]);
 
-    if (graceful) return;
+    if (graceful) {
+      return;
+    }
 
     managed.proc.kill('SIGKILL');
 

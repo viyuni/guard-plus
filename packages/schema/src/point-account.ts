@@ -9,10 +9,15 @@ import {
   remark,
 } from './common';
 
+const legacyPointTypeIdSchema = v.pipe(
+  v.string('请输入积分类型 ID'),
+  v.uuid('请输入有效的积分类型 ID'),
+);
+
 /** 录入旧平台待迁移积分。 */
 export const CreateLegacyPointMigrationSchema = v.object({
   biliUid: bilibiliUid,
-  pointTypeId: v.pipe(v.string('请输入积分类型 ID'), v.uuid('请输入有效的积分类型 ID')),
+  pointTypeId: legacyPointTypeIdSchema,
   points: v.pipe(
     v.number('请输入积分'),
     v.integer('积分必须是整数'),
@@ -37,7 +42,7 @@ export const LegacyPointMigrationStatus = {
 
 export const LegacyPointMigrationPageQuerySchema = v.object({
   biliUid: v.optional(bilibiliUid),
-  pointTypeId: v.optional(v.pipe(v.string('请输入积分类型 ID'), v.uuid('请输入有效的积分类型 ID'))),
+  pointTypeId: v.optional(legacyPointTypeIdSchema),
   status: v.optional(v.enum(LegacyPointMigrationStatus, '请选择有效的迁移状态')),
   ...pageQuery.entries,
 });

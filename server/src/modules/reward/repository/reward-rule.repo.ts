@@ -1,161 +1,175 @@
+import { type InferInput, ripple } from 'cyrenejs';
 import { and, asc, eq, gt, isNull, lte, or } from 'drizzle-orm';
 
-import type { DbExecutor } from '#db';
-import { deletedAtIsNull } from '#db/helper';
+import { Database } from '#composition/tokens';
+import type { DbExecutor } from '#infrastructure/db';
+import { deletedAtIsNull } from '#infrastructure/db/helper';
 import {
   rewardRules,
   type InsertRewardRule,
   type RewardRule,
   type UpdateRewardRule,
-} from '#db/schema';
+} from '#infrastructure/db/schema';
 
-export class RewardRuleRepository {
-  constructor(private readonly db: DbExecutor) {}
+export const RewardRuleRepo = ripple(
+  {
+    Database,
+  },
+  ({ Database }) => {
+    async function update(
+      rewardRuleId: string,
+      data: UpdateRewardRule,
+      executor: DbExecutor = Database,
+    ) {
+      const [rule] = await executor
+        .update(rewardRules)
+        .set(data)
+        .where(and(eq(rewardRules.id, rewardRuleId), deletedAtIsNull(rewardRules)))
+        .returning();
 
-  async findById(rewardRuleId: string, db: DbExecutor = this.db) {
-    return await db.query.rewardRules.findFirst({
-      where: {
-        id: rewardRuleId,
-        deletedAt: {
-          isNull: true,
-        },
-      },
-    });
-  }
+      return rule ?? null;
+    }
 
-  async findByName(name: string, db: DbExecutor = this.db) {
-    return (
-      (await db.query.rewardRules.findFirst({
-        where: {
-          name,
-          deletedAt: {
-            isNull: true,
-          },
-        },
-      })) ?? null
-    );
-  }
-
-  async listCandidates(now = new Date(), db: DbExecutor = this.db) {
-    return await db
-      .select()
-      .from(rewardRules)
-      .where(
-        and(
-          deletedAtIsNull(rewardRules),
-          eq(rewardRules.enabled, true),
-          or(isNull(rewardRules.startAt), lte(rewardRules.startAt, now)),
-          or(isNull(rewardRules.endAt), gt(rewardRules.endAt, now)),
-        ),
-      )
-      .orderBy(asc(rewardRules.priority), asc(rewardRules.createdAt));
-  }
-
-  async create(input: InsertRewardRule, db: DbExecutor = this.db) {
-    const [rule] = await db.insert(rewardRules).values(input).returning();
-    return rule ?? null;
-  }
-
-  async update(rewardRuleId: string, data: UpdateRewardRule, db: DbExecutor = this.db) {
-    const [rule] = await db
-      .update(rewardRules)
-      .set(data)
-      .where(and(eq(rewardRules.id, rewardRuleId), deletedAtIsNull(rewardRules)))
-      .returning();
-
-    return rule ?? null;
-  }
-
-  async delete(rewardRuleId: string, db: DbExecutor = this.db) {
-    const [rule] = await db
-      .update(rewardRules)
-      .set({
-        deletedAt: new Date(),
-      })
-      .where(and(eq(rewardRules.id, rewardRuleId), deletedAtIsNull(rewardRules)))
-      .returning();
-
-    return rule ?? null;
-  }
-
-  async updateEnabled(
-    rewardRuleId: string,
-    enabled: RewardRule['enabled'],
-    db: DbExecutor = this.db,
-  ) {
-    return await this.update(rewardRuleId, { enabled }, db);
-  }
-
-  listManage() {
-    return this.db.query.rewardRules.findMany({
-      where: {
-        deletedAt: {
-          isNull: true,
-        },
-      },
-      with: {
-        pointType: {
-          columns: {
-            name: true,
-          },
-        },
-      },
-      orderBy: {
-        priority: 'desc',
-        createdAt: 'desc',
-      },
-    });
-  }
-
-  listVisible() {
-    const now = new Date();
-
-    return this.db.query.rewardRules.findMany({
-      where: {
-        AND: [
-          {
+    return {
+      async findById(rewardRuleId: string, executor: DbExecutor = Database) {
+        return await executor.query.rewardRules.findFirst({
+          where: {
+            id: rewardRuleId,
             deletedAt: {
               isNull: true,
             },
           },
-          {
-            enabled: true,
-          },
-          {
-            startAt: {
-              isNull: true,
-              or: [
-                {
-                  lte: now,
-                },
-              ],
-            },
-            endAt: {
-              isNull: true,
-              or: [
-                {
-                  gte: now,
-                },
-              ],
-            },
-          },
-        ],
+        });
       },
-      columns: {
-        name: true,
-        description: true,
+
+      async findByName(name: string, executor: DbExecutor = Database) {
+        return (
+          (await executor.query.rewardRules.findFirst({
+            where: {
+              name,
+              deletedAt: {
+                isNull: true,
+              },
+            },
+          })) ?? null
+        );
       },
-      with: {
-        pointType: {
+
+      async listCandidates(now = new Date(), executor: DbExecutor = Database) {
+        const startedAt = or(isNull(rewardRules.startAt), lte(rewardRules.startAt, now));
+        const notEndedAt = or(isNull(rewardRules.endAt), gt(rewardRules.endAt, now));
+
+        return await executor
+          .select()
+          .from(rewardRules)
+          .where(
+            and(deletedAtIsNull(rewardRules), eq(rewardRules.enabled, true), startedAt, notEndedAt),
+          )
+          .orderBy(asc(rewardRules.priority), asc(rewardRules.createdAt));
+      },
+
+      async create(input: InsertRewardRule, executor: DbExecutor = Database) {
+        const [rule] = await executor.insert(rewardRules).values(input).returning();
+        return rule ?? null;
+      },
+
+      update,
+
+      async delete(rewardRuleId: string, executor: DbExecutor = Database) {
+        const [rule] = await executor
+          .update(rewardRules)
+          .set({
+            deletedAt: new Date(),
+          })
+          .where(and(eq(rewardRules.id, rewardRuleId), deletedAtIsNull(rewardRules)))
+          .returning();
+
+        return rule ?? null;
+      },
+
+      async updateEnabled(
+        rewardRuleId: string,
+        enabled: RewardRule['enabled'],
+        executor: DbExecutor = Database,
+      ) {
+        return await update(rewardRuleId, { enabled }, executor);
+      },
+
+      listManage() {
+        return Database.query.rewardRules.findMany({
+          where: {
+            deletedAt: {
+              isNull: true,
+            },
+          },
+          with: {
+            pointType: {
+              columns: {
+                name: true,
+              },
+            },
+          },
+          orderBy: {
+            priority: 'desc',
+            createdAt: 'desc',
+          },
+        });
+      },
+
+      listVisible() {
+        const now = new Date();
+
+        return Database.query.rewardRules.findMany({
+          where: {
+            AND: [
+              {
+                deletedAt: {
+                  isNull: true,
+                },
+              },
+              {
+                enabled: true,
+              },
+              {
+                startAt: {
+                  isNull: true,
+                  or: [
+                    {
+                      lte: now,
+                    },
+                  ],
+                },
+                endAt: {
+                  isNull: true,
+                  or: [
+                    {
+                      gte: now,
+                    },
+                  ],
+                },
+              },
+            ],
+          },
           columns: {
             name: true,
+            description: true,
           },
-        },
+          with: {
+            pointType: {
+              columns: {
+                name: true,
+              },
+            },
+          },
+          orderBy: {
+            priority: 'desc',
+            createdAt: 'desc',
+          },
+        });
       },
-      orderBy: {
-        priority: 'desc',
-        createdAt: 'desc',
-      },
-    });
-  }
-}
+    };
+  },
+  { debugName: 'RewardRuleRepository' },
+);
+
+export type RewardRuleRepository = InferInput<typeof RewardRuleRepo>;

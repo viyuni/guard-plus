@@ -1,4 +1,4 @@
-import type { ProductStockMovementType } from '#db/schema';
+import type { ProductStockMovementType } from '#infrastructure/db/schema';
 
 export const STOCK_MOVEMENT_SOURCE_TYPE = {
   consume: 'consume',

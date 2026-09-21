@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { processPrefix } from './logger';
 
 const ignoredMessages = ['is not in the project directory and will not be watched'];

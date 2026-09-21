@@ -8,7 +8,7 @@ export default defineConfig({
       },
       typecheck: {
         cache: true,
-        command: 'golar typecheck',
+        command: 'vue-tsc --build',
         input: [{ auto: true }, '!**/*.tsbuildinfo'],
       },
       'generate:manifest': {

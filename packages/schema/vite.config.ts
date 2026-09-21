@@ -4,7 +4,7 @@ export default defineConfig({
   run: {
     tasks: {
       typecheck: {
-        command: 'tsgo --build',
+        command: 'tsc --build',
         input: [{ auto: true }, '!**/*.tsbuildinfo'],
       },
     },

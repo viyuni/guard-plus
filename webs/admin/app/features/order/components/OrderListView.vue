@@ -56,6 +56,7 @@ const {
   meta: orderMeta,
   isLoading: isTableLoading,
 } = usePageQuery(() => orderPageQuery(query.value));
+
 const [openOrderDetailDialog] = useOverlay(OrderDetailDialog);
 const [openOrderExpressDialog] = useOverlay(OrderExpressDialog);
 const [openOrderReceiverDialog] = useOverlay(OrderReceiverDialog);
@@ -65,14 +66,17 @@ const { mutateAsync: exportOrders, isLoading: isExporting } = useExportOrders();
 const selectedOrderIds = ref(new Set<string>());
 const selectedOrderCount = computed(() => selectedOrderIds.value.size);
 const currentPageOrderIds = computed(() => orders.value.map(order => order.id));
+
 const currentPageSelectedCount = computed(
   () => currentPageOrderIds.value.filter(id => selectedOrderIds.value.has(id)).length,
 );
+
 const isCurrentPageSelected = computed(
   () =>
     currentPageOrderIds.value.length > 0 &&
     currentPageSelectedCount.value === currentPageOrderIds.value.length,
 );
+
 const selectAllModel = computed(
   () => isCurrentPageSelected.value || (currentPageSelectedCount.value > 0 && 'indeterminate'),
 );

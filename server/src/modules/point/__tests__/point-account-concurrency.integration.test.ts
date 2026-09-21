@@ -2,7 +2,7 @@ import { expect, it } from 'bun:test';
 
 import { count, eq } from 'drizzle-orm';
 
-import { pointTransactions } from '#db/schema';
+import { pointTransactions } from '#infrastructure/db/schema';
 import { countFulfilled, countRejected, runConcurrent } from '#test-helpers/concurrency';
 import {
   createDeps,
@@ -62,7 +62,7 @@ describeWithDatabase('积分账户真实数据库并发保护', () => {
     const prefix = newBatch();
     const pointType = await seedPointType(`${prefix}_balance_point`);
     const user = await seedUser(`${prefix}_user`);
-    const { pointAccountUseCase } = createDeps();
+    const { PointAccountUseCase } = await createDeps();
 
     await grantPoints({
       adminId: `${prefix}_admin`,
@@ -76,10 +76,12 @@ describeWithDatabase('积分账户真实数据库并发保护', () => {
       where: { userId: user.id, pointTypeId: pointType.id },
     });
 
-    if (!account) throw new Error('seed account failed');
+    if (!account) {
+      throw new Error('seed account failed');
+    }
 
     const results = await runConcurrent(10, index =>
-      pointAccountUseCase.adjustBalance(`${prefix}_admin_${index}`, {
+      PointAccountUseCase.adjustBalance(`${prefix}_admin_${index}`, {
         userId: user.id,
         pointTypeId: pointType.id,
         delta: -1,
@@ -98,10 +100,10 @@ describeWithDatabase('积分账户真实数据库并发保护', () => {
     const prefix = newBatch();
     const pointType = await seedPointType(`${prefix}_transaction_unique_point`);
     const user = await seedUser(`${prefix}_transaction_user`);
-    const { pointAccountUseCase } = createDeps();
+    const { PointAccountUseCase } = await createDeps();
 
     const results = await runConcurrent(5, () =>
-      pointAccountUseCase.adjustBalance(`${prefix}_admin`, {
+      PointAccountUseCase.adjustBalance(`${prefix}_admin`, {
         userId: user.id,
         pointTypeId: pointType.id,
         delta: 1,
@@ -121,6 +123,7 @@ describeWithDatabase('积分账户真实数据库并发保护', () => {
           }),
         ),
       );
+
     const account = await db.query.pointAccounts.findFirst({
       where: { userId: user.id, pointTypeId: pointType.id },
     });
@@ -136,16 +139,16 @@ describeWithDatabase('积分账户真实数据库并发保护', () => {
     const pointType = await seedPointType(`${prefix}_mismatch_point`);
     const otherPointType = await seedPointType(`${prefix}_mismatch_other_point`);
     const user = await seedUser(`${prefix}_mismatch_user`);
-    const { pointAccountRepo, pointBalanceUseCase } = createDeps();
+    const { PointAccountRepo, PointBalanceUseCase } = await createDeps();
 
     await expectRejectsInstanceOf(
       db.transaction(async tx => {
-        const account = await pointAccountRepo.ensureAccountAndLock(tx, {
+        const account = await PointAccountRepo.ensureAccountAndLock(tx, {
           userId: user.id,
           pointTypeId: pointType.id,
         });
 
-        return pointBalanceUseCase.changeBalance(tx, account, {
+        return PointBalanceUseCase.changeBalance(tx, account, {
           type: 'grant',
           userId: user.id,
           pointTypeId: otherPointType.id,
@@ -163,20 +166,21 @@ describeWithDatabase('积分账户真实数据库并发保护', () => {
     const prefix = newBatch();
     const pointType = await seedPointType(`${prefix}_idempotency_conflict_point`);
     const user = await seedUser(`${prefix}_idempotency_conflict_user`);
-    const { pointAccountUseCase } = createDeps();
+    const { PointAccountUseCase } = await createDeps();
+
     const input = {
       userId: user.id,
       pointTypeId: pointType.id,
       nonce: `${prefix}_same_nonce`,
     };
 
-    await pointAccountUseCase.adjustBalance(`${prefix}_admin`, {
+    await PointAccountUseCase.adjustBalance(`${prefix}_admin`, {
       ...input,
       delta: 1,
     });
 
     await expectRejectsInstanceOf(
-      pointAccountUseCase.adjustBalance(`${prefix}_admin`, {
+      PointAccountUseCase.adjustBalance(`${prefix}_admin`, {
         ...input,
         delta: 2,
       }),
@@ -188,7 +192,8 @@ describeWithDatabase('积分账户真实数据库并发保护', () => {
     const prefix = newBatch();
     const pointType = await seedPointType(`${prefix}_reversal_point`);
     const user = await seedUser(`${prefix}_reversal_user`);
-    const { pointTransactionUseCase } = createDeps();
+    const { PointTransactionUseCase } = await createDeps();
+
     const grantResult = await grantPoints({
       adminId: `${prefix}_admin`,
       userId: user.id,
@@ -198,7 +203,7 @@ describeWithDatabase('积分账户真实数据库并发保护', () => {
     });
 
     const results = await runConcurrent(5, () =>
-      pointTransactionUseCase.reversal(`${prefix}_admin`, {
+      PointTransactionUseCase.reversal(`${prefix}_admin`, {
         transactionId: grantResult.transaction.id,
       }),
     );
@@ -207,6 +212,7 @@ describeWithDatabase('积分账户真实数据库并发保护', () => {
       .select({ total: count() })
       .from(pointTransactions)
       .where(eq(pointTransactions.reversalOfTransactionId, grantResult.transaction.id));
+
     const account = await db.query.pointAccounts.findFirst({
       where: { userId: user.id, pointTypeId: pointType.id },
     });

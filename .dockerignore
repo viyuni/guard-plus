@@ -3,6 +3,9 @@
 **/.output
 **/dist
 **/tmp
+**/.env
+**/.env.*
+!**/.env.example
 
 .git
 .vite-hooks

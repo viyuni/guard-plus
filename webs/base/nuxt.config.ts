@@ -27,11 +27,9 @@ export default defineNuxtConfig({
         '@vueuse/core',
         '@vueuse/router',
         'class-variance-authority',
-        'clsx',
         'ky',
         'lucide-vue-next',
         'reka-ui',
-        'tailwind-merge',
         'vee-validate',
         'vue-sonner',
       ],
@@ -57,7 +55,7 @@ export default defineNuxtConfig({
       },
     },
     sharedTsConfig: {
-      include: ['../colada.options.ts', '../golar.config.ts'],
+      include: ['../colada.options.ts'],
     },
   },
   fonts: {

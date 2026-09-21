@@ -2,7 +2,7 @@ import { expect, it } from 'bun:test';
 
 import { count, eq } from 'drizzle-orm';
 
-import { productStockMovements } from '#db/schema';
+import { productStockMovements } from '#infrastructure/db/schema';
 import { countFulfilled, countRejected, runConcurrent } from '#test-helpers/concurrency';
 import {
   createDeps,
@@ -25,9 +25,10 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
   it('兑换商城列表会展示监修中商品', async () => {
     const prefix = newBatch('product_reviewing_list');
     const pointType = await seedPointType(`${prefix}_point`);
-    const { productUseCase } = createDeps();
+    const { ProductUseCase } = await createDeps();
+
     const product = expectSeeded(
-      await productUseCase.create({
+      await ProductUseCase.create({
         name: `${prefix}_product`,
         pointTypeId: pointType.id,
         price: 1,
@@ -37,7 +38,7 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
       'seed reviewing product failed',
     );
 
-    const page = await productUseCase.pageRedeem({
+    const page = await ProductUseCase.pageRedeem({
       page: 1,
       pageSize: 10,
     });
@@ -50,16 +51,18 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
   it('库存增加后超出 PostgreSQL integer 范围时返回数量错误', async () => {
     const prefix = newBatch('product_stock_overflow');
     const pointType = await seedPointType(`${prefix}_point`);
+
     const product = await seedProduct({
       name: `${prefix}_product`,
       pointTypeId: pointType.id,
       price: 1,
       stock: 2_147_483_647,
     });
-    const { productUseCase } = createDeps();
+
+    const { ProductUseCase } = await createDeps();
 
     await expectRejectsInstanceOf(
-      productUseCase.adminAdjustStock(product.id, `${prefix}_admin`, {
+      ProductUseCase.adminAdjustStock(product.id, `${prefix}_admin`, {
         delta: 1,
         nonce: `${prefix}_overflow`,
       }),
@@ -74,16 +77,16 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
   it('商品创建允许重复名称', async () => {
     const prefix = newBatch('product_name');
     const pointType = await seedPointType(`${prefix}_point`);
-    const { productUseCase } = createDeps();
+    const { ProductUseCase } = await createDeps();
 
-    const first = await productUseCase.create({
+    const first = await ProductUseCase.create({
       name: `${prefix}_product`,
       pointTypeId: pointType.id,
       price: 1,
       stock: 1,
     });
 
-    const second = await productUseCase.create({
+    const second = await ProductUseCase.create({
       name: `${prefix}_product`,
       pointTypeId: pointType.id,
       price: 1,
@@ -101,10 +104,10 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
   it('商品创建会拒绝重复编码', async () => {
     const prefix = newBatch('product_code');
     const pointType = await seedPointType(`${prefix}_point`);
-    const { productUseCase } = createDeps();
+    const { ProductUseCase } = await createDeps();
     const code = `${prefix}_code`;
 
-    await productUseCase.create({
+    await ProductUseCase.create({
       code,
       name: `${prefix}_first_product`,
       pointTypeId: pointType.id,
@@ -113,7 +116,7 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
     });
 
     await expectRejectsInstanceOf(
-      productUseCase.create({
+      ProductUseCase.create({
         code,
         name: `${prefix}_second_product`,
         pointTypeId: pointType.id,
@@ -127,10 +130,11 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
   it('商品编码唯一索引会阻止并发重复创建', async () => {
     const prefix = newBatch('product_code_concurrency');
     const pointType = await seedPointType(`${prefix}_point`);
-    const { productUseCase } = createDeps();
+    const { ProductUseCase } = await createDeps();
     const code = `${prefix}_code`;
+
     const results = await runConcurrent(5, index =>
-      productUseCase.create({
+      ProductUseCase.create({
         code,
         name: `${prefix}_product_${index}`,
         pointTypeId: pointType.id,
@@ -146,12 +150,14 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
   it('商品更新允许重复名称', async () => {
     const prefix = newBatch('product_update_name');
     const pointType = await seedPointType(`${prefix}_point`);
+
     const first = await seedProduct({
       name: `${prefix}_first_product`,
       pointTypeId: pointType.id,
       price: 1,
       stock: 1,
     });
+
     const second = await seedProduct({
       name: `${prefix}_second_product`,
       pointTypeId: pointType.id,
@@ -159,9 +165,9 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
       stock: 1,
     });
 
-    const { productUseCase } = createDeps();
+    const { ProductUseCase } = await createDeps();
 
-    const updated = await productUseCase.update(second.id, {
+    const updated = await ProductUseCase.update(second.id, {
       name: first.name,
     });
 
@@ -171,12 +177,14 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
   it('商品更新会拒绝重复编码', async () => {
     const prefix = newBatch('product_update_code');
     const pointType = await seedPointType(`${prefix}_point`);
+
     const first = await seedProduct({
       name: `${prefix}_first_product`,
       pointTypeId: pointType.id,
       price: 1,
       stock: 1,
     });
+
     const second = await seedProduct({
       name: `${prefix}_second_product`,
       pointTypeId: pointType.id,
@@ -185,7 +193,7 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
     });
 
     await expectRejectsInstanceOf(
-      createDeps().productUseCase.update(second.id, { code: first.code }),
+      (await createDeps()).ProductUseCase.update(second.id, { code: first.code }),
       ProductCodeExistsError,
     );
   });
@@ -193,6 +201,7 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
   it('商品更新保持原名称时允许保存', async () => {
     const prefix = newBatch('product_keep_name');
     const pointType = await seedPointType(`${prefix}_point`);
+
     const product = await seedProduct({
       name: `${prefix}_product`,
       pointTypeId: pointType.id,
@@ -200,8 +209,9 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
       stock: 1,
     });
 
-    const { productUseCase } = createDeps();
-    const updated = await productUseCase.update(product.id, {
+    const { ProductUseCase } = await createDeps();
+
+    const updated = await ProductUseCase.update(product.id, {
       name: product.name,
       price: 2,
     });
@@ -213,6 +223,7 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
   it('商品删除后可复用编码', async () => {
     const prefix = newBatch('product_remove_code');
     const pointType = await seedPointType(`${prefix}_point`);
+
     const product = await seedProduct({
       name: `${prefix}_product`,
       pointTypeId: pointType.id,
@@ -220,18 +231,19 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
       stock: 1,
     });
 
-    const { productUseCase } = createDeps();
+    const { ProductUseCase } = await createDeps();
 
-    await productUseCase.remove(product.id);
+    await ProductUseCase.remove(product.id);
 
-    const recreated = await productUseCase.create({
+    const recreated = await ProductUseCase.create({
       code: product.code,
       name: `${prefix}_recreated_product`,
       pointTypeId: pointType.id,
       price: 1,
       stock: 1,
     });
-    const page = await productUseCase.pageManage({
+
+    const page = await ProductUseCase.pageManage({
       keyword: product.code,
       page: 1,
       pageSize: 10,
@@ -245,8 +257,11 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
   it('管理端商品列表支持按编码搜索', async () => {
     const prefix = newBatch('product_code_search');
     const pointType = await seedPointType(`${prefix}_point`);
+
     const product = expectSeeded(
-      await createDeps().productUseCase.create({
+      await (
+        await createDeps()
+      ).ProductUseCase.create({
         code: `${prefix}_SEARCH_CODE`,
         name: `${prefix}_product`,
         pointTypeId: pointType.id,
@@ -256,7 +271,9 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
       'seed searchable product failed',
     );
 
-    const page = await createDeps().productUseCase.pageManage({
+    const page = await (
+      await createDeps()
+    ).ProductUseCase.pageManage({
       keyword: 'search_code',
       page: 1,
       pageSize: 10,
@@ -268,6 +285,7 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
   it('库存扣减不会并发超扣', async () => {
     const prefix = newBatch('product_stock');
     const pointType = await seedPointType(`${prefix}_point`);
+
     const product = await seedProduct({
       name: `${prefix}_product`,
       pointTypeId: pointType.id,
@@ -275,9 +293,10 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
       stock: 3,
     });
 
-    const { productUseCase } = createDeps();
+    const { ProductUseCase } = await createDeps();
+
     const results = await runConcurrent(10, index =>
-      productUseCase.adminAdjustStock(product.id, `${prefix}_admin_${index}`, {
+      ProductUseCase.adminAdjustStock(product.id, `${prefix}_admin_${index}`, {
         delta: -1,
         nonce: `${prefix}_deduct_${index}`,
       }),
@@ -293,6 +312,7 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
   it('库存变动记录按幂等键保持唯一', async () => {
     const prefix = newBatch('product_movement');
     const pointType = await seedPointType(`${prefix}_point`);
+
     const product = await seedProduct({
       name: `${prefix}_product`,
       pointTypeId: pointType.id,
@@ -300,9 +320,10 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
       stock: 0,
     });
 
-    const { productUseCase } = createDeps();
+    const { ProductUseCase } = await createDeps();
+
     const results = await runConcurrent(5, () =>
-      productUseCase.adminAdjustStock(product.id, `${prefix}_admin`, {
+      ProductUseCase.adminAdjustStock(product.id, `${prefix}_admin`, {
         delta: 1,
         nonce: `${prefix}_same_key`,
       }),
@@ -321,6 +342,7 @@ describeWithDatabase('产品库存真实数据库并发保护', () => {
           }),
         ),
       );
+
     const current = await db.query.products.findFirst({ where: { id: product.id } });
 
     expect(countFulfilled(results)).toBe(1);

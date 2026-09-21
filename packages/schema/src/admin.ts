@@ -26,6 +26,12 @@ export const AdminIdParamsSchema = v.object({
   adminId: v.pipe(v.string('请输入管理员 ID'), v.description('管理员 ID')),
 });
 
+const adminRemarkSchema = v.pipe(
+  v.string('请输入备注'),
+  v.maxLength(500, '备注不能超过 500 个字符'),
+  v.description('备注'),
+);
+
 /**
  * 创建管理员请求参数 Schema
  */
@@ -33,15 +39,7 @@ export const AdminCreateSchema = v.object({
   uid: bilibiliUid,
   username: username,
   password: password,
-  remark: v.optional(
-    emptyable(
-      v.pipe(
-        v.string('请输入备注'),
-        v.maxLength(500, '备注不能超过 500 个字符'),
-        v.description('备注'),
-      ),
-    ),
-  ),
+  remark: v.optional(emptyable(adminRemarkSchema)),
 });
 
 export type AdminCreateBody = v.InferOutput<typeof AdminCreateSchema>;
@@ -51,15 +49,7 @@ export type AdminCreateBody = v.InferOutput<typeof AdminCreateSchema>;
  */
 export const SuperAdminUpdateSchema = v.object({
   username: v.optional(username),
-  remark: v.nullish(
-    emptyable(
-      v.pipe(
-        v.string('请输入备注'),
-        v.maxLength(500, '备注不能超过 500 个字符'),
-        v.description('备注'),
-      ),
-    ),
-  ),
+  remark: v.nullish(emptyable(adminRemarkSchema)),
 });
 
 export type SuperAdminUpdateBody = v.InferOutput<typeof SuperAdminUpdateSchema>;

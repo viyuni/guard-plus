@@ -1,11 +1,13 @@
-import { IntegerValuePolicy } from '#utils/number';
+import { createIntegerPolicy } from '#shared';
 
 import { StockAmountInvalidError } from './errors';
 
-export class StockAmountPolicy extends IntegerValuePolicy {
-  protected static override label = '商品库存';
+const integerPolicy = createIntegerPolicy({
+  label: '商品库存',
+  createError: message => new StockAmountInvalidError(message),
+});
 
-  protected static override createError(message: string) {
-    return new StockAmountInvalidError(message);
-  }
-}
+export const assertStockAmountInteger = integerPolicy.assertIsInteger;
+export const assertPositiveStockAmount = integerPolicy.assertPositiveInteger;
+export const assertNonZeroStockAmount = integerPolicy.assertNonZeroInteger;
+export const assertStockAmountCanAdd = integerPolicy.assertCanAdd;

@@ -38,3 +38,7 @@ gr*.exe
 bunqueue.db*
 
 .data
+.docs
+
+# Agent skills from npm packages (managed by skills-npm)
+**/skills/npm-*

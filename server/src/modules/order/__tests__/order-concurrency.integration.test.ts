@@ -2,11 +2,16 @@ import { expect, it } from 'bun:test';
 
 import { and, count, eq } from 'drizzle-orm';
 
-import { orders, pointTransactions, productStockMovements } from '#db/schema';
+import { orders, pointTransactions, productStockMovements } from '#infrastructure/db/schema';
 import { OrderIdempotencyKey } from '#modules/order';
 import { PointIdempotencyKey } from '#modules/point';
 import { ProductUnavailableError, StockIdempotencyKey } from '#modules/product';
-import { countFulfilled, countRejected, runConcurrent } from '#test-helpers/concurrency';
+import {
+  countFulfilled,
+  countRejected,
+  firstFulfilled,
+  runConcurrent,
+} from '#test-helpers/concurrency';
 import {
   createDeps,
   db,
@@ -28,9 +33,10 @@ describeWithDatabase('订单真实数据库并发保护', () => {
     const prefix = newBatch('order_product_reviewing');
     const pointType = await seedPointType(`${prefix}_point`);
     const user = await seedUser(`${prefix}_user`);
-    const { orderUseCase, productUseCase } = createDeps();
+    const { OrderUseCase, ProductUseCase } = await createDeps();
+
     const product = expectSeeded(
-      await productUseCase.create({
+      await ProductUseCase.create({
         name: `${prefix}_product`,
         pointTypeId: pointType.id,
         price: 1,
@@ -49,7 +55,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
     });
 
     await expectRejectsInstanceOf(
-      orderUseCase.create(user.id, {
+      OrderUseCase.create(user.id, {
         productId: product.id,
         nonce: `${prefix}_nonce`,
       }),
@@ -60,9 +66,11 @@ describeWithDatabase('订单真实数据库并发保护', () => {
       .select({ total: count() })
       .from(orders)
       .where(and(eq(orders.userId, user.id), eq(orders.productId, product.id)));
+
     const account = await db.query.pointAccounts.findFirst({
       where: { userId: user.id, pointTypeId: pointType.id },
     });
+
     const currentProduct = await db.query.products.findFirst({ where: { id: product.id } });
 
     expect(orderRows?.total).toBe(0);
@@ -74,6 +82,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
     const prefix = newBatch('order_stock');
     const pointType = await seedPointType(`${prefix}_point`);
     const user = await seedUser(`${prefix}_user`);
+
     const product = await seedProduct({
       name: `${prefix}_product`,
       pointTypeId: pointType.id,
@@ -81,7 +90,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
       stock: 3,
     });
 
-    const { orderUseCase } = createDeps();
+    const { OrderUseCase } = await createDeps();
 
     await grantPoints({
       adminId: `${prefix}_admin`,
@@ -92,16 +101,18 @@ describeWithDatabase('订单真实数据库并发保护', () => {
     });
 
     const results = await runConcurrent(10, index =>
-      orderUseCase.create(user.id, {
+      OrderUseCase.create(user.id, {
         productId: product.id,
         nonce: `${prefix}_${index}`,
       }),
     );
 
     const currentProduct = await db.query.products.findFirst({ where: { id: product.id } });
+
     const account = await db.query.pointAccounts.findFirst({
       where: { userId: user.id, pointTypeId: pointType.id },
     });
+
     const [orderRows] = await db
       .select({ total: count() })
       .from(orders)
@@ -118,6 +129,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
     const prefix = newBatch('order_idempotency');
     const pointType = await seedPointType(`${prefix}_point`);
     const user = await seedUser(`${prefix}_user`);
+
     const product = await seedProduct({
       name: `${prefix}_product`,
       pointTypeId: pointType.id,
@@ -125,7 +137,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
       stock: 5,
     });
 
-    const { orderUseCase } = createDeps();
+    const { OrderUseCase } = await createDeps();
 
     await grantPoints({
       adminId: `${prefix}_admin`,
@@ -136,20 +148,20 @@ describeWithDatabase('订单真实数据库并发保护', () => {
     });
 
     const results = await runConcurrent(5, () =>
-      orderUseCase.create(user.id, {
+      OrderUseCase.create(user.id, {
         productId: product.id,
         nonce: `${prefix}_same_nonce`,
       }),
     );
-    const fulfilledOrder = expectSeeded(
-      results.find(result => result.status === 'fulfilled')?.value,
-      'order create failed',
-    );
+
+    const fulfilledOrder = expectSeeded(firstFulfilled(results), 'order create failed');
 
     const currentProduct = await db.query.products.findFirst({ where: { id: product.id } });
+
     const account = await db.query.pointAccounts.findFirst({
       where: { userId: user.id, pointTypeId: pointType.id },
     });
+
     const [orderRows] = await db
       .select({ total: count() })
       .from(orders)
@@ -161,6 +173,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
           }),
         ),
       );
+
     const [consumeRows] = await db
       .select({ total: count() })
       .from(pointTransactions)
@@ -170,6 +183,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
           PointIdempotencyKey.orderConsume({ orderId: fulfilledOrder.order.id }),
         ),
       );
+
     const [stockRows] = await db
       .select({ total: count() })
       .from(productStockMovements)
@@ -193,7 +207,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
     const prefix = newBatch('order_product_time_range');
     const pointType = await seedPointType(`${prefix}_point`);
     const user = await seedUser(`${prefix}_user`);
-    const { orderUseCase } = createDeps();
+    const { OrderUseCase } = await createDeps();
 
     await grantPoints({
       adminId: `${prefix}_admin`,
@@ -210,6 +224,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
       stock: 1,
       startAt: new Date(Date.now() + 60_000),
     });
+
     const expiredProduct = await seedProduct({
       name: `${prefix}_expired_product`,
       pointTypeId: pointType.id,
@@ -219,14 +234,14 @@ describeWithDatabase('订单真实数据库并发保护', () => {
     });
 
     await expectRejectsInstanceOf(
-      orderUseCase.create(user.id, {
+      OrderUseCase.create(user.id, {
         productId: futureProduct.id,
         nonce: `${prefix}_future_nonce`,
       }),
       ProductUnavailableError,
     );
     await expectRejectsInstanceOf(
-      orderUseCase.create(user.id, {
+      OrderUseCase.create(user.id, {
         productId: expiredProduct.id,
         nonce: `${prefix}_expired_nonce`,
       }),
@@ -245,13 +260,15 @@ describeWithDatabase('订单真实数据库并发保护', () => {
     const prefix = newBatch('order_refund');
     const pointType = await seedPointType(`${prefix}_point`);
     const user = await seedUser(`${prefix}_user`);
+
     const product = await seedProduct({
       name: `${prefix}_product`,
       pointTypeId: pointType.id,
       price: 1,
       stock: 1,
     });
-    const { orderUseCase } = createDeps();
+
+    const { OrderUseCase } = await createDeps();
 
     await grantPoints({
       adminId: `${prefix}_admin`,
@@ -261,21 +278,24 @@ describeWithDatabase('订单真实数据库并发保护', () => {
       nonce: `${prefix}_grant_points`,
     });
 
-    const created = await orderUseCase.create(user.id, {
+    const created = await OrderUseCase.create(user.id, {
       productId: product.id,
       nonce: `${prefix}_create`,
     });
+
     const results = await runConcurrent(2, () =>
-      orderUseCase.refund(created.order.id, {
+      OrderUseCase.refund(created.order.id, {
         reason: '并发退款测试',
       }),
     );
 
     const currentOrder = await db.query.orders.findFirst({ where: { id: created.order.id } });
     const currentProduct = await db.query.products.findFirst({ where: { id: product.id } });
+
     const account = await db.query.pointAccounts.findFirst({
       where: { userId: user.id, pointTypeId: pointType.id },
     });
+
     const [refundRows] = await db
       .select({ total: count() })
       .from(pointTransactions)
@@ -285,6 +305,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
           PointIdempotencyKey.orderRefund({ orderId: created.order.id }),
         ),
       );
+
     const [restoreRows] = await db
       .select({ total: count() })
       .from(productStockMovements)
@@ -308,13 +329,15 @@ describeWithDatabase('订单真实数据库并发保护', () => {
     const prefix = newBatch('order_complete_refund');
     const pointType = await seedPointType(`${prefix}_point`);
     const user = await seedUser(`${prefix}_user`);
+
     const product = await seedProduct({
       name: `${prefix}_product`,
       pointTypeId: pointType.id,
       price: 1,
       stock: 1,
     });
-    const { orderUseCase } = createDeps();
+
+    const { OrderUseCase } = await createDeps();
 
     await grantPoints({
       adminId: `${prefix}_admin`,
@@ -324,22 +347,25 @@ describeWithDatabase('订单真实数据库并发保护', () => {
       nonce: `${prefix}_grant_points`,
     });
 
-    const created = await orderUseCase.create(user.id, {
+    const created = await OrderUseCase.create(user.id, {
       productId: product.id,
       nonce: `${prefix}_create`,
     });
+
     const results = await Promise.allSettled([
-      orderUseCase.complete(created.order.id),
-      orderUseCase.refund(created.order.id, {
+      OrderUseCase.complete(created.order.id),
+      OrderUseCase.refund(created.order.id, {
         reason: '完成退款竞态测试',
       }),
     ]);
 
     const currentOrder = await db.query.orders.findFirst({ where: { id: created.order.id } });
     const currentProduct = await db.query.products.findFirst({ where: { id: product.id } });
+
     const account = await db.query.pointAccounts.findFirst({
       where: { userId: user.id, pointTypeId: pointType.id },
     });
+
     const [refundRows] = await db
       .select({ total: count() })
       .from(pointTransactions)
@@ -349,6 +375,7 @@ describeWithDatabase('订单真实数据库并发保护', () => {
           PointIdempotencyKey.orderRefund({ orderId: created.order.id }),
         ),
       );
+
     const [restoreRows] = await db
       .select({ total: count() })
       .from(productStockMovements)

@@ -1,38 +1,36 @@
-import { AppError } from '#utils';
+import { AppError } from '#shared';
 
 import type { BiliGuardRewardEvent } from './types';
 
-export class RewardPolicy {
-  static calculateBiliGuardPoints(basePoints: number, event: BiliGuardRewardEvent) {
-    return basePoints * event.totalNormalized;
+export function calculateBiliGuardPoints(basePoints: number, event: BiliGuardRewardEvent) {
+  return basePoints * event.totalNormalized;
+}
+
+export function getBiliGuardEventTime(event: BiliGuardRewardEvent) {
+  if (event.timestamp > 9_999_999_999) {
+    return new Date(event.timestamp);
   }
 
-  static getBiliGuardEventTime(event: BiliGuardRewardEvent) {
-    if (event.timestamp > 9_999_999_999) {
-      return new Date(event.timestamp);
-    }
+  return new Date(event.timestampNormalized);
+}
 
-    return new Date(event.timestampNormalized);
-  }
-
-  static getErrorSnapshot(error: unknown) {
-    if (error instanceof AppError) {
-      return {
-        lastErrorCode: error.code,
-        lastErrorMessage: error.message,
-      };
-    }
-
-    if (error instanceof Error) {
-      return {
-        lastErrorCode: error.name,
-        lastErrorMessage: error.message,
-      };
-    }
-
+export function getErrorSnapshot(error: unknown) {
+  if (error instanceof AppError) {
     return {
-      lastErrorCode: 'UNKNOWN_ERROR',
-      lastErrorMessage: '未知错误',
+      lastErrorCode: error.code,
+      lastErrorMessage: error.message,
     };
   }
+
+  if (error instanceof Error) {
+    return {
+      lastErrorCode: error.name,
+      lastErrorMessage: error.message,
+    };
+  }
+
+  return {
+    lastErrorCode: 'UNKNOWN_ERROR',
+    lastErrorMessage: '未知错误',
+  };
 }

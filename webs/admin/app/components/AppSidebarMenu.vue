@@ -19,7 +19,10 @@ function closeSidebar() {
 }
 
 function isActive(to?: RouteLocationRaw) {
-  if (!to) return false;
+  if (!to) {
+    return false;
+  }
+
   return route.path === to;
 }
 

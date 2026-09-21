@@ -1,31 +1,54 @@
-import { expect, it, mock } from 'bun:test';
+import { afterAll, expect, it, spyOn } from 'bun:test';
 
-import { InvalidCredentialsError, PasswordUtil } from '#utils';
+import { Cyrene } from 'cyrenejs';
 
-import type { UserBasicInfoCrypto } from '../domain';
-import type { UserRepository } from '../repository';
-import { UserUseCase } from '../usecase';
+import { Database, DataSecret } from '#composition/tokens';
+import type { DbClient } from '#infrastructure/db';
+import User, { type UserRepository } from '#modules/user';
+import { InvalidCredentialsError, PasswordUtil } from '#shared';
+
+type UserRow = NonNullable<Awaited<ReturnType<UserRepository['findById']>>>;
+
+const runtimes: Array<{ dispose: () => Promise<void> }> = [];
+
+afterAll(async () => {
+  await Promise.all(runtimes.map(runtime => runtime.dispose()));
+});
 
 async function createFixture() {
   const passwordHash = await PasswordUtil.hash('old_password');
+
   const user = {
     id: 'authenticated-user-id',
     biliUid: '123456',
     username: 'tester',
-    status: 'active' as const,
+    status: 'active',
     passwordHash,
-  };
-  const findById = mock(async () => user);
-  const updatePassword = mock(async (_userId: string, nextPasswordHash: string) => ({
-    ...user,
-    passwordHash: nextPasswordHash,
-  }));
-  const useCase = new UserUseCase({
-    userBasicInfoCrypto: {} as UserBasicInfoCrypto,
-    userRepo: { findById, updatePassword } as unknown as UserRepository,
+  } as unknown as UserRow;
+
+  const runtime = new Cyrene({
+    ripples: { UserRepo: User.UserRepo, UserUseCase: User.UserUseCase },
+    bindings: [
+      // 只验证依赖装配与业务分支, 不连接数据库。
+      { token: Database, value: {} as DbClient },
+      { token: DataSecret, value: 'test-data-secret' },
+    ],
   });
 
-  return { findById, updatePassword, useCase };
+  runtimes.push(runtime);
+
+  const container = await runtime.start();
+
+  const findById = spyOn(container.UserRepo, 'findById').mockResolvedValue(user);
+
+  const updatePassword = spyOn(container.UserRepo, 'updatePassword').mockImplementation(
+    async (_userId: string, nextPasswordHash: string) => ({
+      ...user,
+      passwordHash: nextPasswordHash,
+    }),
+  );
+
+  return { findById, updatePassword, useCase: container.UserUseCase };
 }
 
 it('修改密码使用鉴权用户 ID 并校验旧密码', async () => {

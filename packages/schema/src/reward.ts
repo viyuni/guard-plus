@@ -33,7 +33,7 @@ export type BiliEventIdParams = v.InferOutput<typeof BiliEventIdParamsSchema>;
 export const BiliEventPageQuerySchema = v.object({
   keyword: v.optional(keyword),
   status: v.optional(
-    v.picklist(['processing', 'succeeded', 'failed', 'ignored'], '请选择有效的事件状态'),
+    v.picklist(['pending', 'processing', 'succeeded', 'failed', 'ignored'], '请选择有效的事件状态'),
   ),
   ...dateRange.entries,
   ...pageQuery.entries,
@@ -98,8 +98,10 @@ export const BiliGuardTypeSchema = v.pipe(
 
 export type BiliGuardType = v.InferOutput<typeof BiliGuardTypeSchema>;
 
+const guardTypeInputSchema = v.pipe(v.picklist(['1', '2', '3']), v.toNumber());
+
 const BiliGuardTypeInputSchema = v.pipe(
-  v.union([BiliGuardTypeSchema, v.pipe(v.picklist(['1', '2', '3']), v.toNumber())]),
+  v.union([BiliGuardTypeSchema, guardTypeInputSchema]),
   v.enum(BiliGuardType, '请选择有效的大航海类型'),
   v.description('大航海类型'),
 );
@@ -131,11 +133,14 @@ export type CreateManualBiliGuardEventBody = v.InferOutput<typeof CreateManualBi
 /**
  * 大航海奖励条件 Schema。
  */
+const guardTypesSchema = v.pipe(
+  v.array(BiliGuardTypeSchema, '请选择大航海类型'),
+  v.description('大航海类型'),
+);
+
 export const BiliGuardRewardConditionSchema = v.object({
   type: v.pipe(v.literal('biliGuard', '请选择有效的条件类型'), v.description('条件类型')),
-  guardTypes: v.optional(
-    v.pipe(v.array(BiliGuardTypeSchema, '请选择大航海类型'), v.description('大航海类型')),
-  ),
+  guardTypes: v.optional(guardTypesSchema),
 });
 
 export type BiliGuardRewardCondition = v.InferOutput<typeof BiliGuardRewardConditionSchema>;
@@ -147,6 +152,25 @@ export const RewardRuleConditionSchema = BiliGuardRewardConditionSchema;
 
 export type RewardRuleCondition = v.InferOutput<typeof RewardRuleConditionSchema>;
 
+const enabledSchema = v.pipe(v.boolean('请选择是否启用'), v.description('是否启用'));
+const pointTypeIdSchema = v.pipe(v.string('请输入积分类型 ID'), v.description('积分类型 ID'));
+
+const pointsSchema = v.pipe(
+  v.number('请输入奖励积分数'),
+  v.integer('奖励积分数必须是整数'),
+  v.minValue(1, '奖励积分数必须大于 0'),
+  v.maxValue(POSTGRES_INTEGER_MAX, '奖励积分数过大'),
+  v.description('奖励积分数'),
+);
+
+const prioritySchema = v.pipe(
+  v.number('请输入优先级'),
+  v.integer('优先级必须是整数'),
+  v.minValue(POSTGRES_INTEGER_MIN, '优先级过小'),
+  v.maxValue(POSTGRES_INTEGER_MAX, '优先级过大'),
+  v.description('优先级，数字越小优先级越高'),
+);
+
 /**
  * 创建积分奖励规则 Body Schema。
  */
@@ -156,27 +180,13 @@ export const CreateRewardRuleSchema = v.object({
 
   conditions: RewardRuleConditionSchema,
 
-  pointTypeId: v.pipe(v.string('请输入积分类型 ID'), v.description('积分类型 ID')),
-  points: v.pipe(
-    v.number('请输入奖励积分数'),
-    v.integer('奖励积分数必须是整数'),
-    v.minValue(1, '奖励积分数必须大于 0'),
-    v.maxValue(POSTGRES_INTEGER_MAX, '奖励积分数过大'),
-    v.description('奖励积分数'),
-  ),
+  pointTypeId: pointTypeIdSchema,
+  points: pointsSchema,
 
-  enabled: v.optional(v.pipe(v.boolean('请选择是否启用'), v.description('是否启用'))),
+  enabled: v.optional(enabledSchema),
   group: v.optional(emptyable(RewardRuleGroupSchema)),
 
-  priority: v.optional(
-    v.pipe(
-      v.number('请输入优先级'),
-      v.integer('优先级必须是整数'),
-      v.minValue(POSTGRES_INTEGER_MIN, '优先级过小'),
-      v.maxValue(POSTGRES_INTEGER_MAX, '优先级过大'),
-      v.description('优先级，数字越小优先级越高'),
-    ),
-  ),
+  priority: v.optional(prioritySchema),
   ...dateRange.entries,
 });
 
@@ -191,29 +201,13 @@ export const UpdateRewardRuleSchema = v.object({
 
   conditions: v.optional(RewardRuleConditionSchema),
 
-  pointTypeId: v.optional(v.pipe(v.string('请输入积分类型 ID'), v.description('积分类型 ID'))),
-  points: v.optional(
-    v.pipe(
-      v.number('请输入奖励积分数'),
-      v.integer('奖励积分数必须是整数'),
-      v.minValue(1, '奖励积分数必须大于 0'),
-      v.maxValue(POSTGRES_INTEGER_MAX, '奖励积分数过大'),
-      v.description('奖励积分数'),
-    ),
-  ),
+  pointTypeId: v.optional(pointTypeIdSchema),
+  points: v.optional(pointsSchema),
 
-  enabled: v.optional(v.pipe(v.boolean('请选择是否启用'), v.description('是否启用'))),
+  enabled: v.optional(enabledSchema),
   group: v.nullish(emptyable(RewardRuleGroupSchema)),
 
-  priority: v.optional(
-    v.pipe(
-      v.number('请输入优先级'),
-      v.integer('优先级必须是整数'),
-      v.minValue(POSTGRES_INTEGER_MIN, '优先级过小'),
-      v.maxValue(POSTGRES_INTEGER_MAX, '优先级过大'),
-      v.description('优先级，数字越小优先级越高'),
-    ),
-  ),
+  priority: v.optional(prioritySchema),
   ...dateRange.entries,
 });
 

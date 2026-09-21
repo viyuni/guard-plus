@@ -1,4 +1,4 @@
-import { createDatabase, type DbClient } from '#db/client';
+import { createDatabase, type DbClient } from '#infrastructure/db/client';
 
 const testDatabaseUrl = Bun.env.TEST_DATABASE_URL;
 const testDatabaseSymbol = Symbol.for('guard-plus.test.database');
@@ -23,7 +23,9 @@ export async function closeTestDatabase() {
   const globalWithDatabase = globalThis as GlobalWithTestDatabase;
   const db = globalWithDatabase[testDatabaseSymbol];
 
-  if (!db) return;
+  if (!db) {
+    return;
+  }
 
   globalWithDatabase[testDatabaseSymbol] = undefined;
   await db.$client.end();

@@ -6,14 +6,15 @@ const bunEnv = bun.with('--bun --env-file=.env');
 const bunTest = bun.with('--bun --env-file=.env.test');
 const dev = bunEnv.with('--bun --no-clear-screen --watch');
 const docker = process.platform === 'linux' ? 'sudo docker' : 'docker';
+const productionCompose = `${docker} compose --env-file .env.prod -f compose.prod.yml`;
 
 const inputs = {
   admin: './src/apps/admin/index.ts',
   dbPush: [
     'drizzle/**',
     'drizzle.config.ts',
-    'src/db/schema/**',
-    'src/db/relations.ts',
+    'src/infrastructure/db/schema/**',
+    'src/infrastructure/db/relations.ts',
     'package.json',
     'bunfig.toml',
   ],
@@ -28,6 +29,7 @@ export default defineConfig({
       eden: './src/eden.ts',
     },
     dts: {
+      eager: true,
       emitDtsOnly: true,
     },
     clean: false,
@@ -65,7 +67,7 @@ export default defineConfig({
       },
       typecheck: {
         cache: true,
-        command: 'tsgo --build',
+        command: 'tsc --build',
         input: [{ auto: true }, '!**/*.tsbuildinfo'],
       },
       check: {
@@ -93,7 +95,7 @@ export default defineConfig({
       },
       'db:seed': {
         cache: false,
-        command: bunEnv('./src/db/seed.ts'),
+        command: bunEnv('./src/apps/seed/index.ts'),
         dependsOn: ['db:push'],
       },
       'db:studio': {
@@ -102,15 +104,15 @@ export default defineConfig({
       },
       'infra:up': {
         cache: false,
-        command: ['docker compose -f compose.infra.yml up -d', 'vpr db:push', 'vpr db:seed'],
+        command: ['docker compose -f compose.dev.yml up -d', 'vpr db:push', 'vpr db:seed'],
       },
       'infra:down': {
         cache: false,
-        command: 'docker compose -f compose.infra.yml down',
+        command: 'docker compose -f compose.dev.yml down',
       },
       'infra:logs': {
         cache: false,
-        command: 'docker compose -f compose.infra.yml logs -f',
+        command: 'docker compose -f compose.dev.yml logs -f',
       },
       'infra:reset': {
         cache: false,
@@ -118,7 +120,11 @@ export default defineConfig({
       },
       deploy: {
         cache: false,
-        command: `${docker} compose --env-file .env.prod -f compose.prod.yml up -d --build --force-recreate`,
+        command: [
+          `${productionCompose} build db-push admin-server user-server event-server`,
+          `${productionCompose} stop admin-server user-server event-server`,
+          `${productionCompose} up -d --force-recreate`,
+        ],
       },
     },
   },

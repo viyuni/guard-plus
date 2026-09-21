@@ -4,200 +4,211 @@ import type {
   UserPageQuery,
   UserRegisterBody,
 } from '@shared/schema/user';
+import { type InferInput, ripple } from 'cyrenejs';
 
-import type { DbExecutor } from '#db';
-import { InvalidCredentialsError } from '#utils';
-import { PasswordUtil } from '#utils';
+import type { DbExecutor } from '#infrastructure/db';
+import { InvalidCredentialsError, PasswordUtil } from '#shared';
 
-import { UserAlreadyRegisteredError, UserBasicInfoCrypto, UserPolicy } from '../domain';
-import { UserRepository } from '../repository';
+import {
+  UserAlreadyRegisteredError,
+  assertUserAvailableExists,
+  assertUserExists,
+  UserBasicInfoCrypto,
+} from '../domain';
+import { UserRepo } from '../repository';
 
-export interface UserUseCaseDeps {
-  userBasicInfoCrypto: UserBasicInfoCrypto;
-  userRepo: UserRepository;
-}
+export const UserUseCase = ripple(
+  {
+    UserBasicInfoCrypto,
+    UserRepo,
+  },
+  ({ UserBasicInfoCrypto, UserRepo }) => {
+    /**
+     * 查询可用用户
+     */
+    async function getAvailableById(userId: string, db?: DbExecutor) {
+      const user = await UserRepo.findById(userId, db);
+      assertUserAvailableExists(user);
 
-export class UserUseCase {
-  constructor(private readonly deps: UserUseCaseDeps) {}
-
-  /**
-   * 查询可用用户
-   */
-  async getAvailableById(userId: string, db?: DbExecutor) {
-    const user = await this.deps.userRepo.findById(userId, db);
-    UserPolicy.assertAvailableExists(user);
-
-    return user;
-  }
-
-  /**
-   * 查询可用用户通过 UID
-   */
-  async getAvailableByBiliUid(biliUid: string, db?: DbExecutor) {
-    const user = await this.deps.userRepo.findByBiliUid(biliUid, db);
-    UserPolicy.assertAvailableExists(user);
-
-    return user;
-  }
-
-  async findByBiliUid(biliUid: string, db?: DbExecutor) {
-    return this.deps.userRepo.findByBiliUid(biliUid, db);
-  }
-
-  /**
-   * 获取用户详情
-   */
-  async getDetail(userId: string) {
-    const user = await this.deps.userRepo.findDetailById(userId);
-
-    UserPolicy.assertAvailableExists(user);
-
-    const { phoneEncrypted, emailEncrypted, addressEncrypted, ...profile } = user;
+      return user;
+    }
 
     return {
-      ...profile,
-      ...this.deps.userBasicInfoCrypto.decryptBasicInfo({
-        phoneEncrypted,
-        emailEncrypted,
-        addressEncrypted,
-      }),
-    };
-  }
+      getAvailableById,
 
-  /**
-   * 查询用户列表
-   */
-  async page(query: UserPageQuery) {
-    const result = await this.deps.userRepo.page(query);
+      /**
+       * 查询可用用户通过 UID
+       */
+      async getAvailableByBiliUid(biliUid: string, db?: DbExecutor) {
+        const user = await UserRepo.findByBiliUid(biliUid, db);
+        assertUserAvailableExists(user);
 
-    return {
-      ...result,
-      items: result.items.map(user => {
-        const { phoneEncrypted, emailEncrypted, addressEncrypted, ...item } = user;
+        return user;
+      },
+
+      async findByBiliUid(biliUid: string, db?: DbExecutor) {
+        return UserRepo.findByBiliUid(biliUid, db);
+      },
+
+      /**
+       * 获取用户详情
+       */
+      async getDetail(userId: string) {
+        const user = await UserRepo.findDetailById(userId);
+
+        assertUserAvailableExists(user);
+
+        const { phoneEncrypted, emailEncrypted, addressEncrypted, ...profile } = user;
 
         return {
-          ...item,
-          ...this.deps.userBasicInfoCrypto.decryptBasicInfo({
+          ...profile,
+          ...UserBasicInfoCrypto.decryptBasicInfo({
             phoneEncrypted,
             emailEncrypted,
             addressEncrypted,
           }),
         };
-      }),
-    };
-  }
-
-  /**
-   * 封禁用户
-   */
-  async ban(userId: string) {
-    const user = await this.deps.userRepo.ban(userId);
-
-    UserPolicy.assertExists(user);
-
-    return user;
-  }
-
-  /**
-   * 恢复用户
-   */
-  async restore(userId: string) {
-    const user = await this.deps.userRepo.restore(userId);
-
-    UserPolicy.assertExists(user);
-
-    return user;
-  }
-
-  /**
-   * 创建用户
-   */
-  async create(input: UserRegisterBody, db?: DbExecutor) {
-    const existing = await this.deps.userRepo.findByBiliUid(input.biliUid, db);
-
-    if (existing) {
-      throw new UserAlreadyRegisteredError();
-    }
-
-    const passwordHash = await PasswordUtil.hash(input.password);
-
-    const user = await this.deps.userRepo.create(
-      {
-        ...input,
-        ...this.deps.userBasicInfoCrypto.encryptBasicInfo(input),
-        passwordHash,
       },
-      db,
-    );
 
-    return {
-      id: user.id,
-      biliUid: user.biliUid,
-      username: user.username,
-      email: input.email,
-      phone: input.phone,
-      address: input.address,
+      /**
+       * 查询用户列表
+       */
+      async page(query: UserPageQuery) {
+        const result = await UserRepo.page(query);
+
+        return {
+          ...result,
+          items: result.items.map(user => {
+            const { phoneEncrypted, emailEncrypted, addressEncrypted, ...item } = user;
+
+            return {
+              ...item,
+              ...UserBasicInfoCrypto.decryptBasicInfo({
+                phoneEncrypted,
+                emailEncrypted,
+                addressEncrypted,
+              }),
+            };
+          }),
+        };
+      },
+
+      /**
+       * 封禁用户
+       */
+      async ban(userId: string) {
+        const user = await UserRepo.ban(userId);
+
+        assertUserExists(user);
+
+        return user;
+      },
+
+      /**
+       * 恢复用户
+       */
+      async restore(userId: string) {
+        const user = await UserRepo.restore(userId);
+
+        assertUserExists(user);
+
+        return user;
+      },
+
+      /**
+       * 创建用户
+       */
+      async create(input: UserRegisterBody, db?: DbExecutor) {
+        const existing = await UserRepo.findByBiliUid(input.biliUid, db);
+
+        if (existing) {
+          throw new UserAlreadyRegisteredError();
+        }
+
+        const passwordHash = await PasswordUtil.hash(input.password);
+
+        const user = await UserRepo.create(
+          {
+            ...input,
+            ...UserBasicInfoCrypto.encryptBasicInfo(input),
+            passwordHash,
+          },
+          db,
+        );
+
+        return {
+          id: user.id,
+          biliUid: user.biliUid,
+          username: user.username,
+          email: input.email,
+          phone: input.phone,
+          address: input.address,
+        };
+      },
+
+      async update(userId: string, data: UpdateUserBody) {
+        const user = await UserRepo.findById(userId);
+        assertUserExists(user);
+
+        const updateData = {
+          ...(data.username === undefined ? {} : { username: data.username }),
+          ...UserBasicInfoCrypto.encryptBasicInfoPatch(data),
+        };
+
+        const updatedUser = await UserRepo.update(user.id, updateData);
+        const basicInfo = UserBasicInfoCrypto.decryptBasicInfo(updatedUser);
+
+        return {
+          id: updatedUser.id,
+          biliUid: updatedUser.biliUid,
+          username: updatedUser.username,
+          email: basicInfo.email,
+          phone: basicInfo.phone,
+          address: basicInfo.address,
+        };
+      },
+
+      async updatePassword(userId: string, data: UpdateUserPasswordBody) {
+        const user = await getAvailableById(userId);
+
+        const isValidPassword = await PasswordUtil.verify(data.oldPassword, user.passwordHash);
+
+        if (!isValidPassword) {
+          throw new InvalidCredentialsError();
+        }
+
+        const passwordHash = await PasswordUtil.hash(data.newPassword);
+
+        await UserRepo.updatePassword(user.id, passwordHash);
+      },
+
+      async setPassword(userId: string, newPassword: string) {
+        const user = await getAvailableById(userId);
+        const passwordHash = await PasswordUtil.hash(newPassword);
+
+        await UserRepo.updatePassword(user.id, passwordHash);
+      },
+
+      /**
+       * 重置用户密码
+       *
+       * - 账号不会退出
+       */
+      async resetPassword(userId: string) {
+        const user = await getAvailableById(userId);
+
+        const radomPassword = PasswordUtil.generate();
+        const passwordHash = await PasswordUtil.hash(radomPassword);
+
+        await UserRepo.updatePassword(user.id, passwordHash);
+
+        return {
+          password: radomPassword,
+        };
+      },
     };
-  }
+  },
+  { debugName: 'UserUseCase' },
+);
 
-  async update(userId: string, data: UpdateUserBody) {
-    const user = await this.deps.userRepo.findById(userId);
-    UserPolicy.assertExists(user);
-
-    const updateData = {
-      ...(data.username === undefined ? {} : { username: data.username }),
-      ...this.deps.userBasicInfoCrypto.encryptBasicInfoPatch(data),
-    };
-
-    const updatedUser = await this.deps.userRepo.update(user.id, updateData);
-    const basicInfo = this.deps.userBasicInfoCrypto.decryptBasicInfo(updatedUser);
-
-    return {
-      id: updatedUser.id,
-      biliUid: updatedUser.biliUid,
-      username: updatedUser.username,
-      email: basicInfo.email,
-      phone: basicInfo.phone,
-      address: basicInfo.address,
-    };
-  }
-
-  async updatePassword(userId: string, data: UpdateUserPasswordBody) {
-    const user = await this.getAvailableById(userId);
-
-    const isValidPassword = await PasswordUtil.verify(data.oldPassword, user.passwordHash);
-
-    if (!isValidPassword) {
-      throw new InvalidCredentialsError();
-    }
-
-    const passwordHash = await PasswordUtil.hash(data.newPassword);
-
-    await this.deps.userRepo.updatePassword(user.id, passwordHash);
-  }
-
-  async setPassword(userId: string, newPassword: string) {
-    const user = await this.getAvailableById(userId);
-    const passwordHash = await PasswordUtil.hash(newPassword);
-
-    await this.deps.userRepo.updatePassword(user.id, passwordHash);
-  }
-
-  /**
-   * 重置用户密码
-   *
-   * - 账号不会退出
-   */
-  async resetPassword(userId: string) {
-    const user = await this.getAvailableById(userId);
-
-    const radomPassword = PasswordUtil.generate();
-    const passwordHash = await PasswordUtil.hash(radomPassword);
-
-    await this.deps.userRepo.updatePassword(user.id, passwordHash);
-
-    return {
-      password: radomPassword,
-    };
-  }
-}
+export type UserUseCase = InferInput<typeof UserUseCase>;

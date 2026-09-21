@@ -13,7 +13,9 @@ export class SchemaWatcher {
   ) {}
 
   start() {
-    if (this.watcher) return;
+    if (this.watcher) {
+      return;
+    }
 
     this.watcher = watch(
       schemaDir,
@@ -72,7 +74,9 @@ export class SchemaWatcher {
   }
 
   private scheduleRestart(filename: string) {
-    if (this.isExiting()) return;
+    if (this.isExiting()) {
+      return;
+    }
 
     logMain(`schema changed: ${filename}`);
 

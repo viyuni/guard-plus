@@ -46,6 +46,8 @@ const NonZeroIntegerSchema = v.pipe(
   v.description('库存调整数量'),
 );
 
+const productIdSchema = v.pipe(v.string('请输入商品 ID'), v.description('商品 ID'));
+
 /**
  * 库存流水分页查询 Query Schema。
  *
@@ -53,7 +55,7 @@ const NonZeroIntegerSchema = v.pipe(
  */
 export const StockMovementPageQuerySchema = v.object({
   type: v.optional(StockMovementTypeSchema),
-  productId: v.optional(v.pipe(v.string('请输入商品 ID'), v.description('商品 ID'))),
+  productId: v.optional(productIdSchema),
   ...dateRange.entries,
   ...pageQuery.entries,
 });

@@ -12,7 +12,15 @@ function formatDate(value: Date | string | null) {
 }
 
 function formatStatus(status: Order['status']) {
-  return status === 'pending' ? '待处理' : status === 'completed' ? '已完成' : '已退款';
+  if (status === 'pending') {
+    return '待处理';
+  }
+
+  if (status === 'completed') {
+    return '已完成';
+  }
+
+  return '已退款';
 }
 
 function formatDeliveryType(deliveryType: Order['deliveryTypeSnapshot']) {

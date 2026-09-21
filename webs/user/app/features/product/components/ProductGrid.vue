@@ -32,6 +32,7 @@ const {
     return lastPage?.meta.hasNextPage ? lastPage.meta.page + 1 : null;
   },
 });
+
 const isLoadingMore = ref(false);
 
 const products = computed(() => {

@@ -39,6 +39,7 @@ const {
   meta: adminMeta,
   isLoading: isTableLoading,
 } = usePageQuery(() => adminPageQuery(query.value));
+
 const [openAdminDialog] = useOverlay(AdminDialog);
 const [openResetAdminPasswordDialog] = useOverlay(ResetAdminPasswordDialog);
 const { mutate: banAdmin, isLoading: isBanning } = useBanAdmin();

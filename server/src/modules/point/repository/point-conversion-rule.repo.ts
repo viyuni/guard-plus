@@ -1,160 +1,172 @@
+import { type InferInput, ripple } from 'cyrenejs';
 import { and, eq } from 'drizzle-orm';
 
-import type { DbExecutor } from '#db';
-import { deletedAtIsNull } from '#db/helper';
+import { Database } from '#composition/tokens';
+import type { DbExecutor } from '#infrastructure/db';
+import { deletedAtIsNull } from '#infrastructure/db/helper';
 import {
   pointConversionRules,
   type InsertPointConversionRule,
   type UpdatePointConversionRule,
-} from '#db/schema';
+} from '#infrastructure/db/schema';
 
-export class PointConversionRuleRepository {
-  constructor(private readonly db: DbExecutor) {}
+export const PointConversionRuleRepo = ripple(
+  {
+    Database,
+  },
+  ({ Database }) => {
+    async function update(
+      pointConversionRuleId: string,
+      data: UpdatePointConversionRule,
+      executor: DbExecutor = Database,
+    ) {
+      const [row] = await executor
+        .update(pointConversionRules)
+        .set(data)
+        .where(
+          and(
+            eq(pointConversionRules.id, pointConversionRuleId),
+            deletedAtIsNull(pointConversionRules),
+          ),
+        )
+        .returning();
 
-  async findById(pointConversionRuleId: string, db: DbExecutor = this.db) {
-    const [row] = await db
-      .select()
-      .from(pointConversionRules)
-      .where(
-        and(
-          eq(pointConversionRules.id, pointConversionRuleId),
-          deletedAtIsNull(pointConversionRules),
-        ),
-      )
-      .limit(1);
+      return row ?? null;
+    }
 
-    return row ?? null;
-  }
+    return {
+      async findById(pointConversionRuleId: string, executor: DbExecutor = Database) {
+        const [row] = await executor
+          .select()
+          .from(pointConversionRules)
+          .where(
+            and(
+              eq(pointConversionRules.id, pointConversionRuleId),
+              deletedAtIsNull(pointConversionRules),
+            ),
+          )
+          .limit(1);
 
-  async findByName(name: string, db: DbExecutor = this.db) {
-    const [row] = await db
-      .select()
-      .from(pointConversionRules)
-      .where(and(eq(pointConversionRules.name, name), deletedAtIsNull(pointConversionRules)))
-      .limit(1);
-
-    return row ?? null;
-  }
-
-  async findByPointTypePair(
-    input: { fromPointTypeId: string; toPointTypeId: string },
-    db: DbExecutor = this.db,
-  ) {
-    const [row] = await db
-      .select()
-      .from(pointConversionRules)
-      .where(
-        and(
-          eq(pointConversionRules.fromPointTypeId, input.fromPointTypeId),
-          eq(pointConversionRules.toPointTypeId, input.toPointTypeId),
-          deletedAtIsNull(pointConversionRules),
-        ),
-      )
-      .limit(1);
-
-    return row ?? null;
-  }
-
-  async create(input: InsertPointConversionRule, db: DbExecutor = this.db) {
-    const [row] = await db.insert(pointConversionRules).values(input).returning();
-    return row ?? null;
-  }
-
-  async update(
-    pointConversionRuleId: string,
-    data: UpdatePointConversionRule,
-    db: DbExecutor = this.db,
-  ) {
-    const [row] = await db
-      .update(pointConversionRules)
-      .set(data)
-      .where(
-        and(
-          eq(pointConversionRules.id, pointConversionRuleId),
-          deletedAtIsNull(pointConversionRules),
-        ),
-      )
-      .returning();
-
-    return row ?? null;
-  }
-
-  async enabled(pointConversionRuleId: string, db: DbExecutor = this.db) {
-    return this.update(pointConversionRuleId, { enabled: true }, db);
-  }
-
-  async disabled(pointConversionRuleId: string, db: DbExecutor = this.db) {
-    return this.update(pointConversionRuleId, { enabled: false }, db);
-  }
-
-  async delete(pointConversionRuleId: string, db: DbExecutor = this.db) {
-    return this.update(pointConversionRuleId, { deletedAt: new Date() }, db);
-  }
-
-  listManage(db: DbExecutor = this.db) {
-    return db.query.pointConversionRules.findMany({
-      where: {
-        deletedAt: {
-          isNull: true,
-        },
+        return row ?? null;
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      with: {
-        fromPointType: true,
-        toPointType: true,
-      },
-    });
-  }
 
-  listVisible(db: DbExecutor = this.db) {
-    const now = new Date();
+      async findByName(name: string, executor: DbExecutor = Database) {
+        const [row] = await executor
+          .select()
+          .from(pointConversionRules)
+          .where(and(eq(pointConversionRules.name, name), deletedAtIsNull(pointConversionRules)))
+          .limit(1);
 
-    return db.query.pointConversionRules.findMany({
-      columns: {
-        id: true,
-        name: true,
-        description: true,
-        // fromPointTypeId: true,
-        // toPointTypeId: true,
-        toAmount: true,
-        minConvertAmount: true,
-        maxConvertAmount: true,
+        return row ?? null;
       },
-      where: {
-        deletedAt: {
-          isNull: true,
-        },
-        enabled: true,
-        AND: [
-          {
-            OR: [{ startAt: { isNull: true } }, { startAt: { lte: now } }],
+
+      async findByPointTypePair(
+        input: { fromPointTypeId: string; toPointTypeId: string },
+        executor: DbExecutor = Database,
+      ) {
+        const [row] = await executor
+          .select()
+          .from(pointConversionRules)
+          .where(
+            and(
+              eq(pointConversionRules.fromPointTypeId, input.fromPointTypeId),
+              eq(pointConversionRules.toPointTypeId, input.toPointTypeId),
+              deletedAtIsNull(pointConversionRules),
+            ),
+          )
+          .limit(1);
+
+        return row ?? null;
+      },
+
+      async create(input: InsertPointConversionRule, executor: DbExecutor = Database) {
+        const [row] = await executor.insert(pointConversionRules).values(input).returning();
+        return row ?? null;
+      },
+
+      update,
+
+      async enabled(pointConversionRuleId: string, executor: DbExecutor = Database) {
+        return update(pointConversionRuleId, { enabled: true }, executor);
+      },
+
+      async disabled(pointConversionRuleId: string, executor: DbExecutor = Database) {
+        return update(pointConversionRuleId, { enabled: false }, executor);
+      },
+
+      async delete(pointConversionRuleId: string, executor: DbExecutor = Database) {
+        return update(pointConversionRuleId, { deletedAt: new Date() }, executor);
+      },
+
+      listManage(executor: DbExecutor = Database) {
+        return executor.query.pointConversionRules.findMany({
+          where: {
+            deletedAt: {
+              isNull: true,
+            },
           },
-          {
-            OR: [{ endAt: { isNull: true } }, { endAt: { gt: now } }],
+          orderBy: {
+            createdAt: 'desc',
           },
-        ],
+          with: {
+            fromPointType: true,
+            toPointType: true,
+          },
+        });
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      with: {
-        fromPointType: {
+
+      listVisible(executor: DbExecutor = Database) {
+        const now = new Date();
+
+        return executor.query.pointConversionRules.findMany({
           columns: {
             id: true,
             name: true,
-            icon: true,
+            description: true,
+            // fromPointTypeId: true,
+            // toPointTypeId: true,
+            toAmount: true,
+            minConvertAmount: true,
+            maxConvertAmount: true,
           },
-        },
-        toPointType: {
-          columns: {
-            id: true,
-            name: true,
-            icon: true,
+          where: {
+            deletedAt: {
+              isNull: true,
+            },
+            enabled: true,
+            AND: [
+              {
+                OR: [{ startAt: { isNull: true } }, { startAt: { lte: now } }],
+              },
+              {
+                OR: [{ endAt: { isNull: true } }, { endAt: { gt: now } }],
+              },
+            ],
           },
-        },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          with: {
+            fromPointType: {
+              columns: {
+                id: true,
+                name: true,
+                icon: true,
+              },
+            },
+            toPointType: {
+              columns: {
+                id: true,
+                name: true,
+                icon: true,
+              },
+            },
+          },
+        });
       },
-    });
-  }
-}
+    };
+  },
+  { debugName: 'PointConversionRuleRepository' },
+);
+
+export type PointConversionRuleRepository = InferInput<typeof PointConversionRuleRepo>;

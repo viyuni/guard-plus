@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'bun:test';
 
-import type { Order } from '#db/schema';
+import type { Order } from '#infrastructure/db/schema';
 
 import { OrderStatusInvalidError } from '../domain';
-import { OrderPolicy } from '../domain';
+import {
+  initialOrderStatusForDeliveryType,
+  assertOrderCanComplete,
+  assertOrderCanRefund,
+} from '../domain';
 
 function order(input: Partial<Order> = {}): Order {
   return {
@@ -38,21 +42,21 @@ function order(input: Partial<Order> = {}): Order {
 
 describe('订单策略', () => {
   it('根据发货方式决定初始订单状态', () => {
-    expect(OrderPolicy.initialStatusForDeliveryType('automatic')).toBe('completed');
-    expect(OrderPolicy.initialStatusForDeliveryType('manual')).toBe('pending');
+    expect(initialOrderStatusForDeliveryType('automatic')).toBe('completed');
+    expect(initialOrderStatusForDeliveryType('manual')).toBe('pending');
   });
 
   it('只允许待完成订单完成', () => {
-    expect(() => OrderPolicy.assertCanComplete(order({ status: 'pending' }))).not.toThrow();
-    expect(() => OrderPolicy.assertCanComplete(order({ status: 'completed' }))).toThrow(
+    expect(() => assertOrderCanComplete(order({ status: 'pending' }))).not.toThrow();
+    expect(() => assertOrderCanComplete(order({ status: 'completed' }))).toThrow(
       OrderStatusInvalidError,
     );
   });
 
   it('只允许待完成或已完成订单退款', () => {
-    expect(() => OrderPolicy.assertCanRefund(order({ status: 'pending' }))).not.toThrow();
-    expect(() => OrderPolicy.assertCanRefund(order({ status: 'completed' }))).not.toThrow();
-    expect(() => OrderPolicy.assertCanRefund(order({ status: 'refunded' }))).toThrow(
+    expect(() => assertOrderCanRefund(order({ status: 'pending' }))).not.toThrow();
+    expect(() => assertOrderCanRefund(order({ status: 'completed' }))).not.toThrow();
+    expect(() => assertOrderCanRefund(order({ status: 'refunded' }))).toThrow(
       OrderStatusInvalidError,
     );
   });

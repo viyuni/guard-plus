@@ -19,7 +19,9 @@ const SlotNode = defineComponent({
 
 function flattenNodes(nodes: VNode[]): VNode[] {
   return nodes.flatMap(node => {
-    if (node.type === Comment) return [];
+    if (node.type === Comment) {
+      return [];
+    }
 
     if (node.type === Fragment && Array.isArray(node.children)) {
       return flattenNodes(node.children.filter(isVNode));

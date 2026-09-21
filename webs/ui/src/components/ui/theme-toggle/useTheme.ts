@@ -1,4 +1,5 @@
 import { useDark } from '@vueuse/core';
+
 export const useTheme = () => {
   const isDark = useDark({
     storageKey: 'theme',

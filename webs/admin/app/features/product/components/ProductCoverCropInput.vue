@@ -29,10 +29,12 @@ const emit = defineEmits<{
 
 const file = defineModel<File | undefined>();
 const inputKey = ref(0);
+
 const cropper = ref<{
   exportImage: () => Promise<ImageCropperResult>;
   reset: () => void;
 }>();
+
 const sourceUrl = ref<string>();
 const isDragging = ref(false);
 

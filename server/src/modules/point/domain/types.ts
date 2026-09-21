@@ -1,4 +1,4 @@
-import type { PointTransactionType } from '#db/schema';
+import type { PointTransactionType } from '#infrastructure/db/schema';
 
 /**
  * 积分流水类型

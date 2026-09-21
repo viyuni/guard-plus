@@ -1,3 +1,7 @@
+import { computed } from 'vue';
+
+import { useCookie } from '#app';
+
 export const AUTH_STATE_COOKIE_NAME = 'auth';
 export const AUTH_STATE_COOKIE_VALUE = 1;
 

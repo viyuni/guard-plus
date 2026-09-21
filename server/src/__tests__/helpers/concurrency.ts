@@ -12,3 +12,9 @@ export function countFulfilled<T>(results: PromiseSettledResult<T>[]) {
 export function countRejected<T>(results: PromiseSettledResult<T>[]) {
   return results.filter(result => result.status === 'rejected').length;
 }
+
+export function firstFulfilled<T>(results: PromiseSettledResult<T>[]) {
+  return results.find(
+    (result): result is PromiseFulfilledResult<T> => result.status === 'fulfilled',
+  )?.value;
+}

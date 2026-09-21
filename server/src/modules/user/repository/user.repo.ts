@@ -1,220 +1,224 @@
 import type { UserPageQuery } from '@shared/schema/user';
+import { ripple, type InferInput } from 'cyrenejs';
 import { and, eq } from 'drizzle-orm';
 
-import type { DbExecutor } from '#db';
-import { defineSelectColumns, QueryPageBuilder } from '#db/helper';
-import type { InsertUser, UpdateUser } from '#db/schema';
-import { users } from '#db/schema';
-import { BadRequestError } from '#utils';
+import { Database } from '#composition/tokens';
+import type { DbExecutor } from '#infrastructure/db';
+import { defineSelectColumns, QueryPageBuilder } from '#infrastructure/db/helper';
+import type { InsertUser, UpdateUser } from '#infrastructure/db/schema';
+import { users } from '#infrastructure/db/schema';
+import { BadRequestError } from '#shared';
 
 const userSelectCols = defineSelectColumns(
   users,
   ({ passwordHash: _passwordHash, phoneHash: _phoneHash, ...cols }) => cols,
 );
 
-export class UserRepository {
-  constructor(private db: DbExecutor) {}
+export const UserRepo = ripple(
+  {
+    Database,
+  },
+  ({ Database }) => ({
+    /**
+     * 获取用户
+     */
+    async findById(userId: string, executor: DbExecutor = Database) {
+      const user = await executor.query.users.findFirst({
+        where: {
+          id: userId,
+        },
+      });
 
-  /**
-   * 获取用户
-   */
-  async findById(userId: string, db: DbExecutor = this.db) {
-    const user = await db.query.users.findFirst({
-      where: {
-        id: userId,
-      },
-    });
+      return user ?? null;
+    },
 
-    return user ?? null;
-  }
+    /**
+     * 通过 B站 UID 查询用户
+     */
+    async findByBiliUid(biliUid: string, executor: DbExecutor = Database) {
+      const user = await executor.query.users.findFirst({
+        where: {
+          biliUid,
+        },
+      });
 
-  /**
-   * 通过 B站 UID 查询用户
-   */
-  async findByBiliUid(biliUid: string, db: DbExecutor = this.db) {
-    const user = await db.query.users.findFirst({
-      where: {
-        biliUid,
-      },
-    });
+      return user ?? null;
+    },
 
-    return user ?? null;
-  }
-
-  /**
-   * 查询用户详情
-   */
-  async findDetailById(userId: string) {
-    const user = await this.db.query.users.findFirst({
-      columns: {
-        id: true,
-        biliUid: true,
-        username: true,
-        status: true,
-        phoneEncrypted: true,
-        emailEncrypted: true,
-        addressEncrypted: true,
-      },
-      with: {
-        pointAccounts: {
-          columns: {
-            id: true,
-            balance: true,
-            status: true,
-          },
-          with: {
-            pointType: {
-              columns: {
-                id: true,
-                name: true,
-                icon: true,
+    /**
+     * 查询用户详情
+     */
+    async findDetailById(userId: string) {
+      const user = await Database.query.users.findFirst({
+        columns: {
+          id: true,
+          biliUid: true,
+          username: true,
+          status: true,
+          phoneEncrypted: true,
+          emailEncrypted: true,
+          addressEncrypted: true,
+        },
+        with: {
+          pointAccounts: {
+            columns: {
+              id: true,
+              balance: true,
+              status: true,
+            },
+            with: {
+              pointType: {
+                columns: {
+                  id: true,
+                  name: true,
+                  icon: true,
+                },
               },
             },
           },
         },
-      },
-      where: {
-        id: userId,
-      },
-    });
+        where: {
+          id: userId,
+        },
+      });
 
-    return user ?? null;
-  }
+      return user ?? null;
+    },
 
-  /**
-   * 封禁用户
-   */
-  async ban(userId: string) {
-    const [user] = await this.db
-      .update(users)
-      .set({
-        status: 'banned',
-      })
-      .where(and(eq(users.id, userId)))
-      .returning();
+    /**
+     * 封禁用户
+     */
+    async ban(userId: string) {
+      const [user] = await Database.update(users)
+        .set({
+          status: 'banned',
+        })
+        .where(and(eq(users.id, userId)))
+        .returning();
 
-    return user ?? null;
-  }
+      return user ?? null;
+    },
 
-  /**
-   * 恢复用户
-   */
-  async restore(userId: string) {
-    const [user] = await this.db
-      .update(users)
-      .set({
-        status: 'active',
-      })
-      .where(and(eq(users.id, userId)))
-      .returning();
+    /**
+     * 恢复用户
+     */
+    async restore(userId: string) {
+      const [user] = await Database.update(users)
+        .set({
+          status: 'active',
+        })
+        .where(and(eq(users.id, userId)))
+        .returning();
 
-    return user ?? null;
-  }
+      return user ?? null;
+    },
 
-  async create(data: InsertUser, db: DbExecutor = this.db) {
-    const [user] = await db.insert(users).values(data).returning(userSelectCols);
+    async create(data: InsertUser, executor: DbExecutor = Database) {
+      const [user] = await executor.insert(users).values(data).returning(userSelectCols);
 
-    if (!user) {
-      throw new BadRequestError('用户创建失败');
-    }
+      if (!user) {
+        throw new BadRequestError('用户创建失败');
+      }
 
-    return user;
-  }
+      return user;
+    },
 
-  async updatePassword(userId: string, passwordHash: string) {
-    const [user] = await this.db
-      .update(users)
-      .set({
-        passwordHash,
-      })
-      .where(eq(users.id, userId))
-      .returning(userSelectCols);
+    async updatePassword(userId: string, passwordHash: string) {
+      const [user] = await Database.update(users)
+        .set({
+          passwordHash,
+        })
+        .where(eq(users.id, userId))
+        .returning(userSelectCols);
 
-    if (!user) {
-      throw new BadRequestError('用户创建失败');
-    }
+      if (!user) {
+        throw new BadRequestError('用户创建失败');
+      }
 
-    return user;
-  }
+      return user;
+    },
 
-  async update(userId: string, data: UpdateUser) {
-    const [user] = await this.db
-      .update(users)
-      .set(data)
-      .where(eq(users.id, userId))
-      .returning(userSelectCols);
+    async update(userId: string, data: UpdateUser) {
+      const [user] = await Database.update(users)
+        .set(data)
+        .where(eq(users.id, userId))
+        .returning(userSelectCols);
 
-    if (!user) {
-      throw new BadRequestError('用户更新失败');
-    }
+      if (!user) {
+        throw new BadRequestError('用户更新失败');
+      }
 
-    return user;
-  }
+      return user;
+    },
 
-  /**
-   * 分页
-   */
-  page(query: UserPageQuery) {
-    return new QueryPageBuilder(this.db, users, this.db.query.users)
-      .page(query.page)
-      .pageSize(query.pageSize)
-      .where({
-        status: query.status,
-        OR: query.keyword
-          ? [
-              {
-                biliUid: {
-                  ilike: `%${query.keyword}%`,
+    /**
+     * 分页
+     */
+    page(query: UserPageQuery) {
+      return new QueryPageBuilder(Database, users, Database.query.users)
+        .page(query.page)
+        .pageSize(query.pageSize)
+        .where({
+          status: query.status,
+          OR: query.keyword
+            ? [
+                {
+                  biliUid: {
+                    ilike: `%${query.keyword}%`,
+                  },
                 },
-              },
-              {
-                username: {
-                  ilike: `%${query.keyword}%`,
+                {
+                  username: {
+                    ilike: `%${query.keyword}%`,
+                  },
                 },
-              },
-            ]
-          : undefined,
-      })
-      .query((findMany, { where, limit, offset }) =>
-        findMany({
-          where,
-          limit,
-          offset,
-          columns: {
-            id: true,
-            biliUid: true,
-            username: true,
-            status: true,
-            phoneEncrypted: true,
-            emailEncrypted: true,
-            addressEncrypted: true,
-            remark: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-          with: {
-            pointAccounts: {
-              columns: {
-                id: true,
-                balance: true,
-                createdAt: true,
-                updatedAt: true,
-              },
-              with: {
-                pointType: {
-                  columns: {
-                    id: true,
-                    name: true,
+              ]
+            : undefined,
+        })
+        .query((findMany, { where, limit, offset }) =>
+          findMany({
+            where,
+            limit,
+            offset,
+            columns: {
+              id: true,
+              biliUid: true,
+              username: true,
+              status: true,
+              phoneEncrypted: true,
+              emailEncrypted: true,
+              addressEncrypted: true,
+              remark: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+            with: {
+              pointAccounts: {
+                columns: {
+                  id: true,
+                  balance: true,
+                  createdAt: true,
+                  updatedAt: true,
+                },
+                with: {
+                  pointType: {
+                    columns: {
+                      id: true,
+                      name: true,
+                    },
                   },
                 },
               },
             },
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
-        }),
-      )
-      .paginate();
-  }
-}
+            orderBy: {
+              createdAt: 'desc',
+            },
+          }),
+        )
+        .paginate();
+    },
+  }),
+  { debugName: 'UserRepository' },
+);
+
+export type UserRepository = InferInput<typeof UserRepo>;

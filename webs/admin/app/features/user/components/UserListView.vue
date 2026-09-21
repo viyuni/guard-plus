@@ -37,6 +37,7 @@ const {
 });
 
 const [handleCreateUser] = useOverlay(CreateUserDialog);
+
 const {
   items: users,
   meta: userMeta,

@@ -25,7 +25,9 @@ function pad(value: number) {
 }
 
 function toDate(value: Date | string | null | undefined) {
-  if (!value) return null;
+  if (!value) {
+    return null;
+  }
 
   const date = value instanceof Date ? value : new Date(value);
 
@@ -35,7 +37,9 @@ function toDate(value: Date | string | null | undefined) {
 function toDatetimeLocalValue(value: Date | string | null | undefined) {
   const date = toDate(value);
 
-  if (!date) return '';
+  if (!date) {
+    return '';
+  }
 
   return [
     `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
@@ -54,7 +58,9 @@ function getEmptyValue() {
 }
 
 watchEffect(() => {
-  if (typeof model.value !== 'string') return;
+  if (typeof model.value !== 'string') {
+    return;
+  }
 
   model.value = toDate(model.value);
 });

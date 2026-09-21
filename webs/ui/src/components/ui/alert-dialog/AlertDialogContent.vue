@@ -25,6 +25,7 @@ const props = withDefaults(
     size: 'default',
   },
 );
+
 const emits = defineEmits<AlertDialogContentEmits>();
 
 const delegatedProps = reactiveOmit(props, 'class', 'size');

@@ -23,7 +23,6 @@
     "@vueuse/router": "catalog:",
     "@web/ui": "workspace:*",
     "class-variance-authority": "catalog:",
-    "clsx": "catalog:",
     "ky": "catalog:",
     "lucide-vue-next": "catalog:",
     "motion-v": "catalog:",
@@ -31,7 +30,6 @@
     "pinia": "catalog:",
     "reka-ui": "catalog:",
     "shadcn-vue": "catalog:",
-    "tailwind-merge": "catalog:",
     "tailwindcss": "catalog:",
     "tw-animate-css": "catalog:",
     "unplugin-vue-components": "catalog:",
@@ -44,8 +42,8 @@
     "vue-sonner": "catalog:"
   },
   "devDependencies": {
-    "@golar/vue": "catalog:",
-    "golar": "catalog:",
-    "rolldown": "catalog:"
+    "rolldown": "catalog:",
+    "typescript": "catalog:",
+    "vue-tsc": "catalog:"
   }
 }

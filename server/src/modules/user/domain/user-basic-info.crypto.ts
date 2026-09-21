@@ -1,5 +1,9 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 
+import { type InferInput, ripple } from 'cyrenejs';
+
+import { DataSecret } from '#composition/tokens';
+
 export interface UserBasicInfo {
   phone?: string | null;
   email?: string | null;
@@ -17,98 +21,104 @@ const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12;
 const FORMAT_VERSION = 'v1';
 
-export class UserBasicInfoCrypto {
-  private readonly key: Buffer;
+export const UserBasicInfoCrypto = ripple(
+  {
+    DataSecret,
+  },
+  ({ DataSecret }) => {
+    const key = createHash('sha256').update(DataSecret).digest();
 
-  constructor(secret: string) {
-    this.key = createHash('sha256').update(secret).digest();
-  }
+    function encryptNullable(value: string | null | undefined) {
+      if (value === undefined) {
+        return undefined;
+      }
 
-  encryptBasicInfo(input: UserBasicInfo): UserEncryptedBasicInfo {
+      if (!value) {
+        return null;
+      }
+
+      const iv = randomBytes(IV_LENGTH);
+      const cipher = createCipheriv(ALGORITHM, key, iv);
+      const encrypted = Buffer.concat([cipher.update(value, 'utf8'), cipher.final()]);
+      const authTag = cipher.getAuthTag();
+
+      return [
+        FORMAT_VERSION,
+        iv.toString('base64url'),
+        authTag.toString('base64url'),
+        encrypted.toString('base64url'),
+      ].join(':');
+    }
+
+    function decryptNullable(value: string | null | undefined) {
+      if (!value) {
+        return null;
+      }
+
+      const [version, ivValue, authTagValue, encryptedValue] = value.split(':');
+
+      if (version !== FORMAT_VERSION || !ivValue || !authTagValue || !encryptedValue) {
+        return value;
+      }
+
+      const decipher = createDecipheriv(ALGORITHM, key, Buffer.from(ivValue, 'base64url'));
+      decipher.setAuthTag(Buffer.from(authTagValue, 'base64url'));
+
+      return Buffer.concat([
+        decipher.update(Buffer.from(encryptedValue, 'base64url')),
+        decipher.final(),
+      ]).toString('utf8');
+    }
+
+    function hashNullable(value: string | null | undefined) {
+      if (value === undefined) {
+        return undefined;
+      }
+
+      if (!value) {
+        return null;
+      }
+
+      return createHash('sha256').update(key).update(value).digest('hex');
+    }
+
     return {
-      phoneEncrypted: this.encryptNullable(input.phone),
-      emailEncrypted: this.encryptNullable(input.email),
-      phoneHash: this.hashNullable(input.phone),
-      addressEncrypted: this.encryptNullable(input.address),
+      encryptBasicInfo(input: UserBasicInfo): UserEncryptedBasicInfo {
+        return {
+          phoneEncrypted: encryptNullable(input.phone),
+          emailEncrypted: encryptNullable(input.email),
+          phoneHash: hashNullable(input.phone),
+          addressEncrypted: encryptNullable(input.address),
+        };
+      },
+
+      encryptBasicInfoPatch(input: UserBasicInfo): Partial<UserEncryptedBasicInfo> {
+        return {
+          ...('phone' in input
+            ? {
+                phoneEncrypted: encryptNullable(input.phone),
+                phoneHash: hashNullable(input.phone),
+              }
+            : {}),
+          ...('email' in input ? { emailEncrypted: encryptNullable(input.email) } : {}),
+          ...('address' in input ? { addressEncrypted: encryptNullable(input.address) } : {}),
+        };
+      },
+
+      decryptBasicInfo(input: {
+        phoneEncrypted?: string | null;
+        emailEncrypted?: string | null;
+        addressEncrypted?: string | null;
+      }): UserBasicInfo {
+        return {
+          phone: decryptNullable(input.phoneEncrypted),
+          email: decryptNullable(input.emailEncrypted),
+          address: decryptNullable(input.addressEncrypted),
+        };
+      },
     };
-  }
+  },
+  { debugName: 'UserBasicInfoCrypto' },
+);
 
-  encryptBasicInfoPatch(input: UserBasicInfo): Partial<UserEncryptedBasicInfo> {
-    return {
-      ...('phone' in input
-        ? {
-            phoneEncrypted: this.encryptNullable(input.phone),
-            phoneHash: this.hashNullable(input.phone),
-          }
-        : {}),
-      ...('email' in input ? { emailEncrypted: this.encryptNullable(input.email) } : {}),
-      ...('address' in input ? { addressEncrypted: this.encryptNullable(input.address) } : {}),
-    };
-  }
-
-  decryptBasicInfo(input: {
-    phoneEncrypted?: string | null;
-    emailEncrypted?: string | null;
-    addressEncrypted?: string | null;
-  }): UserBasicInfo {
-    return {
-      phone: this.decryptNullable(input.phoneEncrypted),
-      email: this.decryptNullable(input.emailEncrypted),
-      address: this.decryptNullable(input.addressEncrypted),
-    };
-  }
-
-  encryptNullable(value: string | null | undefined) {
-    if (value === undefined) {
-      return undefined;
-    }
-
-    if (!value) {
-      return null;
-    }
-
-    const iv = randomBytes(IV_LENGTH);
-    const cipher = createCipheriv(ALGORITHM, this.key, iv);
-    const encrypted = Buffer.concat([cipher.update(value, 'utf8'), cipher.final()]);
-    const authTag = cipher.getAuthTag();
-
-    return [
-      FORMAT_VERSION,
-      iv.toString('base64url'),
-      authTag.toString('base64url'),
-      encrypted.toString('base64url'),
-    ].join(':');
-  }
-
-  decryptNullable(value: string | null | undefined) {
-    if (!value) {
-      return null;
-    }
-
-    const [version, ivValue, authTagValue, encryptedValue] = value.split(':');
-
-    if (version !== FORMAT_VERSION || !ivValue || !authTagValue || !encryptedValue) {
-      return value;
-    }
-
-    const decipher = createDecipheriv(ALGORITHM, this.key, Buffer.from(ivValue, 'base64url'));
-    decipher.setAuthTag(Buffer.from(authTagValue, 'base64url'));
-
-    return Buffer.concat([
-      decipher.update(Buffer.from(encryptedValue, 'base64url')),
-      decipher.final(),
-    ]).toString('utf8');
-  }
-
-  hashNullable(value: string | null | undefined) {
-    if (value === undefined) {
-      return undefined;
-    }
-
-    if (!value) {
-      return null;
-    }
-
-    return createHash('sha256').update(this.key).update(value).digest('hex');
-  }
-}
+export type UserBasicInfoCrypto = InferInput<typeof UserBasicInfoCrypto>;

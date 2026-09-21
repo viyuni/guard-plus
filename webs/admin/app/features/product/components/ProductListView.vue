@@ -50,6 +50,7 @@ const {
   meta: productMeta,
   isLoading: isTableLoading,
 } = usePageQuery(() => productPageQuery(query.value));
+
 const [openAdjustProductStockDialog] = useOverlay(AdjustProductStockDialog);
 const [openProductCoverDialog] = useOverlay(ProductCoverDialog);
 const [openProductDialog] = useOverlay(ProductDialog);

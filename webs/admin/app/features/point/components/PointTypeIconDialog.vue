@@ -17,6 +17,7 @@ const open = defineModel<boolean>('open', { default: false });
 const pointTypeIconInput = ref<InstanceType<typeof PointTypeIconInput>>();
 const updatePointTypeIconMutation = useUpdatePointTypeIcon();
 const { getImageUrl } = useImage();
+
 const currentIconUrl = computed(() =>
   props.pointType.icon ? getImageUrl(props.pointType.icon) : undefined,
 );

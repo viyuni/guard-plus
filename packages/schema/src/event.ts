@@ -17,6 +17,12 @@ const HeartbeatStatusSchema = v.object({
   error: v.nullable(ErrorStatusSchema),
 });
 
+const LastErrorSchema = v.object({
+  name: v.string(),
+  message: v.string(),
+  at: v.number(),
+});
+
 const ListenerStatusSchema = v.object({
   instanceId: v.string(),
   roomId: v.number(),
@@ -34,13 +40,7 @@ const ListenerStatusSchema = v.object({
     invalidSince: NullableTimestampSchema,
   }),
   lastHeartbeat: v.nullable(HeartbeatStatusSchema),
-  lastError: v.nullable(
-    v.object({
-      name: v.string(),
-      message: v.string(),
-      at: v.number(),
-    }),
-  ),
+  lastError: v.nullable(LastErrorSchema),
 });
 
 export const EventServiceStatusSchema = v.object({

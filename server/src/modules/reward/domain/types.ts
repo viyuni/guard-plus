@@ -1,6 +1,6 @@
 import { type Guard } from '@viyuni/bevent-relay/events';
 
-import type { BiliEventRewardItemSnapshot } from '#db/schema';
+import type { BiliEventRewardItemSnapshot } from '#infrastructure/db/schema';
 
 export interface BiliGuardRewardEvent extends Guard {
   isManual?: boolean;

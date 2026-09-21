@@ -2,6 +2,11 @@ import * as v from 'valibot';
 
 import { bilibiliUid, emptyable, loginPassword, pageQuery, password, username } from './common';
 
+const emailSchema = v.pipe(v.string(), v.email('请输入有效的邮箱地址'), v.description('邮箱地址'));
+const addressSchema = v.pipe(v.string('请输入收获地址'), v.description('收获地址'));
+const phoneSchema = v.pipe(v.string('请输入手机号码'), v.description('手机号码'));
+const userNameKeywordSchema = v.pipe(v.string('请输入用户名'), v.description('用户名'));
+
 /**
  * User ID Params Schema。
  */
@@ -18,11 +23,9 @@ export const UserRegisterSchema = v.object({
   biliUid: bilibiliUid,
   username: username,
   password: password,
-  email: v.optional(
-    emptyable(v.pipe(v.string(), v.email('请输入有效的邮箱地址'), v.description('邮箱地址'))),
-  ),
-  address: v.optional(emptyable(v.pipe(v.string('请输入收获地址'), v.description('收获地址')))),
-  phone: v.optional(emptyable(v.pipe(v.string('请输入手机号码'), v.description('手机号码')))),
+  email: v.optional(emptyable(emailSchema)),
+  address: v.optional(emptyable(addressSchema)),
+  phone: v.optional(emptyable(phoneSchema)),
 });
 
 export type UserRegisterBody = v.InferOutput<typeof UserRegisterSchema>;
@@ -41,11 +44,9 @@ export type BiliRegisterVerification = v.InferOutput<typeof BiliRegisterVerifica
  */
 export const UserUpdateSchema = v.object({
   username: v.optional(username),
-  email: v.optional(
-    emptyable(v.pipe(v.string(), v.email('请输入有效的邮箱地址'), v.description('邮箱地址'))),
-  ),
-  address: v.optional(emptyable(v.pipe(v.string('请输入收获地址'), v.description('收获地址')))),
-  phone: v.optional(emptyable(v.pipe(v.string('请输入手机号码'), v.description('手机号码')))),
+  email: v.optional(emptyable(emailSchema)),
+  address: v.optional(emptyable(addressSchema)),
+  phone: v.optional(emptyable(phoneSchema)),
 });
 
 export type UpdateUserBody = v.InferOutput<typeof UserUpdateSchema>;
@@ -84,7 +85,7 @@ export type UserLoginBody = v.InferOutput<typeof UserLoginSchema>;
  * 用户分页查询 Schema
  */
 export const UserPageQuerySchema = v.object({
-  keyword: v.optional(emptyable(v.pipe(v.string('请输入用户名'), v.description('用户名')))),
+  keyword: v.optional(emptyable(userNameKeywordSchema)),
   status: v.optional(v.picklist(['active', 'banned'], '请选择有效的状态')),
   ...pageQuery.entries,
 });

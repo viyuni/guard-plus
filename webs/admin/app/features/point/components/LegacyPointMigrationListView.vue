@@ -43,6 +43,7 @@ const {
   meta,
   isLoading: isTableLoading,
 } = usePageQuery(() => legacyPointMigrationPageQuery(query.value));
+
 const [openCreateDialog] = useOverlay(LegacyPointMigrationCreateDialog);
 const { mutate: deleteMigration, isLoading: isDeleting } = useDeleteLegacyPointMigration();
 const { mutate: replayMigration, isLoading: isReplaying } = useReplayLegacyPointMigration();

@@ -10,10 +10,12 @@ const props = defineProps<{
 const numericValue = computed(() => Number(props.value));
 const isPositive = computed(() => numericValue.value > 0);
 const isNegative = computed(() => numericValue.value < 0);
+
 const displayValue = computed(() => {
   if (isPositive.value) {
     return `+${props.value}`;
   }
+
   return String(props.value);
 });
 </script>

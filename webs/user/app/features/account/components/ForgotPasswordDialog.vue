@@ -16,10 +16,12 @@ import { useForm } from 'vee-validate';
 import { useResetUserPassword } from '../mutations';
 import BiliRegisterCodeDialog, { type BiliRegisterStatus } from './BiliRegisterCodeDialog.vue';
 
+const confirmPasswordSchema = v.pipe(v.string(), v.nonEmpty('请再次输入密码'));
+
 const ForgotPasswordSchema = v.pipe(
   v.object({
     ...UserResetPasswordSchema.entries,
-    confirmPassword: v.pipe(v.string(), v.nonEmpty('请再次输入密码')),
+    confirmPassword: confirmPasswordSchema,
   }),
   v.forward(
     v.partialCheck(
@@ -48,6 +50,7 @@ const { handleSubmit, meta, resetForm, values } = useForm({
   validationSchema: toTypedSchema(ForgotPasswordSchema),
   initialValues: createDefaultValues(),
 });
+
 const { isLoading } = resetPasswordMutation;
 
 const onSubmit = handleSubmit(async values => {

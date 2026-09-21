@@ -1,4 +1,4 @@
-import { ConflictError, NotFoundError } from '#utils';
+import { ConflictError, NotFoundError } from '#shared';
 
 export class OrderNotFoundError extends NotFoundError {
   override code = 'ORDER_NOT_FOUND';

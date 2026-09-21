@@ -25,19 +25,14 @@
     "paths": {
       "~/*": ["./*"],
       "#apps/*": ["./src/apps/*"],
-      "#context": ["./src/context.ts"],
-      "#context/*": ["./src/context/*"],
-      "#db": ["./src/db/index.ts"],
-      "#db/*": ["./src/db/*"],
-      "#env/*": ["./src/env/*"],
+      "#composition": ["./src/composition/index.ts"],
+      "#composition/*": ["./src/composition/*"],
+      "#config/*": ["./src/config/*"],
+      "#infrastructure/*": ["./src/infrastructure/*"],
       "#modules/*": ["./src/modules/*"],
-      "#redis": ["./src/redis/index.ts"],
-      "#redis/*": ["./src/redis/*"],
-      "#server": ["./src/index.ts"],
-      "#utils": ["./src/utils/index.ts"],
-      "#utils/*": ["./src/utils/*"],
+      "#shared": ["./src/shared/index.ts"],
+      "#shared/*": ["./src/shared/*"],
       "#packages/schema/*": ["../packages/schema/src/*"],
-      "#queues": ["./src/queues/index.ts"],
       "#test-helpers/*": ["./src/__tests__/helpers/*"]
     }
   }

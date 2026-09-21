@@ -24,10 +24,10 @@
     "valibot": "catalog:"
   },
   "devDependencies": {
-    "@typescript/native-preview": "catalog:",
-    "bun-types": "catalog:"
+    "bun-types": "catalog:",
+    "typescript-7": "npm:typescript@^7.0.2"
   },
   "peerDependencies": {
-    "typescript": "^5"
+    "typescript": "^7.0.2"
   }
 }

@@ -16,10 +16,12 @@ import * as v from 'valibot';
 import { useRegister } from '../mutations';
 import BiliRegisterCodeDialog, { type BiliRegisterStatus } from './BiliRegisterCodeDialog.vue';
 
+const confirmPasswordSchema = v.pipe(v.string(), v.nonEmpty('请再次输入密码'));
+
 const RegisterFormSchema = v.pipe(
   v.object({
     ...UserRegisterSchema.entries,
-    confirmPassword: v.pipe(v.string(), v.nonEmpty('请再次输入密码')),
+    confirmPassword: confirmPasswordSchema,
   }),
   v.forward(
     v.partialCheck(
