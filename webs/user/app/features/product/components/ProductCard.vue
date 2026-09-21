@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ShoppingCart } from 'lucide-vue-next';
+import { motion } from 'motion-v';
 
+import { useEnterMotion } from '~/composables/useEnterMotion';
 import type { Product } from '~/features/product';
 
 import ProductImagePreview from './ProductImagePreview.vue';
@@ -8,11 +10,19 @@ import ProductImagePreview from './ProductImagePreview.vue';
 const props = defineProps<{
   product: Product;
   isBuying?: boolean;
+  /** Position in the staggered entrance sequence. */
+  enterIndex?: number;
 }>();
 
 const emit = defineEmits<{
   buy: [productId: string];
 }>();
+
+const {
+  animate: enterAnimate,
+  initial: enterInitial,
+  transition: enterTransition,
+} = useEnterMotion({ index: props.enterIndex, offset: 14 });
 
 const { getImageUrl } = useImage();
 
@@ -33,7 +43,12 @@ const isBuyDisabled = computed(
 </script>
 
 <template>
-  <article class="group rounded-xl">
+  <motion.article
+    class="group rounded-xl"
+    :initial="enterInitial"
+    :animate="enterAnimate"
+    :transition="enterTransition"
+  >
     <ProductImagePreview
       :src="coverUrl"
       :alt="product.name"
@@ -69,5 +84,5 @@ const isBuyDisabled = computed(
         <ShoppingCart :size="16" />
       </Button>
     </div>
-  </article>
+  </motion.article>
 </template>

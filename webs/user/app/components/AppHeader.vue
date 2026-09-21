@@ -1,6 +1,10 @@
 <script setup lang="ts">
+import { Skeleton } from '@web/ui/components/ui/skeleton';
 import { LogIn, WalletCards } from 'lucide-vue-next';
+import { motion } from 'motion-v';
 
+import { useDeferredVisibility } from '~/composables/useDeferredVisibility';
+import { useEnterMotion } from '~/composables/useEnterMotion';
 import { useUserSession } from '~/composables/useUserSession';
 import { AccountDropdown, useLogout } from '~/features/account';
 
@@ -15,8 +19,10 @@ const emit = defineEmits<{
 
 const logoutMutation = useLogout();
 const { isLoading: isLoggingOut } = logoutMutation;
-const { balances, isAuthenticated, refreshUserSession } = useUserSession();
+const { balances, isAuthenticated, isSessionLoading, refreshUserSession } = useUserSession();
 const hasPointAccounts = computed(() => balances.value.length > 0);
+const { animate, initial, transition } = useEnterMotion({ offset: 8 });
+const showAccountSkeleton = useDeferredVisibility(isSessionLoading);
 
 async function logout() {
   try {
@@ -39,28 +45,38 @@ async function logout() {
       </a>
 
       <div class="flex items-center justify-end gap-1">
-        <Button v-if="!isAuthenticated" variant="quaternary" @click="emit('login')">
-          <LogIn class="size-4" />
-          <span>登录 / 注册</span>
-        </Button>
-        <Button
-          v-if="isAuthenticated && hasPointAccounts"
-          variant="quaternary"
-          size="icon-sm"
-          aria-label="查看积分"
-          @click="emit('viewPoints')"
+        <Skeleton v-if="showAccountSkeleton" class="h-9 w-28 rounded-full" />
+
+        <motion.div
+          v-else-if="!isSessionLoading"
+          class="flex items-center justify-end gap-1"
+          :initial="initial"
+          :animate="animate"
+          :transition="transition"
         >
-          <WalletCards class="size-4" />
-        </Button>
-        <AccountDropdown
-          v-if="isAuthenticated"
-          :is-logging-out="isLoggingOut"
-          @edit-profile="emit('editProfile')"
-          @change-password="emit('changePassword')"
-          @view-transactions="emit('viewTransactions')"
-          @view-orders="emit('viewOrders')"
-          @logout="logout"
-        />
+          <Button v-if="!isAuthenticated" variant="quaternary" @click="emit('login')">
+            <LogIn class="size-4" />
+            <span>登录 / 注册</span>
+          </Button>
+          <Button
+            v-if="isAuthenticated && hasPointAccounts"
+            variant="quaternary"
+            size="icon-sm"
+            aria-label="查看积分"
+            @click="emit('viewPoints')"
+          >
+            <WalletCards class="size-4" />
+          </Button>
+          <AccountDropdown
+            v-if="isAuthenticated"
+            :is-logging-out="isLoggingOut"
+            @edit-profile="emit('editProfile')"
+            @change-password="emit('changePassword')"
+            @view-transactions="emit('viewTransactions')"
+            @view-orders="emit('viewOrders')"
+            @logout="logout"
+          />
+        </motion.div>
       </div>
     </div>
   </header>

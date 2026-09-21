@@ -8,6 +8,7 @@ export const useUserSession = defineQuery(() => {
 
   const user = computed(() => query.data.value?.user);
   const isAuthenticated = computed(() => Boolean(query.data.value?.authenticated));
+  const isSessionLoading = computed(() => query.isPlaceholderData.value);
   const balances = computed(() => user.value?.pointAccounts ?? []);
   const conversionRules = computed(() => user.value?.pointConversionRules ?? []);
 
@@ -19,6 +20,7 @@ export const useUserSession = defineQuery(() => {
     ...query,
     user,
     isAuthenticated,
+    isSessionLoading,
     balances,
     conversionRules,
     refreshUserSession,
