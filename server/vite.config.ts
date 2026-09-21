@@ -104,15 +104,15 @@ export default defineConfig({
       },
       'infra:up': {
         cache: false,
-        command: ['docker compose -f compose.infra.yml up -d', 'vpr db:push', 'vpr db:seed'],
+        command: ['docker compose -f compose.dev.yml up -d', 'vpr db:push', 'vpr db:seed'],
       },
       'infra:down': {
         cache: false,
-        command: 'docker compose -f compose.infra.yml down',
+        command: 'docker compose -f compose.dev.yml down',
       },
       'infra:logs': {
         cache: false,
-        command: 'docker compose -f compose.infra.yml logs -f',
+        command: 'docker compose -f compose.dev.yml logs -f',
       },
       'infra:reset': {
         cache: false,

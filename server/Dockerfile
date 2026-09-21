@@ -2,9 +2,18 @@ FROM oven/bun:1.4.2 AS base
 
 WORKDIR /app
 
-COPY . .
+COPY package.json bun.lock ./
+COPY server/package.json server/package.json
+COPY packages/schema/package.json packages/schema/package.json
 
-RUN bun install --frozen-lockfile --ignore-scripts
+RUN bun install \
+  --frozen-lockfile \
+  --ignore-scripts \
+  --filter @server/app \
+  --filter @shared/schema
+
+COPY server server
+COPY packages/schema packages/schema
 
 ENV NODE_ENV=production
 
