@@ -21,3 +21,11 @@
     font-weight: 450;
   }
 }
+
+@layer components {
+  /* 整页斜向薄渐变：柔光带横跨页面，不聚焦任何角落 */
+  .storefront-background {
+    background-image: linear-gradient(135deg, transparent 15%, var(--primary) 50%, transparent 85%);
+    opacity: 0.07;
+  }
+}
