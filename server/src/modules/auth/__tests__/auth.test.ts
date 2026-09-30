@@ -2,9 +2,8 @@ import { afterEach, describe, expect, it, mock, setSystemTime, spyOn } from 'bun
 
 import { Cyrene } from 'cyrenex';
 import Elysia from 'elysia';
-import { decodeJwt } from 'jose';
+import { decodeJwt, jwtVerify } from 'jose';
 
-import { JwtSecret } from '#config';
 import {
   createAuthCookieOptions,
   createAuthGuard,
@@ -14,9 +13,10 @@ import { Redis } from '#infrastructure/redis';
 import type { RedisClient } from '#infrastructure/redis';
 import { stub } from '#test-helpers/stub';
 
-import type { AuthTokenPair } from '../domain';
+import type { AuthPayload, AuthTokenPair } from '../domain';
+import { createAuth } from '../index';
 import { AuthSessionRepo } from '../repository';
-import { AuthUseCase } from '../usecase';
+import { createAuthUseCase as declareAuthUseCase } from '../usecase';
 
 const testAuthCookieOptions = createAuthCookieOptions({
   apiOrigin: 'https://api.admin.example.com',
@@ -58,11 +58,14 @@ async function createAuthUseCase() {
   const refreshResults = new Map<string, AuthTokenPair>();
   const refreshLocks = new Set<string>();
 
+  const AuthUseCase = declareAuthUseCase('AuthUseCase', {
+    JwtSecret: stub('JwtSecret', 'test-secret'),
+  });
+
   const runtime = new Cyrene()
     .use(AuthSessionRepo, AuthUseCase)
     // 会话仓库的方法会被下面整体替换, 这里只需要一个占位客户端。
-    .override(Redis, stub('Redis', {} as RedisClient))
-    .override(JwtSecret, stub('JwtSecret', 'test-secret'));
+    .override(Redis, stub('Redis', {} as RedisClient));
 
   runtimes.push(runtime);
 
@@ -151,6 +154,41 @@ async function createAuthUseCase() {
 }
 
 describe('AuthUseCase', () => {
+  it('isolates factory declarations and JWT secrets inside one runtime', async () => {
+    const AdminAuth = createAuth('AdminTokenUseCase', {
+      JwtSecret: stub('AdminJwtSecret', 'admin-secret'),
+    });
+
+    const UserAuth = createAuth('UserTokenUseCase', {
+      JwtSecret: stub('UserJwtSecret', 'user-secret'),
+    });
+
+    expect(AdminAuth.AuthUseCase).not.toBe(UserAuth.AuthUseCase);
+
+    const runtime = new Cyrene()
+      .use(AdminAuth.AuthUseCase, UserAuth.AuthUseCase)
+      .override(Redis, stub('Redis', {} as RedisClient));
+
+    runtimes.push(runtime);
+    await runtime.init();
+
+    const admin = runtime.resolve(AdminAuth.AuthUseCase);
+    const user = runtime.resolve(UserAuth.AuthUseCase);
+    const payload = { id: 'account', role: 'user', sid: 'session' } satisfies AuthPayload;
+    const adminToken = await admin.signAccessToken(payload);
+    const userToken = await user.signAccessToken(payload);
+    const adminSecret = new TextEncoder().encode('admin-secret');
+    const userSecret = new TextEncoder().encode('user-secret');
+
+    expect(admin).not.toBe(user);
+    expect(runtime.resolve(AdminAuth.AuthUseCase)).toBe(admin);
+    expect(runtime.resolve(UserAuth.AuthUseCase)).toBe(user);
+    await expect(jwtVerify(adminToken, adminSecret)).resolves.toBeDefined();
+    await expect(jwtVerify(userToken, userSecret)).resolves.toBeDefined();
+    await expect(jwtVerify(adminToken, userSecret)).rejects.toThrow();
+    await expect(jwtVerify(userToken, adminSecret)).rejects.toThrow();
+  });
+
   it('签发和解析对象 JWT payload', async () => {
     const { authUseCase } = await createAuthUseCase();
 

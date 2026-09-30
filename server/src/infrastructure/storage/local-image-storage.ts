@@ -11,8 +11,7 @@ import { InvalidImageSizeError } from './errors';
 /**
  * 本地磁盘图片存储。
  *
- * 技术能力, 不含业务规则; 消费方只依赖 `ImageStorage` 这一条声明,
- * 存储目录来自组合层的 `ImageSavePath` 配置 ripple。
+ * 技术能力, 不含业务规则; 存储目录来自 `#config` 的 `ImageSavePath`。
  */
 export const ImageStorage = ripple(
   'ImageStorage',

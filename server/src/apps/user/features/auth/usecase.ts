@@ -1,10 +1,10 @@
 import type { UserLoginBody, UserRegisterBody, UserResetPasswordBody } from '@shared/schema/user';
 import { type InferInput, ripple } from 'cyrenex';
 
+import { Auth } from '#apps/user/auth';
 import { BiliRoom } from '#config';
 import { Database } from '#infrastructure/db';
 import { Logger } from '#infrastructure/logger';
-import Auth from '#modules/auth';
 import Point from '#modules/point';
 import Reward from '#modules/reward';
 import User from '#modules/user';

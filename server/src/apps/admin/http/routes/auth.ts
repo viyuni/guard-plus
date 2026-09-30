@@ -2,6 +2,7 @@ import { AdminLoginSchema } from '@shared/schema/admin';
 import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
+import { Auth } from '#apps/admin/auth';
 import AdminAuthFeature from '#apps/admin/features/auth';
 import {
   ACCESS_TOKEN_COOKIE_NAME,
@@ -9,7 +10,6 @@ import {
   AUTH_STATE_COOKIE_VALUE,
   REFRESH_TOKEN_COOKIE_NAME,
 } from '#infrastructure/http';
-import Auth from '#modules/auth';
 
 import { AdminAuthCookies } from '../auth';
 

@@ -7,6 +7,7 @@ import {
 import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
+import { Auth } from '#apps/user/auth';
 import UserAuthFeature from '#apps/user/features/auth';
 import {
   ACCESS_TOKEN_COOKIE_NAME,
@@ -18,7 +19,6 @@ import {
   BILI_REGISTER_VERIFIER_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_NAME,
 } from '#infrastructure/http';
-import Auth from '#modules/auth';
 
 import { UserAuthCookies } from '../auth';
 

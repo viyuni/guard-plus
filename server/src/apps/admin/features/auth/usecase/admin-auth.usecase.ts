@@ -1,8 +1,8 @@
 import type { AdminLoginBody } from '@shared/schema/admin';
 import { type InferInput, ripple } from 'cyrenex';
 
+import { Auth } from '#apps/admin/auth';
 import AdminFeature, { isAdminAvailable } from '#apps/admin/features/admin';
-import Auth from '#modules/auth';
 import { InvalidCredentialsError, PasswordUtil } from '#shared';
 
 export interface AdminLoginUser {

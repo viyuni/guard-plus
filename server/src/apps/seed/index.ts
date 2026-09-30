@@ -460,7 +460,7 @@ async function seedBiliGuardRewardEvents(targetDb: DbClient) {
   await seedRewardRules(targetDb, pointTypeMap);
   await seedPointConversionRules(targetDb, pointTypeMap);
 
-  // 奖励发放链路使用组合层声明好的配置与数据库 ripple（与 targetDb 同一个 DATABASE_URL）。
+  // 奖励发放链路使用声明好的 Database / DataSecret（与 targetDb 同一个 DATABASE_URL）。
   await using runtime = new Cyrene().use(...Object.values(SeedRewardRipples));
 
   await runtime.init();

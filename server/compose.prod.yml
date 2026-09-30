@@ -124,7 +124,6 @@ services:
     logging: *logging
     environment:
       <<: *app-environment
-      APP_ROLE: admin
       ADMIN_PORT: 3600
       ADMIN_API_ORIGIN: ${ADMIN_API_ORIGIN:?set ADMIN_API_ORIGIN in .env.prod}
       ADMIN_WEB_ORIGINS: ${ADMIN_WEB_ORIGINS:?set ADMIN_WEB_ORIGINS in .env.prod}
@@ -152,7 +151,6 @@ services:
     logging: *logging
     environment:
       <<: *app-environment
-      APP_ROLE: user
       USER_PORT: 3800
       USER_API_ORIGIN: ${USER_API_ORIGIN:?set USER_API_ORIGIN in .env.prod}
       USER_WEB_ORIGINS: ${USER_WEB_ORIGINS:?set USER_WEB_ORIGINS in .env.prod}
@@ -184,7 +182,6 @@ services:
     logging: *logging
     environment:
       <<: *app-environment
-      APP_ROLE: event
       EVENT_PORT: 3700
       VIYUNI_LOGIN_SYNC_URL: ${VIYUNI_LOGIN_SYNC_URL:?set VIYUNI_LOGIN_SYNC_URL in .env.prod}
       VIYUNI_LOGIN_SYNC_PASSWORD: ${VIYUNI_LOGIN_SYNC_PASSWORD:?set VIYUNI_LOGIN_SYNC_PASSWORD in .env.prod}

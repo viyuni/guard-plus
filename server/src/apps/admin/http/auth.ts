@@ -1,7 +1,8 @@
 import { ripple } from 'cyrenex';
 
+import { Auth } from '#apps/admin/auth';
 import { createAuthCookieOptions, createAuthGuard } from '#infrastructure/http';
-import Auth, {
+import {
   ACCESS_TOKEN_EXPIRES_IN_SECONDS,
   BILI_REGISTER_EXPIRES_IN_SECONDS,
   REFRESH_TOKEN_EXPIRES_IN_SECONDS,

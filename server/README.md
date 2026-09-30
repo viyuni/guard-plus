@@ -9,7 +9,7 @@ This package contains the admin and user API apps, event ingestion runtime, back
 The layering is `apps → modules → infrastructure → config → shared`, enforced by
 the `guard-plus/architecture-import-boundary` lint rule.
 
-- `src/apps/admin`: admin HTTP app — `config.ts`, `composition.ts`, `server.ts`,
+- `src/apps/admin`: admin HTTP app — `config.ts`, `auth.ts`, `server.ts`,
   `http/` (auth guard, root ripple, route ripples), `features/` (app-only capabilities).
 - `src/apps/user`: user HTTP app — same layout.
 - `src/apps/event`: Bilibili event ingestion runtime plus its `EventHandler` ripple.
@@ -58,7 +58,9 @@ such as `#modules/user/repository` are rejected by lint, so module internals sta
 refactorable.
 
 Every runnable app owns one Composition Root and one Cyrene container:
-`createAdminApp()`, `createUserApp()`, `createEventApp()`. The composition root lists
+`createAdminServer()`, `createUserServer()`, `createEventApp()`. The HTTP apps
+combine dependency initialization and Elysia assembly in `server.ts`; the event app
+keeps its composition root in `composition.ts`. The composition root lists
 every node explicitly (no scanning, no `providersOf`), registers it with
 `new Cyrene().use(...Object.values(Manifest))`, and then `await runtime.init()` to
 validate the graph and warm every reachable singleton before the app accepts work.
@@ -123,14 +125,20 @@ admin-only needs.
 `src/config/*` holds one env schema fragment per concern (`shared`, `database`,
 `redis`, `bili`, `image`, `smtp`) and, in `src/config/index.ts`, the single
 `createEnv` call that turns them into the `Config` ripple plus the fine-grained
-configuration ripples derived from it (`DataSecret`, `JwtSecret`, `BiliRoom`,
+configuration ripples derived from it (`DataSecret`, `AdminJwtSecret`, `UserJwtSecret`, `BiliRoom`,
 `RegisterCodeTtl`, `ImageSavePath`, `DatabaseUrl`, `RedisOptions`, `LoggerConfig`,
-`SmtpConfig`). Only the variables all three processes share are declared there.
+`SmtpConfig`). It declares shared variables and optional JWT secrets for both apps;
+each JWT secret is required only when its corresponding ripple is resolved.
 
 Each `src/apps/<app>/config.ts` remains the app's configuration boundary: it validates
 the app-only variables (`ADMIN_*`, `USER_*`, `EVENT_*`, SMTP) and exposes the ones
 other app code needs as ripples too (`ApiOrigin`, `WebOrigins`). Modules never read
 `process.env`; they depend on the configuration ripples they actually use.
+
+Each HTTP app creates its authentication declarations once with `createAuth(key,
+{ JwtSecret })`, passing `AdminJwtSecret` or `UserJwtSecret`. Guards, login, and
+logout routes reuse that app's declarations. The event app uses only the shared
+verification capabilities and does not require a JWT secret.
 
 The container owns infrastructure lifetimes: `Database`/`Redis` return instances with
 `Symbol.asyncDispose`, so a single `runtime.dispose()` closes them on shutdown and on

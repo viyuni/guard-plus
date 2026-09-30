@@ -1,14 +1,22 @@
 import { Cyrene } from 'cyrenex';
 
+import { Auth as AdminAuth } from '#apps/admin/auth';
 import AdminFeature from '#apps/admin/features/admin';
 import AdminAuthFeature from '#apps/admin/features/auth';
 import AdminUserFeature from '#apps/admin/features/user';
+import { Auth as UserAuth } from '#apps/user/auth';
 import UserAuthFeature from '#apps/user/features/auth';
-import { BiliRoom, DataSecret, ImageSavePath, JwtSecret, RegisterCodeTtl } from '#config';
+import {
+  BiliRoom,
+  DataSecret,
+  ImageSavePath,
+  AdminJwtSecret,
+  UserJwtSecret,
+  RegisterCodeTtl,
+} from '#config';
 import { Database, type DbClient } from '#infrastructure/db';
 import { createLogger, Logger } from '#infrastructure/logger';
 import { Redis, type RedisClient } from '#infrastructure/redis';
-import Auth from '#modules/auth';
 import BiliEvent from '#modules/bili-event';
 import Dashboard from '#modules/dashboard';
 import Order from '#modules/order';
@@ -26,7 +34,8 @@ import { stub } from './stub';
  * 便于在同一个 Runtime 里覆盖跨模块事务。
  */
 const TestRipples = {
-  ...Auth,
+  ...UserAuth,
+  AdminTokenUseCase: AdminAuth.AuthUseCase,
   ...BiliEvent,
   ...Dashboard,
   ...Order,
@@ -60,6 +69,7 @@ export function createTestContainer({ db, redis, imageSavePath = '' }: TestConta
     .override(DataSecret, stub('DataSecret', 'test-data-secret'))
     .override(BiliRoom, stub('BiliRoom', 721))
     .override(RegisterCodeTtl, stub('RegisterCodeTtl', 300))
-    .override(JwtSecret, stub('JwtSecret', 'test-jwt-secret'))
+    .override(AdminJwtSecret, stub('AdminJwtSecret', 'test-admin-jwt-secret'))
+    .override(UserJwtSecret, stub('UserJwtSecret', 'test-user-jwt-secret'))
     .override(ImageSavePath, stub('ImageSavePath', imageSavePath));
 }

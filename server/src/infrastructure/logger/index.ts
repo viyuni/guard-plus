@@ -56,9 +56,7 @@ export function createLogger({ level, pretty: usePretty }: LoggerOptions) {
 export type AppLogger = ReturnType<typeof createLogger>;
 
 /**
- * 应用日志器。
- *
- * 参数来自 `#config` 的 `LoggerConfig`, 谁需要日志就 import 这条声明。
+ * 应用日志器。参数来自 `#config` 的 `LoggerConfig`。
  */
 export const Logger = ripple(
   'Logger',

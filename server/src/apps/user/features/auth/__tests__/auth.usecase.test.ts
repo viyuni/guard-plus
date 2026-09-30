@@ -3,13 +3,13 @@ import { afterEach, expect, it, spyOn } from 'bun:test';
 import { Cyrene } from 'cyrenex';
 import { createClient } from 'redis';
 
-import { BiliRoom, DataSecret, JwtSecret, RegisterCodeTtl } from '#config';
+import { Auth } from '#apps/user/auth';
+import { BiliRoom, DataSecret, UserJwtSecret, RegisterCodeTtl } from '#config';
 import { Database } from '#infrastructure/db';
 import type { DbClient } from '#infrastructure/db';
 import { Logger } from '#infrastructure/logger';
 import { createLogger } from '#infrastructure/logger';
 import { Redis } from '#infrastructure/redis';
-import Auth from '#modules/auth';
 import type { BiliRegisterChallenge } from '#modules/auth';
 import Point from '#modules/point';
 import Reward from '#modules/reward';
@@ -58,7 +58,7 @@ async function createUseCase(
     .override(Redis, stub('Redis', createClient({})))
     .override(Logger, stub('Logger', createLogger({ level: 'silent', pretty: false })))
     .override(DataSecret, stub('DataSecret', 'test-data-secret'))
-    .override(JwtSecret, stub('JwtSecret', 'test-jwt-secret'))
+    .override(UserJwtSecret, stub('UserJwtSecret', 'test-jwt-secret'))
     .override(BiliRoom, stub('BiliRoom', 1))
     .override(RegisterCodeTtl, stub('RegisterCodeTtl', 300));
 

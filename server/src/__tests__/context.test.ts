@@ -82,7 +82,8 @@ describe('Cyrene application contexts', () => {
     const keys = runtime.inspect().nodes.map(node => node.key);
 
     expect(keys).toContain('RewardProcessor');
-    expect(keys).not.toContain('JwtSecret');
+    expect(keys).not.toContain('AdminJwtSecret');
+    expect(keys).not.toContain('UserJwtSecret');
     expect(keys).not.toContain('ImageStorage');
     expect(keys).not.toContain('ProductUseCase');
   });
