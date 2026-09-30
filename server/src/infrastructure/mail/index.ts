@@ -1,6 +1,8 @@
+import { ripple } from 'cyrenex';
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 
+import { SmtpConfig } from '#config';
 import { BadRequestError } from '#shared';
 
 export interface SendMailInput {
@@ -15,6 +17,8 @@ export interface Mailer {
   notifyEmails: string[];
   send(input: SendMailInput): Promise<unknown>;
   close(): void;
+  /** 交给依赖图按资源协议释放, 无需在容器外手工 close。 */
+  [Symbol.asyncDispose](): Promise<void>;
 }
 
 /** SMTP 技术配置, 由 App Boundary 从环境变量映射而来。 */
@@ -50,6 +54,10 @@ class SmtpMailer implements Mailer {
     this.transporter.close();
   }
 
+  async [Symbol.asyncDispose]() {
+    this.close();
+  }
+
   send(input: SendMailInput) {
     return this.transporter.sendMail({
       from: this.config.from,
@@ -70,6 +78,10 @@ class UnconfiguredMailer implements Mailer {
 
   close() {}
 
+  async [Symbol.asyncDispose]() {
+    // 降级实现不持有任何需要释放的资源
+  }
+
   async send(): Promise<never> {
     throw new BadRequestError('SMTP 未配置，无法发送邮件');
   }
@@ -78,3 +90,12 @@ class UnconfiguredMailer implements Mailer {
 export function createMailer(config: SmtpMailConfig | undefined) {
   return config ? new SmtpMailer(config) : new UnconfiguredMailer();
 }
+
+/** SMTP 邮件发送能力; 未配置 SMTP 时是明确的降级实现。 */
+export const Mailer = ripple(
+  'Mailer',
+  {
+    SmtpConfig,
+  },
+  ({ SmtpConfig }) => createMailer(SmtpConfig),
+);

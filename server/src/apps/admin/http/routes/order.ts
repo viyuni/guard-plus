@@ -6,7 +6,7 @@ import {
   UpdateOrderExpressSchema,
   UpdateOrderReceiverSchema,
 } from '@shared/schema/order';
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
 import Order from '#modules/order';
@@ -14,6 +14,7 @@ import Order from '#modules/order';
 import { AdminAuthGuard } from '../auth';
 
 export const AdminOrderRoutes = ripple(
+  'AdminOrderRoutes',
   {
     AdminAuthGuard,
     OrderUseCase: Order.OrderUseCase,
@@ -147,5 +148,4 @@ export const AdminOrderRoutes = ripple(
           },
         },
       ),
-  { debugName: 'AdminOrderRoutes' },
 );

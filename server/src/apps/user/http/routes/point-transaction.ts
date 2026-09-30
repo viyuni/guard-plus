@@ -1,5 +1,5 @@
 import { TransactionPageQuerySchema } from '@shared/schema/point-transaction';
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
 import Point from '#modules/point';
@@ -7,6 +7,7 @@ import Point from '#modules/point';
 import { UserAuthGuard } from '../auth';
 
 export const PointTransactionRoutes = ripple(
+  'PointTransactionRoutes',
   {
     PointTransactionUseCase: Point.PointTransactionUseCase,
     UserAuthGuard,
@@ -33,5 +34,4 @@ export const PointTransactionRoutes = ripple(
           },
         },
       ),
-  { debugName: 'PointTransactionRoutes' },
 );

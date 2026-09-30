@@ -1,6 +1,6 @@
 import type { DashboardOverviewQuery } from '@shared/schema/dashboard';
 import { BiliGuardType } from '@shared/schema/reward';
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
 import { DashboardRepo } from '../repository';
 
@@ -48,6 +48,7 @@ function buildBiliGuardTrend(
 }
 
 export const DashboardUseCase = ripple(
+  'DashboardUseCase',
   {
     DashboardRepo,
   },
@@ -101,7 +102,6 @@ export const DashboardUseCase = ripple(
       };
     },
   }),
-  { debugName: 'DashboardUseCase' },
 );
 
 export type DashboardUseCase = InferInput<typeof DashboardUseCase>;

@@ -1,10 +1,11 @@
 import type { BiliEventPageQuery } from '@shared/schema/reward';
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
 import BiliEventModule from '#modules/bili-event';
 
 /** 大航海事件只读查询能力。 */
 export const RewardQuery = ripple(
+  'RewardQuery',
   {
     BiliEventRepo: BiliEventModule.BiliEventRepo,
   },
@@ -13,7 +14,6 @@ export const RewardQuery = ripple(
       return BiliEventRepo.pageBiliGuard(query);
     },
   }),
-  { debugName: 'RewardQuery' },
 );
 
 export type RewardQuery = InferInput<typeof RewardQuery>;

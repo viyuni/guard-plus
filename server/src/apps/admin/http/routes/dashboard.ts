@@ -1,5 +1,5 @@
 import { DashboardOverviewQuerySchema } from '@shared/schema/dashboard';
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
 import Dashboard from '#modules/dashboard';
@@ -7,6 +7,7 @@ import Dashboard from '#modules/dashboard';
 import { AdminAuthGuard } from '../auth';
 
 export const DashboardRoutes = ripple(
+  'DashboardRoutes',
   {
     AdminAuthGuard,
     DashboardUseCase: Dashboard.DashboardUseCase,
@@ -33,5 +34,4 @@ export const DashboardRoutes = ripple(
           },
         },
       ),
-  { debugName: 'DashboardRoutes' },
 );

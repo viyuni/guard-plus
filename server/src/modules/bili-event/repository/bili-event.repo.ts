@@ -1,8 +1,8 @@
 import type { BiliEventPageQuery } from '@shared/schema/reward';
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 import { and, asc, eq, inArray, isNotNull, lt, lte, or, sql } from 'drizzle-orm';
 
-import { Database } from '#composition/tokens';
+import { Database } from '#infrastructure/db';
 import type { DbExecutor } from '#infrastructure/db';
 import { QueryPageBuilder } from '#infrastructure/db/helper';
 import {
@@ -14,6 +14,7 @@ import {
 } from '#infrastructure/db/schema';
 
 export const BiliEventRepo = ripple(
+  'BiliEventRepo',
   {
     Database,
   },
@@ -459,7 +460,6 @@ export const BiliEventRepo = ripple(
       },
     };
   },
-  { debugName: 'BiliEventRepository' },
 );
 
 export type BiliEventRepository = InferInput<typeof BiliEventRepo>;

@@ -1,5 +1,5 @@
 import { UserUpdatePasswordSchema, UserUpdateSchema } from '@shared/schema/user';
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
 import Point from '#modules/point';
@@ -8,6 +8,7 @@ import User from '#modules/user';
 import { UserAuthGuard } from '../auth';
 
 export const UserRoutes = ripple(
+  'UserRoutes',
   {
     PointConversionUseCase: Point.PointConversionUseCase,
     UserAuthGuard,
@@ -59,5 +60,4 @@ export const UserRoutes = ripple(
           },
         },
       ),
-  { debugName: 'UserRoutes' },
 );

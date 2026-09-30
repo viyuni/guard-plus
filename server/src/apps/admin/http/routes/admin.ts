@@ -6,7 +6,7 @@ import {
   AdminUpdateSchema,
   SuperAdminUpdateSchema,
 } from '@shared/schema/admin';
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
 import AdminFeature, { AdminErrors } from '#apps/admin/features/admin';
@@ -14,6 +14,7 @@ import AdminFeature, { AdminErrors } from '#apps/admin/features/admin';
 import { AdminAuthGuard } from '../auth';
 
 export const AdminRoutes = ripple(
+  'AdminRoutes',
   {
     AdminAuthGuard,
     AdminUseCase: AdminFeature.AdminUseCase,
@@ -105,5 +106,4 @@ export const AdminRoutes = ripple(
           },
         },
       ),
-  { debugName: 'AdminRoutes' },
 );

@@ -21,19 +21,17 @@
     "noPropertyAccessFromIndexSignature": false,
     "types": ["bun-types", "node"],
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.server.app.tsbuildinfo",
-
     "paths": {
       "~/*": ["./*"],
       "#apps/*": ["./src/apps/*"],
-      "#composition": ["./src/composition/index.ts"],
-      "#composition/*": ["./src/composition/*"],
       "#config/*": ["./src/config/*"],
       "#infrastructure/*": ["./src/infrastructure/*"],
       "#modules/*": ["./src/modules/*"],
       "#shared": ["./src/shared/index.ts"],
       "#shared/*": ["./src/shared/*"],
       "#packages/schema/*": ["../packages/schema/src/*"],
-      "#test-helpers/*": ["./src/__tests__/helpers/*"]
+      "#test-helpers/*": ["./src/__tests__/helpers/*"],
+      "#config": ["./src/config/index.ts"]
     }
   }
 }

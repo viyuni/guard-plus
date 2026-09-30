@@ -1,5 +1,3 @@
-import { defineRipples } from 'cyrenejs';
-
 import { RewardRuleRepo } from './repository';
 import {
   BiliGuardRewardUseCase,
@@ -15,7 +13,7 @@ export * from './domain';
 export type { RewardProcessor as RewardProcessorService } from './usecase';
 
 /** reward 模块的 Ripple Manifest。 */
-export default defineRipples({
+export default {
   RewardRuleRepo,
 
   RewardProcessor,
@@ -24,4 +22,4 @@ export default defineRipples({
   RewardRuleUseCase,
   ManualRewardUseCase,
   RewardReplayUseCase,
-});
+};

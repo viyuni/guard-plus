@@ -1,14 +1,16 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test';
 
-import { Cyrene } from 'cyrenejs';
+import { Cyrene } from 'cyrenex';
 import { eq, inArray, like } from 'drizzle-orm';
 
-import { Database, Logger } from '#composition/tokens';
+import { Database } from '#infrastructure/db';
 import type { DbClient } from '#infrastructure/db';
 import { admins } from '#infrastructure/db/schema';
+import { Logger } from '#infrastructure/logger';
 import { createLogger } from '#infrastructure/logger';
 import { InvalidCredentialsError } from '#shared';
 import { PasswordUtil } from '#shared';
+import { stub } from '#test-helpers/stub';
 import { getTestDatabase } from '#test-helpers/test-database';
 
 import { AdminNotFoundError, AdminSuperAdminCannotBeBannedError } from '../domain/errors';
@@ -105,17 +107,16 @@ beforeEach(async () => {
 
   await clearAdmins();
 
-  const runtime = new Cyrene({
-    ripples: { AdminRepo, AdminUseCase },
-    bindings: [
-      { token: Database, value: db },
-      { token: Logger, value: createLogger({ level: 'silent', pretty: false }) },
-    ],
-  });
+  const runtime = new Cyrene()
+    .use(AdminRepo, AdminUseCase)
+    .override(Database, stub('Database', db))
+    .override(Logger, stub('Logger', createLogger({ level: 'silent', pretty: false })));
 
   runtimes.push(runtime);
 
-  useCase = (await runtime.start()).AdminUseCase;
+  await runtime.init();
+
+  useCase = runtime.ripples.AdminUseCase;
 });
 
 afterEach(async () => {

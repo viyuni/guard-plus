@@ -129,9 +129,9 @@ vpr @server/app#typecheck
 - [`server/src/apps/user`](./server/src/apps/user/)：用户 HTTP 应用，结构同上。
 - [`server/src/apps/event`](./server/src/apps/event/)：直播事件接入运行时。
 - [`server/src/apps/seed`](./server/src/apps/seed/)：开发种子脚本及其组合根。
-- [`server/src/modules`](./server/src/modules/)：可复用业务能力，每个模块只有一个公共入口并默认导出 `defineRipples(...)`。
+- [`server/src/modules`](./server/src/modules/)：可复用业务能力，每个模块只有一个公共入口并默认导出 Ripple Manifest 对象。
 - [`server/src/infrastructure`](./server/src/infrastructure/)：db、redis、queue、logger、mail、storage 与 HTTP 适配器。
-- [`server/src/composition`](./server/src/composition/)：基础设施与配置令牌及绑定辅助函数。
+- [`server/src/config`](./server/src/config/)：环境变量片段，以及共享配置 ripple 与由它派生的能力 ripple。
 - [`server/src/shared`](./server/src/shared/)：与业务无关的错误与工具函数。
 - [`server/src/config`](./server/src/config/)：纯环境变量 Schema 片段，只由 App 配置边界导入。
 - [`server/src/eden.ts`](./server/src/eden.ts)：供 Web 包使用的 Eden 类型导出入口。

@@ -1,5 +1,3 @@
-import { defineRipples } from 'cyrenejs';
-
 import { AdminRepo } from './repository';
 import { AdminUseCase } from './usecase';
 
@@ -7,7 +5,7 @@ import { AdminUseCase } from './usecase';
 export * from './domain';
 
 /** Admin App 专属的管理员账号能力。 */
-export default defineRipples({
+export default {
   AdminRepo,
   AdminUseCase,
-});
+};

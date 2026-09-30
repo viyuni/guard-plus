@@ -1,9 +1,9 @@
 import type { PageQuery } from '@shared/schema/common';
 import type { ProductPageQuery } from '@shared/schema/product';
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 import { and, eq, gte, lte, sql } from 'drizzle-orm';
 
-import { Database } from '#composition/tokens';
+import { Database } from '#infrastructure/db';
 import type { DbExecutor, DbTransaction } from '#infrastructure/db';
 import { deletedAtIsNull, QueryPageBuilder } from '#infrastructure/db/helper';
 import {
@@ -23,6 +23,7 @@ import {
 const POSTGRES_INTEGER_MAX = 2_147_483_647;
 
 export const ProductRepo = ripple(
+  'ProductRepo',
   {
     Database,
   },
@@ -288,7 +289,6 @@ export const ProductRepo = ripple(
       },
     };
   },
-  { debugName: 'ProductRepository' },
 );
 
 export type ProductRepository = InferInput<typeof ProductRepo>;

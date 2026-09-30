@@ -1,12 +1,21 @@
 import { afterEach, expect, it, spyOn } from 'bun:test';
 
+import { Cyrene } from 'cyrenex';
+import { createClient } from 'redis';
+
+import { Auth } from '#apps/user/auth';
+import { BiliRoom, DataSecret, UserJwtSecret, RegisterCodeTtl } from '#config';
+import { Database } from '#infrastructure/db';
 import type { DbClient } from '#infrastructure/db';
-import Auth, { type BiliRegisterChallenge } from '#modules/auth';
+import { Logger } from '#infrastructure/logger';
+import { createLogger } from '#infrastructure/logger';
+import { Redis } from '#infrastructure/redis';
+import type { BiliRegisterChallenge } from '#modules/auth';
 import Point from '#modules/point';
 import Reward from '#modules/reward';
 import User from '#modules/user';
 import { BadRequestError } from '#shared';
-import { createTestRuntime } from '#test-helpers/test-runtime';
+import { stub } from '#test-helpers/stub';
 
 import { UserAuthUseCase } from '../usecase';
 
@@ -38,20 +47,28 @@ async function createUseCase(
 ) {
   const tx = {};
 
-  const runtime = createTestRuntime(
-    { UserAuthUseCase },
-    {
-      database: {
-        transaction: async (callback: (actualTx: unknown) => unknown) => callback(tx),
-      } as unknown as DbClient,
-    },
-  );
+  const database = {
+    transaction: async (callback: (actualTx: unknown) => unknown) => callback(tx),
+  } as unknown as DbClient;
+
+  const runtime = new Cyrene()
+    .use(UserAuthUseCase)
+    // 只提供占位基础设施与配置, 不建立真实连接。
+    .override(Database, stub('Database', database))
+    .override(Redis, stub('Redis', createClient({})))
+    .override(Logger, stub('Logger', createLogger({ level: 'silent', pretty: false })))
+    .override(DataSecret, stub('DataSecret', 'test-data-secret'))
+    .override(UserJwtSecret, stub('UserJwtSecret', 'test-jwt-secret'))
+    .override(BiliRoom, stub('BiliRoom', 1))
+    .override(RegisterCodeTtl, stub('RegisterCodeTtl', 300));
 
   runtimes.push(runtime);
 
-  const container = await runtime.start();
+  await runtime.init();
 
-  const create = spyOn(await runtime.resolve(User.UserUseCase), 'create').mockImplementation(
+  const container = runtime.ripples;
+
+  const create = spyOn(runtime.resolve(User.UserUseCase), 'create').mockImplementation(
     async () =>
       ({
         id: 'user-id',
@@ -61,7 +78,7 @@ async function createUseCase(
   );
 
   const replayByUserId = spyOn(
-    await runtime.resolve(Reward.RewardReplayUseCase),
+    runtime.resolve(Reward.RewardReplayUseCase),
     'replayByUserId',
   ).mockImplementation(async () => {
     if (options.rewardError) {
@@ -72,7 +89,7 @@ async function createUseCase(
   });
 
   const replayLegacyMigrations = spyOn(
-    await runtime.resolve(Point.PointAccountUseCase),
+    runtime.resolve(Point.PointAccountUseCase),
     'replayLegacyMigrations',
   ).mockImplementation(async () => {
     if (options.migrationError) {
@@ -82,8 +99,8 @@ async function createUseCase(
     return [];
   });
 
-  const registerUseCase = await runtime.resolve(Auth.BiliRegisterUseCase);
-  const resetUseCase = await runtime.resolve(Auth.BiliPasswordResetUseCase);
+  const registerUseCase = runtime.resolve(Auth.BiliRegisterUseCase);
+  const resetUseCase = runtime.resolve(Auth.BiliPasswordResetUseCase);
 
   const getOwnedChallenge = spyOn(registerUseCase, 'getOwnedChallenge').mockImplementation(
     async () => challenge,
@@ -111,7 +128,7 @@ async function createUseCase(
     async () => passwordResetChallenge,
   );
 
-  const accountUseCase = await runtime.resolve(User.UserUseCase);
+  const accountUseCase = runtime.resolve(User.UserUseCase);
 
   const getAvailableByBiliUid = spyOn(accountUseCase, 'getAvailableByBiliUid').mockImplementation(
     async () =>

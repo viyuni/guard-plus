@@ -3,9 +3,9 @@ import type {
   CreateLegacyPointMigrationBody,
   LegacyPointMigrationPageQuery,
 } from '@shared/schema/point-account';
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
-import { Database } from '#composition/tokens';
+import { Database } from '#infrastructure/db';
 import type { DbTransaction } from '#infrastructure/db';
 import User from '#modules/user';
 import { BadRequestError } from '#shared';
@@ -16,6 +16,7 @@ import { PointBalanceUseCase } from './point-balance.usecase';
 import { PointTypeQuery } from './point-type-query';
 
 export const PointAccountUseCase = ripple(
+  'PointAccountUseCase',
   {
     Database,
     LegacyPointMigrationRepo,
@@ -144,7 +145,6 @@ export const PointAccountUseCase = ripple(
       },
     };
   },
-  { debugName: 'PointAccountUseCase' },
 );
 
 export type PointAccountUseCase = InferInput<typeof PointAccountUseCase>;

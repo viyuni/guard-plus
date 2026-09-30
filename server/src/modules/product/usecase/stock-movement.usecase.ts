@@ -1,9 +1,10 @@
 import type { StockMovementPageQuery } from '@shared/schema/stock';
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
 import { StockMovementRepo } from '../repository';
 
 export const StockMovementUseCase = ripple(
+  'StockMovementUseCase',
   {
     StockMovementRepo,
   },
@@ -15,7 +16,6 @@ export const StockMovementUseCase = ripple(
       return StockMovementRepo.page(query);
     },
   }),
-  { debugName: 'StockMovementUseCase' },
 );
 
 export type StockMovementUseCase = InferInput<typeof StockMovementUseCase>;

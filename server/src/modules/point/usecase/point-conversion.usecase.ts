@@ -3,9 +3,9 @@ import type {
   CreatePointConversionRuleBody,
   UpdatePointConversionRuleBody,
 } from '@shared/schema/point-conversion';
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
-import { Database } from '#composition/tokens';
+import { Database } from '#infrastructure/db';
 import type {
   InsertPointConversionRule,
   UpdatePointConversionRule,
@@ -27,6 +27,7 @@ import { PointBalanceUseCase } from './point-balance.usecase';
 import { PointTypeQuery } from './point-type-query';
 
 export const PointConversionUseCase = ripple(
+  'PointConversionUseCase',
   {
     Database,
     PointAccountRepo,
@@ -269,7 +270,6 @@ export const PointConversionUseCase = ripple(
       },
     };
   },
-  { debugName: 'PointConversionUseCase' },
 );
 
 export type PointConversionUseCase = InferInput<typeof PointConversionUseCase>;

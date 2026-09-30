@@ -2,18 +2,19 @@ import { createHash } from 'node:crypto';
 import { access, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
-import { ImageSavePath } from '#composition/tokens';
+import { ImageSavePath } from '#config';
 
 import { InvalidImageSizeError } from './errors';
 
 /**
  * 本地磁盘图片存储。
  *
- * 技术能力, 不含业务规则; 对外只通过 `ImageStorage` 令牌被消费方使用。
+ * 技术能力, 不含业务规则; 存储目录来自 `#config` 的 `ImageSavePath`。
  */
-export const LocalImageStorage = ripple(
+export const ImageStorage = ripple(
+  'ImageStorage',
   {
     ImageSavePath,
   },
@@ -76,7 +77,6 @@ export const LocalImageStorage = ripple(
       },
     };
   },
-  { debugName: 'LocalImageStorage' },
 );
 
-export type ImageStorage = InferInput<typeof LocalImageStorage>;
+export type ImageStorage = InferInput<typeof ImageStorage>;

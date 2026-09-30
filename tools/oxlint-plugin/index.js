@@ -5,8 +5,12 @@
  * - `ripple-deps-each-on-own-line`：强制 `ripple()` 的依赖对象每个属性独占一行。
  *   Cyrene 的 provider 输入是这份项目里唯一的“依赖清单”，
  *   竖排后新增/删除依赖在 diff 里一眼可见，也便于 review 依赖边界。
- * - `ripple-pascal-case`：强制 `ripple()` 返回的 provider 定义用 PascalCase 命名。
+ * - `ripple-pascal-case`：强制 `ripple()` 的声明 key 与返回的 provider 定义都用 PascalCase。
+ *   cyrenex 的 key 是声明身份，也是 `app.ripples` 上的属性名，必须与定义同名。
  * - `ripple-deps-pascal-case`：强制 `ripple()` 的依赖键与注入定义同名（PascalCase 简写）。
+ *
+ * cyrenex 的调用形态是 `ripple(key, deps, factory)`，所以依赖对象在第二个参数；
+ * 依赖对象一律通过 `getDepsObject` 定位，不写死下标。
  *
  * 注意：oxfmt 会保留对象字面量里用户写的换行（不会把短对象折叠回一行），
  * 所以第一条规则的 autofix 结果不会被 `vp fmt` 撤销。
@@ -27,6 +31,28 @@ function toPascalCase(name) {
     .filter(Boolean)
     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
     .join('');
+}
+
+/**
+ * 定位 `ripple()` 的依赖对象。
+ *
+ * cyrenex 的形态是 `ripple(key, deps, factory)`；没有 key 的旧形态
+ * （`ripple(deps, factory)`）也一并兼容，便于渐进迁移。
+ *
+ * @param {any} node `ripple()` 调用节点
+ */
+function getDepsObject(node) {
+  const [first, second] = node.arguments ?? [];
+
+  if (!first) {
+    return null;
+  }
+
+  if (first.type === 'Literal' && typeof first.value === 'string') {
+    return second?.type === 'ObjectExpression' ? second : null;
+  }
+
+  return first.type === 'ObjectExpression' ? first : null;
 }
 
 /**
@@ -139,9 +165,9 @@ const rippleDepsEachOnOwnLine = {
           return;
         }
 
-        const deps = node.arguments?.[0];
+        const deps = getDepsObject(node);
 
-        if (!deps || deps.type !== 'ObjectExpression' || deps.properties.length === 0) {
+        if (!deps || deps.properties.length === 0) {
           return;
         }
 
@@ -162,10 +188,10 @@ const rippleDepsEachOnOwnLine = {
 /**
  * `ripple()` 返回的是一个 provider 定义，语义上等同于“类”：`token()` 和
  * `InferInput<typeof X>` 的类型名已经是 PascalCase，返回值也统一成 PascalCase 后，
- * provider 定义、它的实例类型和 `container` 上的键名就是同一个名字。
+ * provider 定义、声明 key、它的实例类型和 `app.ripples` 上的键名就是同一个名字。
  *
- * 依赖对象里的键不受此规则约束——令牌别名（`apiOrigin: ApiOrigin`）仍然是 camelCase，
- * 只有“返回值被绑定到哪个名字”需要大写开头。
+ * 依赖对象里的键不受此规则约束——令牌别名仍然是 camelCase，
+ * 只有声明 key 与“返回值被绑定到哪个名字”需要大写开头。
  *
  * 不提供 autofix：这里的 provider 基本都是 `export` 的，跨文件引用无法在单文件 fix 里改到，
  * 只报错并给出建议名，改名交给调用方统一处理。
@@ -174,17 +200,46 @@ const ripplePascalCase = {
   meta: {
     type: 'suggestion',
     docs: {
-      description: 'ripple() 返回的 provider 必须用 PascalCase 命名',
+      description: 'ripple() 的 key 与返回的 provider 必须用 PascalCase 命名',
     },
     schema: [],
     messages: {
       pascalCase:
         'ripple() 返回的是 provider 定义，请用 PascalCase 命名："{{name}}" 应改为 "{{suggestion}}"',
+      pascalCaseKey:
+        'ripple() 的 key 是声明身份，请用 PascalCase 命名："{{name}}" 应改为 "{{suggestion}}"',
     },
   },
 
   create(context) {
     return {
+      CallExpression(node) {
+        const callee = node.callee;
+
+        if (!callee || callee.type !== 'Identifier' || callee.name !== RIPPLE_CALLEE_NAME) {
+          return;
+        }
+
+        const key = node.arguments?.[0];
+
+        if (!key || key.type !== 'Literal' || typeof key.value !== 'string') {
+          return;
+        }
+
+        if (PASCAL_CASE.test(key.value)) {
+          return;
+        }
+
+        context.report({
+          node: key,
+          messageId: 'pascalCaseKey',
+          data: {
+            name: key.value,
+            suggestion: toPascalCase(key.value),
+          },
+        });
+      },
+
       VariableDeclarator(node) {
         const id = node.id;
 
@@ -293,9 +348,9 @@ const rippleDepsPascalCase = {
           return;
         }
 
-        const deps = node.arguments?.[0];
+        const deps = getDepsObject(node);
 
-        if (!deps || deps.type !== 'ObjectExpression') {
+        if (!deps) {
           return;
         }
 
@@ -311,8 +366,13 @@ const rippleDepsPascalCase = {
  * 架构边界规则。
  *
  * `server/src` 的顶层目录就是依赖层级：apps → modules → infrastructure →
- * composition → shared，导入只能顺着这个方向走；另外还有两条模块级约束：
+ * config → shared，导入只能顺着这个方向走；另外还有两条模块级约束：
  * 跨模块只能走 `#modules/<name>` 公共入口，App 之间不能互相导入。
+ *
+ * config 层有点特殊：它同时是"环境变量 Schema"和"派生出来的配置 ripple"的所在地。
+ * 前者（`#config/*` 片段与原始解析结果 `configEnv`）只允许在 config 层内部与
+ * `apps/<app>/config.ts` 出现，后者（`LoggerConfig`、`DatabaseUrl`、`RedisOptions` …）
+ * 就是给各层按需 import 的能力，跟随上面的分层规则即可。
  *
  * 判据只看源码里的 `#` 别名导入，因此 relative import 仍留给人工判断
  * （同一模块内部的 relative import 是允许且推荐的）。
@@ -320,26 +380,22 @@ const rippleDepsPascalCase = {
 
 const SOURCE_LAYERS = {
   // 同层互相依赖始终允许；这里只列"允许向下的层"。
-  apps: new Set(['modules', 'infrastructure', 'composition', 'shared', 'config']),
-  modules: new Set(['infrastructure', 'composition', 'shared']),
-  infrastructure: new Set(['composition', 'shared']),
-  // composition 声明的令牌必须用基础设施能力的类型（Database: DbClient ...），
-  // 因此允许 composition → infrastructure，但基础设施本身不允许反向依赖 composition。
-  composition: new Set(['infrastructure', 'shared']),
+  apps: new Set(['modules', 'infrastructure', 'shared', 'config']),
+  modules: new Set(['infrastructure', 'shared', 'config']),
+  infrastructure: new Set(['shared', 'config']),
+  // config 只依赖 shared：环境变量解析与配置 ripple 都在这层，其它层可以按需 import。
+  config: new Set(['shared']),
   shared: new Set(),
-  // config 只包含无运行时副作用的环境变量 Schema 片段。
-  config: new Set(),
 };
 
 const ALIAS_LAYERS = [
   ['#apps/', 'apps'],
   ['#modules/', 'modules'],
   ['#infrastructure/', 'infrastructure'],
-  ['#composition/', 'composition'],
-  ['#composition', 'composition'],
   ['#shared/', 'shared'],
   ['#shared', 'shared'],
   ['#config/', 'config'],
+  ['#config', 'config'],
 ];
 
 /**
@@ -384,6 +440,45 @@ function resolveAliasLayer(specifier) {
   return null;
 }
 
+const CONFIG_ALIAS = '#config';
+
+/** App 配置边界：唯一允许接触原始环境变量的业务文件。 */
+const APP_CONFIG_FILE = /^apps\/[^/]+\/config\.ts$/;
+
+/** `#config` 里的原始解析结果，等价于直接读 `process.env`。 */
+const RAW_ENV_EXPORT = 'configEnv';
+
+/**
+ * 判断一次 `#config` 导入是否触碰"原始环境变量表面"。
+ *
+ * - `#config/<fragment>`：直接引用 env schema 片段；
+ * - `#config` 的 `configEnv`（含 namespace 导入）：等价于直接读 `process.env`。
+ *
+ * 由 config 层派生出来的配置 ripple 不在此列——它们才是给各层按需 import 的能力。
+ *
+ * @param {string} specifier
+ * @param {any} node import/export 声明节点
+ */
+function touchesRawEnv(specifier, node) {
+  if (specifier.startsWith(`${CONFIG_ALIAS}/`)) {
+    return true;
+  }
+
+  if (specifier !== CONFIG_ALIAS) {
+    return false;
+  }
+
+  return (node.specifiers ?? []).some(item => {
+    if (item.type === 'ImportNamespaceSpecifier') {
+      return true;
+    }
+
+    const name = item.imported?.name ?? item.imported?.value ?? item.local?.name;
+
+    return name === RAW_ENV_EXPORT;
+  });
+}
+
 const architectureImportBoundary = {
   meta: {
     type: 'problem',
@@ -393,12 +488,10 @@ const architectureImportBoundary = {
     schema: [],
     messages: {
       layerViolation:
-        '{{layer}} 层不允许依赖 {{target}} 层："{{specifier}}" 破坏了 apps → modules → infrastructure → composition → shared 的单向依赖',
+        '{{layer}} 层不允许依赖 {{target}} 层："{{specifier}}" 破坏了 apps → modules → infrastructure → config → shared 的单向依赖',
       moduleDeepImport:
         '跨模块禁止 deep import："{{specifier}}" 只允许该模块内部使用，其他模块请从 "#modules/{{module}}" 默认导出访问能力',
       appDeepImport: 'App 之间禁止互相导入："{{specifier}}" 只允许在 apps/{{app}} 内部使用',
-      configBoundary:
-        '环境变量 Schema 只允许由 apps/<app>/config.ts 导入："{{specifier}}" 出现在 {{relative}}',
     },
   },
 
@@ -420,20 +513,6 @@ const architectureImportBoundary = {
 
       if (!targetLayer) {
         return null;
-      }
-
-      if (
-        targetLayer === 'config' &&
-        source.layer !== 'config' &&
-        !/^apps\/[^/]+\/config\.ts$/.test(source.relative)
-      ) {
-        return {
-          messageId: 'configBoundary',
-          data: {
-            relative: source.relative,
-            specifier,
-          },
-        };
       }
 
       const sameLayer = targetLayer === source.layer;

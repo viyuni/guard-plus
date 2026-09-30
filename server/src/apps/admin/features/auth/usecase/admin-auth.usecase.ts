@@ -1,8 +1,8 @@
 import type { AdminLoginBody } from '@shared/schema/admin';
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
+import { Auth } from '#apps/admin/auth';
 import AdminFeature, { isAdminAvailable } from '#apps/admin/features/admin';
-import Auth from '#modules/auth';
 import { InvalidCredentialsError, PasswordUtil } from '#shared';
 
 export interface AdminLoginUser {
@@ -22,6 +22,7 @@ export interface AdminLoginResult {
 }
 
 export const AdminAuthUseCase = ripple(
+  'AdminAuthUseCase',
   {
     AdminRepo: AdminFeature.AdminRepo,
     AuthUseCase: Auth.AuthUseCase,
@@ -64,7 +65,6 @@ export const AdminAuthUseCase = ripple(
       };
     },
   }),
-  { debugName: 'AdminAuthUseCase' },
 );
 
 export type AdminAuthUseCase = InferInput<typeof AdminAuthUseCase>;

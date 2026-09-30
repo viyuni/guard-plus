@@ -1,10 +1,11 @@
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
 import { RewardBiliGuardRoutes } from './bili-guard';
 import { RewardRuleRoutes } from './rule';
 
 export const RewardRoutes = ripple(
+  'RewardRoutes',
   {
     RewardBiliGuardRoutes,
     RewardRuleRoutes,
@@ -19,5 +20,4 @@ export const RewardRoutes = ripple(
     })
       .use(routes.RewardBiliGuardRoutes)
       .use(routes.RewardRuleRoutes),
-  { debugName: 'RewardRoutes' },
 );

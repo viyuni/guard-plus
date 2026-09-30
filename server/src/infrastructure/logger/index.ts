@@ -1,5 +1,8 @@
+import { ripple } from 'cyrenex';
 import pino from 'pino';
 import pretty from 'pino-pretty';
+
+import { LoggerConfig } from '#config';
 
 export interface LoggerOptions {
   /** 日志等级，例如 `debug` / `info` / `warn` / `error`。 */
@@ -51,3 +54,14 @@ export function createLogger({ level, pretty: usePretty }: LoggerOptions) {
 }
 
 export type AppLogger = ReturnType<typeof createLogger>;
+
+/**
+ * 应用日志器。参数来自 `#config` 的 `LoggerConfig`。
+ */
+export const Logger = ripple(
+  'Logger',
+  {
+    LoggerConfig,
+  },
+  ({ LoggerConfig }) => createLogger(LoggerConfig),
+);

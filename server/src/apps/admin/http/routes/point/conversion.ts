@@ -4,7 +4,7 @@ import {
   PointConversionRuleIdParamsSchema,
   UpdatePointConversionRuleSchema,
 } from '@shared/schema/point-conversion';
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
 import Point from '#modules/point';
@@ -12,6 +12,7 @@ import Point from '#modules/point';
 import { AdminAuthGuard } from '../../auth';
 
 export const PointConversionRoutes = ripple(
+  'PointConversionRoutes',
   {
     AdminAuthGuard,
     PointConversionUseCase: Point.PointConversionUseCase,
@@ -116,5 +117,4 @@ export const PointConversionRoutes = ripple(
           },
         },
       ),
-  { debugName: 'PointConversionRoutes' },
 );

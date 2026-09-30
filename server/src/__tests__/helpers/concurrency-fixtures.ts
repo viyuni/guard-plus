@@ -87,11 +87,13 @@ export async function expectRejectsInstanceOf<T extends Error>(
 
 export async function createDeps() {
   const runtime = createTestContainer({ db, redis: getTestRedis() });
-  const container = await runtime.start();
 
   runtimes.add(runtime);
 
-  return container;
+  // 与 App 组合根一致: 预热整张图, 让缺失绑定/环在夹具创建时就失败。
+  await runtime.init();
+
+  return runtime.ripples;
 }
 
 export async function seedPointType(name: string) {

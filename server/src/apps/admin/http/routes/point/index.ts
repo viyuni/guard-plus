@@ -1,4 +1,4 @@
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
 import { PointAccountRoutes } from './account';
@@ -7,6 +7,7 @@ import { PointTransactionRoutes } from './transaction';
 import { PointTypeRoutes } from './type';
 
 export const PointRoutes = ripple(
+  'PointRoutes',
   {
     PointAccountRoutes,
     PointConversionRoutes,
@@ -25,5 +26,4 @@ export const PointRoutes = ripple(
       .use(routes.PointAccountRoutes)
       .use(routes.PointConversionRoutes)
       .use(routes.PointTransactionRoutes),
-  { debugName: 'PointRoutes' },
 );

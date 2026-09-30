@@ -1,11 +1,12 @@
 import { pageQuery } from '@shared/schema';
 import { ProductIdParamsSchema } from '@shared/schema/product';
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
 import Product from '#modules/product';
 
 export const ProductRoutes = ripple(
+  'ProductRoutes',
   {
     ProductUseCase: Product.ProductUseCase,
   },
@@ -41,5 +42,4 @@ export const ProductRoutes = ripple(
           },
         },
       ),
-  { debugName: 'ProductRoutes' },
 );

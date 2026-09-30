@@ -1,7 +1,9 @@
+import { type Dependency, ripple } from 'cyrenex';
 import { createClient } from 'redis';
 import type { RedisClientOptions, RedisClientType } from 'redis';
 
-import type { AppLogger } from '#infrastructure/logger';
+import { RedisOptions } from '#config';
+import { Logger, type AppLogger } from '#infrastructure/logger';
 
 export type RedisClient = RedisClientType<any, any, any, 2 | 3>;
 
@@ -59,3 +61,30 @@ export function createRedisClient(
 
   return client;
 }
+
+/**
+ * Redis 客户端。
+ *
+ * 连接参数来自 `#config` 的 `RedisOptions`, 容器拥有并在停止时释放连接。
+ */
+export const Redis: Dependency<
+  RedisClient,
+  {
+    RedisOptions: Dependency<RedisConnectionOptions, {}, false>;
+    Logger: Dependency<AppLogger, {}, false>;
+  },
+  false
+> = ripple(
+  'Redis',
+  {
+    RedisOptions,
+    Logger,
+  },
+  ({ RedisOptions, Logger }) => {
+    const client = createRedisClient(RedisOptions, Logger);
+
+    return Object.assign(client, {
+      [Symbol.asyncDispose]: () => client.destroy(),
+    });
+  },
+);

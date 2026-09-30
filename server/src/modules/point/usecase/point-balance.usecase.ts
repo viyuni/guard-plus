@@ -1,4 +1,4 @@
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
 import type { DbTransaction } from '#infrastructure/db';
 import type { PointAccount, PointTransaction } from '#infrastructure/db/schema';
@@ -19,6 +19,7 @@ import { PointAccountRepo, PointTransactionRepo } from '../repository';
 import { PointTypeQuery } from './point-type-query';
 
 export const PointBalanceUseCase = ripple(
+  'PointBalanceUseCase',
   {
     PointAccountRepo,
     PointTransactionRepo,
@@ -141,7 +142,6 @@ export const PointBalanceUseCase = ripple(
       },
     };
   },
-  { debugName: 'PointBalanceUseCase' },
 );
 
 export type PointBalanceUseCase = InferInput<typeof PointBalanceUseCase>;

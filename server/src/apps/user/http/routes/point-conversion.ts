@@ -1,5 +1,5 @@
 import { UserConvertPointSchema } from '@shared/schema/point-conversion';
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
 import Point from '#modules/point';
@@ -7,6 +7,7 @@ import Point from '#modules/point';
 import { UserAuthGuard } from '../auth';
 
 export const PointConversionRoutes = ripple(
+  'PointConversionRoutes',
   {
     PointConversionUseCase: Point.PointConversionUseCase,
     UserAuthGuard,
@@ -48,5 +49,4 @@ export const PointConversionRoutes = ripple(
           },
         },
       ),
-  { debugName: 'PointConversionRoutes' },
 );

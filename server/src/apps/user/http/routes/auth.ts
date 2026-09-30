@@ -4,9 +4,10 @@ import {
   UserRegisterSchema,
   UserResetPasswordSchema,
 } from '@shared/schema/user';
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
+import { Auth } from '#apps/user/auth';
 import UserAuthFeature from '#apps/user/features/auth';
 import {
   ACCESS_TOKEN_COOKIE_NAME,
@@ -18,7 +19,6 @@ import {
   BILI_REGISTER_VERIFIER_COOKIE_NAME,
   REFRESH_TOKEN_COOKIE_NAME,
 } from '#infrastructure/http';
-import Auth from '#modules/auth';
 
 import { UserAuthCookies } from '../auth';
 
@@ -53,6 +53,7 @@ function removeBiliPasswordResetCookies(
 }
 
 export const AuthRoutes = ripple(
+  'AuthRoutes',
   {
     AuthUseCase: Auth.AuthUseCase,
     UserAuthCookies,
@@ -248,5 +249,4 @@ export const AuthRoutes = ripple(
           },
         },
       ),
-  { debugName: 'AuthRoutes' },
 );

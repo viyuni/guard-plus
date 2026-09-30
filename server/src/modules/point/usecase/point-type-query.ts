@@ -1,4 +1,4 @@
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
 import type { DbExecutor } from '#infrastructure/db';
 
@@ -12,6 +12,7 @@ import { PointTypeRepo } from '../repository';
  * 因此单独的 Query 可以避免把图片存储等 Admin 依赖带进它们的依赖图。
  */
 export const PointTypeQuery = ripple(
+  'PointTypeQuery',
   {
     PointTypeRepo,
   },
@@ -36,7 +37,6 @@ export const PointTypeQuery = ripple(
       return PointTypeRepo.list();
     },
   }),
-  { debugName: 'PointTypeQuery' },
 );
 
 export type PointTypeQuery = InferInput<typeof PointTypeQuery>;

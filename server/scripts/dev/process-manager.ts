@@ -86,6 +86,7 @@ export class ProcessManager {
 
   private startProcess(config: DevProcess): ManagedProcess {
     const proc = Bun.spawn(config.command, {
+      env: process.env,
       cwd: this.getProcessCwd(config),
       stdout: 'pipe',
       stderr: 'pipe',

@@ -1,14 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
 import { createHash } from 'node:crypto';
 
-import { Cyrene } from 'cyrenejs';
+import { Cyrene } from 'cyrenex';
 import { createClient } from 'redis';
 
-import { Redis, RegisterCodeTtl } from '#composition/tokens';
+import { RegisterCodeTtl } from '#config';
+import { Redis } from '#infrastructure/redis';
 import type { RedisClient } from '#infrastructure/redis';
+import { stub } from '#test-helpers/stub';
 
-import type { BiliRegisterRedisRepository } from '../repository';
 import { BiliPasswordResetRepo, BiliRegisterRepo } from '../repository';
+import type { BiliRegisterRedisRepository } from '../repository';
 import {
   BILI_REGISTER_CODE_PREFIX,
   BiliPasswordResetUseCase,
@@ -67,23 +69,22 @@ beforeEach(async () => {
   redis = createClient({ url: testRedisUrl });
   await redis.connect();
 
-  const runtime = new Cyrene({
-    ripples: {
+  const runtime = new Cyrene()
+    .use(
       BiliPasswordResetRepo,
       BiliPasswordResetUseCase,
       BiliRegisterRepo,
       BiliRegisterUseCase,
       BiliVerificationMatcher,
-    },
-    bindings: [
-      { token: Redis, value: redis },
-      { token: RegisterCodeTtl, value: ttlSeconds },
-    ],
-  });
+    )
+    .override(Redis, stub('Redis', redis))
+    .override(RegisterCodeTtl, stub('RegisterCodeTtl', ttlSeconds));
 
   runtimes.push(runtime);
 
-  const container = await runtime.start();
+  await runtime.init();
+
+  const container = runtime.ripples;
 
   repo = container.BiliRegisterRepo;
   useCase = container.BiliRegisterUseCase;

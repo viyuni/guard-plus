@@ -1,13 +1,14 @@
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 import { nanoid } from 'nanoid';
 
-import { Redis } from '#composition/tokens';
+import { Redis } from '#infrastructure/redis';
 
 import { REFRESH_TOKEN_EXPIRES_IN_SECONDS } from '../constants';
 import type { AuthRole, AuthSession, AuthTokenPair } from '../domain';
 import releaseRefreshLockScript from './release-refresh-lock.lua' with { type: 'text' };
 
 export const AuthSessionRepo = ripple(
+  'AuthSessionRepo',
   {
     Redis,
   },
@@ -126,7 +127,6 @@ export const AuthSessionRepo = ripple(
       },
     };
   },
-  { debugName: 'AuthSessionRepository' },
 );
 
 export type AuthSessionRedisRepository = InferInput<typeof AuthSessionRepo>;

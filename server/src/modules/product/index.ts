@@ -1,5 +1,3 @@
-import { defineRipples } from 'cyrenejs';
-
 import { ProductRepo, StockMovementRepo } from './repository';
 import { ProductUseCase, StockMovementUseCase } from './usecase';
 
@@ -8,9 +6,9 @@ export * from './domain';
 export * from './usecase/types';
 
 /** product 模块的 Ripple Manifest。 */
-export default defineRipples({
+export default {
   ProductRepo,
   StockMovementRepo,
   ProductUseCase,
   StockMovementUseCase,
-});
+};

@@ -1,4 +1,4 @@
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
 import Auth from '#modules/auth';
 
@@ -10,6 +10,7 @@ export interface BiliMessageEvent {
 
 /** 将实时弹幕匹配到 Redis 中的短生命周期验证码 Challenge。 */
 export const BiliVerificationConsumer = ripple(
+  'BiliVerificationConsumer',
   {
     BiliVerificationMatcher: Auth.BiliVerificationMatcher,
   },
@@ -22,7 +23,6 @@ export const BiliVerificationConsumer = ripple(
       });
     },
   }),
-  { debugName: 'BiliVerificationConsumer' },
 );
 
 export type BiliVerificationConsumer = InferInput<typeof BiliVerificationConsumer>;

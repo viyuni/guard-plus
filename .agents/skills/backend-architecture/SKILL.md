@@ -31,8 +31,8 @@ server/
         http/         auth guard, root ripple, routes/
         features/     admin-only capabilities (admin, auth, user)
         config.ts     ADMIN_* env -> AdminConfig
-        composition.ts createAdminApp() (Composition Root + Cyrene runtime)
-        server.ts     Elysia assembly (createAdminServer)
+        auth.ts       app-specific authentication declarations
+        server.ts     composition root + Elysia assembly (createAdminServer)
       user/           user HTTP app (same layout)
       event/          event ingestion runtime (config/composition/handler/server)
       seed/           development seed script + its own runtime
@@ -130,8 +130,9 @@ Shared modules must not:
 
 ## Composition Root Rules
 
-Each runnable app owns one Composition Root and one Cyrene runtime, created in
-`server/src/apps/<app>/composition.ts`:
+Each runnable app owns one Composition Root and one Cyrene runtime. HTTP apps
+create both in `server/src/apps/{admin,user}/server.ts` (`createAdminServer` /
+`createUserServer`); the event app keeps `apps/event/composition.ts`:
 
 - Read the app config from `apps/<app>/config.ts` (the only place that knows the env prefix).
 - Create the infrastructure the app owns (`createDatabase`, `createRedisClient`) and close it if startup fails.
@@ -318,7 +319,8 @@ Module manifest: default export of modules/<name>/index.ts (defineRipples)
 Route ripple export: PascalCase + Routes, e.g. AdminRoutes, PointTypeRoutes
 HTTP root ripple: PascalCase + Http, e.g. AdminHttp, UserHttp
 Guard ripple: PascalCase + Guard, e.g. AdminAuthGuard
-Composition root: create<App>App, e.g. createAdminApp
+HTTP composition root: create<App>Server, e.g. createAdminServer
+Event composition root: createEventApp
 HTTP server factory: create<App>Server, e.g. createAdminServer
 UseCase/Ripple: {Module}UseCase, {Module}Query, {Module}Processor, {Module}Repo
 Policy: {Module}Policy
@@ -330,7 +332,7 @@ Elysia name: PascalCase descriptive and unique within the app, e.g. AdminAuthRou
 
 - If code is HTTP-specific, keep it in `server/src/apps/{admin,user}/http/` (routes, guard, root ripple).
 - If code is app-only business logic, keep it in `server/src/apps/{admin,user}/features/*`.
-- If code wires app config, the runtime graph, or app-only startup, keep it in `server/src/apps/<app>/composition.ts` / `config.ts`.
+- If code wires HTTP app config, the runtime graph, or app-only startup, keep it in `server/src/apps/{admin,user}/server.ts` / `config.ts`. Event wiring stays in `apps/event/composition.ts`.
 - If code defines a background job/queue processor payload, keep it in `server/src/infrastructure/queue`; the processing logic belongs to a module ripple (for example `RewardProcessor`).
 - If code describes a business action, keep it in `modules/<name>/usecase/*`.
 - If code is a Drizzle read/write, keep it in `modules/<name>/repository/*`.

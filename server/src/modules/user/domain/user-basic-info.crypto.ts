@@ -1,8 +1,8 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
-import { DataSecret } from '#composition/tokens';
+import { DataSecret } from '#config';
 
 export interface UserBasicInfo {
   phone?: string | null;
@@ -22,6 +22,7 @@ const IV_LENGTH = 12;
 const FORMAT_VERSION = 'v1';
 
 export const UserBasicInfoCrypto = ripple(
+  'UserBasicInfoCrypto',
   {
     DataSecret,
   },
@@ -118,7 +119,6 @@ export const UserBasicInfoCrypto = ripple(
       },
     };
   },
-  { debugName: 'UserBasicInfoCrypto' },
 );
 
 export type UserBasicInfoCrypto = InferInput<typeof UserBasicInfoCrypto>;

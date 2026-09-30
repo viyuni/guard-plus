@@ -1,7 +1,7 @@
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 import { and, asc, eq, gt, isNull, lte, or } from 'drizzle-orm';
 
-import { Database } from '#composition/tokens';
+import { Database } from '#infrastructure/db';
 import type { DbExecutor } from '#infrastructure/db';
 import { deletedAtIsNull } from '#infrastructure/db/helper';
 import {
@@ -12,6 +12,7 @@ import {
 } from '#infrastructure/db/schema';
 
 export const RewardRuleRepo = ripple(
+  'RewardRuleRepo',
   {
     Database,
   },
@@ -169,7 +170,6 @@ export const RewardRuleRepo = ripple(
       },
     };
   },
-  { debugName: 'RewardRuleRepository' },
 );
 
 export type RewardRuleRepository = InferInput<typeof RewardRuleRepo>;

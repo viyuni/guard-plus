@@ -6,11 +6,12 @@ import type {
   UpdateProductBody,
 } from '@shared/schema/product';
 import type { StockAdjustmentBody } from '@shared/schema/stock';
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
-import { Database, ImageStorage } from '#composition/tokens';
+import { Database } from '#infrastructure/db';
 import type { DbTransaction } from '#infrastructure/db';
 import type { InsertProduct, Product, UpdateProduct } from '#infrastructure/db/schema';
+import { ImageStorage } from '#infrastructure/storage';
 import Point from '#modules/point';
 
 import {
@@ -32,6 +33,7 @@ import { ProductRepo, StockMovementRepo } from '../repository';
 import { STOCK_MOVEMENT_SOURCE_TYPE, type ChangeStockInput } from './types';
 
 export const ProductUseCase = ripple(
+  'ProductUseCase',
   {
     Database,
     ImageStorage,
@@ -306,7 +308,6 @@ export const ProductUseCase = ripple(
       },
     };
   },
-  { debugName: 'ProductUseCase' },
 );
 
 export type ProductUseCase = InferInput<typeof ProductUseCase>;

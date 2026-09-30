@@ -3,7 +3,7 @@ import {
   RewardRuleIdParamsSchema,
   UpdateRewardRuleSchema,
 } from '@shared/schema/reward';
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
 import Reward, { RewardErrors } from '#modules/reward';
@@ -11,6 +11,7 @@ import Reward, { RewardErrors } from '#modules/reward';
 import { AdminAuthGuard } from '../../auth';
 
 export const RewardRuleRoutes = ripple(
+  'RewardRuleRoutes',
   {
     AdminAuthGuard,
     RewardRuleUseCase: Reward.RewardRuleUseCase,
@@ -116,5 +117,4 @@ export const RewardRuleRoutes = ripple(
           },
         },
       ),
-  { debugName: 'RewardRuleRoutes' },
 );
