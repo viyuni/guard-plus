@@ -120,7 +120,15 @@ export class BiliGuardWorker {
 
         const task = this.processClaim(event, claimId)
           .catch(error => {
-            this.deps.logger.error(error, 'Bilibili guard worker failed unexpectedly');
+            this.deps.logger.error(
+              {
+                event: 'bili.guard.worker.failed',
+                biliEventId: event.biliEventId,
+                claimId,
+                err: error,
+              },
+              '大航海任务执行器发生异常',
+            );
           })
           .finally(() => {
             this.inFlight.delete(task);
@@ -130,18 +138,32 @@ export class BiliGuardWorker {
         this.inFlight.add(task);
       }
     } catch (error) {
-      this.deps.logger.error(error, 'Bilibili guard worker polling failed');
+      this.deps.logger.error(
+        { event: 'bili.guard.poll.failed', workerId: this.workerId, err: error },
+        '大航海任务轮询失败',
+      );
     }
   }
 
   private async processClaim(event: BiliEvent, claimId: string) {
+    const fields = {
+      biliEventId: event.biliEventId,
+      biliUid: event.biliUid,
+      claimId,
+      workerId: this.workerId,
+      retryCount: event.retryCount,
+    };
+
+    const startedAt = performance.now();
+    this.deps.logger.info({ ...fields, event: 'bili.guard.claimed' }, '大航海任务已抢占');
+
     const heartbeat = setInterval(
       () => {
         const leaseUntil = new Date(Date.now() + this.options.leaseMs);
 
         this.deps.biliEventRepo.renewClaim(event.biliEventId, claimId, leaseUntil).catch(error => {
           this.deps.logger.error(
-            { error, biliEventId: event.biliEventId },
+            { ...fields, err: error, event: 'bili.guard.lease.failed' },
             'Bilibili guard lease renewal failed',
           );
         });
@@ -165,6 +187,11 @@ export class BiliGuardWorker {
         if (!planned) {
           throw new BiliEventPersistFailedError('大航海奖励计划保存失败或任务租约已失效');
         }
+
+        this.deps.logger.info(
+          { ...fields, event: 'bili.guard.plan.saved', rewardCount: rewardItems.length },
+          '大航海奖励计划已保存',
+        );
       }
 
       const result = await this.deps.rewardProcessor.processBiliGuard(snapshot, rewardItems);
@@ -173,6 +200,10 @@ export class BiliGuardWorker {
         await this.requirePersisted(
           this.deps.biliEventRepo.markClaimIgnored(event.biliEventId, claimId, result.ignoreReason),
           event.biliEventId,
+        );
+        this.deps.logger.info(
+          { ...fields, event: 'bili.guard.ignored', reason: result.ignoreReason },
+          '大航海任务已忽略',
         );
         return;
       }
@@ -184,21 +215,51 @@ export class BiliGuardWorker {
         }),
         event.biliEventId,
       );
+      this.deps.logger.info(
+        {
+          ...fields,
+          event: 'bili.guard.succeeded',
+          userId: result.user.id,
+          rewardCount: result.rewardResultSnapshots.length,
+          durationMs: Math.round(performance.now() - startedAt),
+        },
+        '大航海任务处理完成',
+      );
     } catch (error) {
       const retryDelay = Math.min(
         this.options.retryMaxDelayMs,
         this.options.retryBaseDelayMs * 2 ** event.retryCount,
       );
 
+      const nextRetryAt = new Date(Date.now() + retryDelay);
+      this.deps.logger.error(
+        { ...fields, event: 'bili.guard.processing.failed', err: error },
+        '大航海任务处理失败',
+      );
+
       const failed = await this.deps.biliEventRepo.markClaimFailed(event.biliEventId, claimId, {
         ...getErrorSnapshot(error),
-        nextRetryAt: new Date(Date.now() + retryDelay),
+        nextRetryAt,
       });
 
       if (!failed) {
         this.deps.logger.warn(
-          { biliEventId: event.biliEventId },
+          { ...fields, event: 'bili.guard.lease.lost' },
           'Bilibili guard failure ignored because the task lease changed',
+        );
+      } else {
+        this.deps.logger.warn(
+          {
+            ...fields,
+            event:
+              event.retryCount + 1 >= this.options.maxRetries
+                ? 'bili.guard.retry.exhausted'
+                : 'bili.guard.retry.scheduled',
+            retryCount: event.retryCount + 1,
+            retryExhausted: event.retryCount + 1 >= this.options.maxRetries,
+            nextRetryAt,
+          },
+          '大航海任务失败状态已保存',
         );
       }
     } finally {

@@ -130,6 +130,9 @@ export const LoggerConfig = ripple(
   ({ Config }) => ({
     level: Config.LOG_LEVEL,
     pretty: Config.NODE_ENV === 'development',
+    directory: Config.LOG_DIRECTORY,
+    maxSizeMb: Config.LOG_MAX_SIZE_MB,
+    maxFiles: Config.LOG_MAX_FILES,
   }),
 );
 

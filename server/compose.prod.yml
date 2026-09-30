@@ -7,8 +7,9 @@ x-app-build: &app-build
 x-logging: &logging
   driver: local
   options:
-    max-size: 20m
-    max-file: 10
+    max-size: '20m'
+    max-file: '10'
+    compress: 'true'
 
 x-app-environment: &app-environment
   NODE_ENV: ${NODE_ENV:-production}
@@ -17,6 +18,9 @@ x-app-environment: &app-environment
   REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD in .env.prod}
   IMAGE_SAVE_PATH: /app/server/public/images
   LOG_LEVEL: ${LOG_LEVEL:-info}
+  LOG_DIRECTORY: /app/logs
+  LOG_MAX_SIZE_MB: ${LOG_MAX_SIZE_MB:-20}
+  LOG_MAX_FILES: ${LOG_MAX_FILES:-10}
   DATA_SECRET: ${DATA_SECRET:?set DATA_SECRET in .env.prod}
   PASSWORD_HASH_COST: ${PASSWORD_HASH_COST:-12}
   BILI_ROOM: ${BILI_ROOM:?set BILI_ROOM in .env.prod}
@@ -138,6 +142,7 @@ services:
         host_ip: 0.0.0.0
     volumes:
       - /home/guard-plus-data/public:/app/server/public
+      - ${GUARD_PLUS_LOG_PATH:-/home/guard-plus-data/logs}/admin:/app/logs
     depends_on: *app-depends-on
     networks:
       - guard-plus
@@ -169,6 +174,7 @@ services:
         host_ip: 0.0.0.0
     volumes:
       - /home/guard-plus-data/public:/app/server/public
+      - ${GUARD_PLUS_LOG_PATH:-/home/guard-plus-data/logs}/user:/app/logs
     depends_on: *app-depends-on
     networks:
       - guard-plus
@@ -190,6 +196,8 @@ services:
         published: ${GUARD_PLUS_EVENT_PUBLISHED_PORT:-39970}
         protocol: tcp
         host_ip: 0.0.0.0
+    volumes:
+      - ${GUARD_PLUS_LOG_PATH:-/home/guard-plus-data/logs}/event:/app/logs
     depends_on: *app-depends-on
     networks:
       - guard-plus

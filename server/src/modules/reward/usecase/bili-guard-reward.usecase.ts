@@ -1,5 +1,6 @@
 import { type InferInput, ripple } from 'cyrenex';
 
+import { Logger } from '#infrastructure/logger';
 import BiliEventModule, {
   BiliEventNotFoundError,
   BiliEventPersistFailedError,
@@ -13,9 +14,10 @@ export const BiliGuardRewardUseCase = ripple(
   'BiliGuardRewardUseCase',
   {
     BiliEventRepo: BiliEventModule.BiliEventRepo,
+    Logger,
     RewardProcessor,
   },
-  ({ BiliEventRepo, RewardProcessor }) => {
+  ({ BiliEventRepo, Logger, RewardProcessor }) => {
     async function persistResult(
       event: BiliGuardRewardEvent,
       result: Awaited<ReturnType<typeof RewardProcessor.processBiliGuard>>,
@@ -26,6 +28,11 @@ export const BiliGuardRewardUseCase = ripple(
         if (!persisted) {
           throw new BiliEventPersistFailedError('B站事件忽略状态保存失败');
         }
+
+        Logger.info(
+          { event: 'reward.event.ignored', biliEventId: event.id, reason: result.ignoreReason },
+          '大航海奖励事件已忽略',
+        );
 
         return result;
       }
@@ -39,6 +46,11 @@ export const BiliGuardRewardUseCase = ripple(
         throw new BiliEventPersistFailedError('B站事件成功状态保存失败');
       }
 
+      Logger.info(
+        { event: 'reward.event.succeeded', biliEventId: event.id, userId: result.user.id },
+        '大航海奖励事件状态已保存',
+      );
+
       return result;
     }
 
@@ -51,6 +63,10 @@ export const BiliGuardRewardUseCase = ripple(
 
         return await persistResult(event, result);
       } catch (error) {
+        Logger.error(
+          { event: 'reward.event.failed', biliEventId: event.id, err: error },
+          '大航海奖励处理失败',
+        );
         const failed = await BiliEventRepo.markFailed(event.id, getErrorSnapshot(error));
 
         if (!failed) {
@@ -74,6 +90,10 @@ export const BiliGuardRewardUseCase = ripple(
         });
 
         if (!biliEvent) {
+          Logger.info(
+            { event: 'reward.event.duplicate', biliEventId: event.id },
+            '大航海奖励事件无需重复处理',
+          );
           return null;
         }
 
@@ -81,6 +101,7 @@ export const BiliGuardRewardUseCase = ripple(
       },
 
       async replayBiliGuardEvent(biliEventId: string) {
+        Logger.info({ event: 'reward.replay.started', biliEventId }, '开始回放大航海奖励事件');
         const biliEvent = await BiliEventRepo.findByBiliEventId(biliEventId);
 
         if (!biliEvent) {

@@ -162,6 +162,9 @@ vpr @server/app#queue
 
 ## Validation
 
+Production logging, file retention, and incident queries are documented in
+[日志持久化与排查](docs/log-troubleshooting.md).
+
 ```bash
 vpr @server/app#typecheck
 vpr @server/app#test

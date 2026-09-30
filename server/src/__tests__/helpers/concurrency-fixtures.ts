@@ -17,6 +17,7 @@ import {
   rewardRules,
   users,
 } from '#infrastructure/db/schema';
+import type { AppLogger } from '#infrastructure/logger';
 
 import type { BiliGuardRewardEvent } from '../../modules/reward';
 import { createTestContainer } from './test-container';
@@ -85,8 +86,8 @@ export async function expectRejectsInstanceOf<T extends Error>(
   throw new Error(`expected promise to reject with ${errorType.name}`);
 }
 
-export async function createDeps() {
-  const runtime = createTestContainer({ db, redis: getTestRedis() });
+export async function createDeps(logger?: AppLogger) {
+  const runtime = createTestContainer({ db, redis: getTestRedis(), logger });
 
   runtimes.add(runtime);
 

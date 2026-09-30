@@ -9,6 +9,7 @@ import type {
 import { type InferInput, ripple } from 'cyrenex';
 
 import { Database } from '#infrastructure/db';
+import { Logger } from '#infrastructure/logger';
 import { publishOrderCreated, type NewOrderEmailInput } from '#infrastructure/queue';
 import Point, { POINT_CHANGE_SOURCE_TYPE, PointIdempotencyKey } from '#modules/point';
 import Product, {
@@ -64,6 +65,7 @@ export const OrderUseCase = ripple(
   'OrderUseCase',
   {
     Database,
+    Logger,
     OrderRepo,
     PointAccountRepo: Point.PointAccountRepo,
     PointBalanceUseCase: Point.PointBalanceUseCase,
@@ -74,6 +76,7 @@ export const OrderUseCase = ripple(
   },
   ({
     Database,
+    Logger,
     OrderRepo,
     PointAccountRepo,
     PointBalanceUseCase,
@@ -114,6 +117,11 @@ export const OrderUseCase = ripple(
       get,
 
       async create(userId: string, orderData: CreateOrderBody) {
+        Logger.info(
+          { event: 'order.create.started', userId, productId: orderData.productId },
+          '开始兑换商品',
+        );
+
         const { order, user, product } = await Database.transaction(async tx => {
           const user = await UserUseCase.getAvailableById(userId, tx);
           const product = await ProductUseCase.requireByIdForUpdate(tx, orderData.productId);
@@ -200,7 +208,19 @@ export const OrderUseCase = ripple(
           };
         });
 
-        publishOrderCreated({
+        Logger.info(
+          {
+            event: 'order.create.committed',
+            orderId: order.id,
+            orderNo: order.orderNo,
+            userId,
+            productId: product.id,
+            transactionId: order.consumeTransactionId,
+          },
+          '订单兑换事务已提交',
+        );
+
+        void publishOrderCreated({
           orderNo: order.orderNo,
           username: user.username,
           biliUid: user.biliUid,
@@ -211,7 +231,23 @@ export const OrderUseCase = ripple(
           status: order.status,
           createdAt: order.createdAt,
           userRemark: order.userRemark,
-        } satisfies NewOrderEmailInput);
+        } satisfies NewOrderEmailInput).then(
+          () =>
+            Logger.info(
+              { event: 'notification.enqueued', orderId: order.id, orderNo: order.orderNo },
+              '订单通知已入队',
+            ),
+          err =>
+            Logger.error(
+              {
+                event: 'notification.enqueue.failed',
+                orderId: order.id,
+                orderNo: order.orderNo,
+                err,
+              },
+              '订单通知入队失败',
+            ),
+        );
 
         return {
           order,
@@ -221,7 +257,7 @@ export const OrderUseCase = ripple(
       },
 
       async complete(orderId: string) {
-        return Database.transaction(async tx => {
+        const result = await Database.transaction(async tx => {
           const order = await OrderRepo.findByIdForUpdate(tx, orderId);
 
           if (!order) {
@@ -246,10 +282,15 @@ export const OrderUseCase = ripple(
 
           return updateOrder;
         });
+
+        Logger.info({ event: 'order.complete.committed', orderId }, '订单完成事务已提交');
+        return result;
       },
 
       async refund(orderId: string, refundData: RefundOrderBody) {
-        return Database.transaction(async tx => {
+        Logger.info({ event: 'order.refund.started', orderId }, '开始订单退款');
+
+        const result = await Database.transaction(async tx => {
           const order = await OrderRepo.findByIdForUpdate(tx, orderId);
 
           if (!order) {
@@ -317,6 +358,17 @@ export const OrderUseCase = ripple(
 
           return updateOrder;
         });
+
+        Logger.info(
+          {
+            event: 'order.refund.committed',
+            orderId,
+            userId: result.userId,
+            transactionId: result.refundTransactionId,
+          },
+          '订单退款事务已提交',
+        );
+        return result;
       },
 
       async updateExpress(orderId: string, expressData: UpdateOrderExpressBody) {

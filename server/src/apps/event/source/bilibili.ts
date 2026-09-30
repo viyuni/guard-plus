@@ -65,7 +65,10 @@ export class BilibiliSource {
         await this.deps.guardConsumer.consume(event);
         this.deps.wakeGuardWorker();
       } catch (error) {
-        this.deps.logger.error(error, 'Bilibili guard event persistence failed');
+        this.deps.logger.error(
+          { event: 'bili.guard.enqueue.failed', biliEventId: event.id, err: error },
+          '大航海事件入队失败',
+        );
       }
 
       return;
@@ -79,13 +82,16 @@ export class BilibiliSource {
           uname: event.uname,
         });
       } catch (error) {
-        this.deps.logger.error(error, 'Bilibili verification message match failed');
+        this.deps.logger.error(
+          { event: 'bili.verification.failed', biliUid: String(event.uid), err: error },
+          'B站验证消息匹配失败',
+        );
       }
 
       return;
     }
 
-    this.deps.logger.debug(event, 'Bilibili event ignored');
+    this.deps.logger.debug({ event: 'bili.event.ignored', type: event.type }, 'B站事件已忽略');
   }
 }
 
