@@ -157,8 +157,20 @@ Route ripples declare their use cases as dependencies and are composed by the ap
 vpr @server/app#dev:admin
 vpr @server/app#dev:user
 vpr @server/app#dev:event
-vpr @server/app#queue
 ```
+
+Email workers run inside the user API; event processing runs inside the event app.
+
+## Docker
+
+| File               | Purpose                                                  |
+| ------------------ | -------------------------------------------------------- |
+| `compose.dev.yml`  | Local PostgreSQL and Redis, ports 8699 and 6379          |
+| `compose.test.yml` | Isolated test services, ports 8799 and 8798              |
+| `compose.prod.yml` | Backend production stack with schema push and monitoring |
+
+Production commands in this package (including `vpr @server/app#deploy`) read `server/.env.prod`.
+The frontend deploys independently via `webs/compose.prod.yml` and `webs/.env.prod`; see the [deployment guide](../webs/docs/content/en/deploy.md).
 
 ## Validation
 
@@ -194,4 +206,9 @@ vpr @server/app#db:studio
 vpr @server/app#db:studio:test
 ```
 
-Use `.env` for local development and `.env.test` for test database commands.
+Use `server/.env` for local development and `server/.env.test` for test database commands.
+Create `.env.test` with a test database URL on port 8799 and a Redis URL on port 8798. The test
+helpers use `TEST_DATABASE_URL` and `TEST_REDIS_URL`; provide both
+alongside `DATABASE_URL` and `REDIS_URL`, plus test values for `DATA_SECRET`, `ADMIN_JWT_SECRET`,
+`USER_JWT_SECRET`, and `BILI_ROOM`. See [CI environment setup](../.github/workflows/ci.yml).
+The package test task recreates the test services and applies the schema before running Bun tests.

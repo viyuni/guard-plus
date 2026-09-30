@@ -46,7 +46,7 @@ const displayLabel = computed(() => props.label || props.filename || props.langu
       </button>
     </div>
     <div class="bg-background/30 overflow-x-auto backdrop-blur-sm">
-      <pre ref="preRef" class="p-4 text-sm"><code><slot /></code></pre>
+      <pre ref="preRef" class="p-4 text-sm"><code><slot>{{ code }}</slot></code></pre>
     </div>
   </div>
 </template>

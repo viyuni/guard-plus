@@ -21,33 +21,17 @@ Guard Plus 是为 [Bilibili Live](https://live.bilibili.com) 大航海会员打�
 
 ## 架构
 
-```
-┌─────────────────────────────────────────────────────┐
-│                     客户端层                         │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐          │
-│  │ 管理后台 │  │ 用户应用 │  │ 文档应用 │          │
-│  │ (Nuxt 4) │  │ (Nuxt 4) │  │ (Nuxt 4) │          │
-│  └────┬─────┘  └────┬─────┘  └──────────┘          │
-│       └─────────────┼─────────────┘                  │
-│             ┌───────┴────────┐                       │
-│             │ 共享 UI (Vue)  │                       │
-│             └────────────────┘                       │
-├─────────────────────────────────────────────────────┤
-│                      API 层                          │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐          │
-│  │  管理    │  │   用户   │  │   事件   │          │
-│  │  服务    │  │   服务   │  │   服务   │          │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘          │
-│       │             │             │                  │
-├───────┴─────────────┴─────────────┴─────────────────┤
-│                     数据层                            │
-│  ┌──────────┐  ┌──────────┐  ┌──────────────────┐  │
-│  │PostgreSQL│  │  Redis   │  │    后台队列      │  │
-│  └──────────┘  └──────────┘  └──────────────────┘  │
-└─────────────────────────────────────────────────────┘
+```text
+Admin SPA ── Admin API ─┐
+User SPA  ── User API  ─┼── PostgreSQL / Redis
+Bilibili  ── Event app ─┘
+
+Admin / User / Docs ── @web/base + @web/ui
 ```
 
 ---
+
+用户 API 内嵌 bunqueue 邮件 Worker。Bilibili 事件任务持久化在 PostgreSQL，由事件应用处理。
 
 ## 包说明
 
@@ -109,26 +93,68 @@ Web 应用和文档共享的 Nuxt 基础应用及静态品牌资源。
 
 ## 开发指南
 
+使用 Vite+ CLI（`vp` / `vpr`）、Bun **1.4.2**，以及 Docker Compose 提供本地基础设施。以下命令均从仓库根目录执行。
+
+### 1. 准备工作区
+
 ```bash
-# 安装依赖并配置 Git Hooks
 vp install
 vp config
-
-# 运行全仓库检查（格式化、Lint、类型检查）
-vpr check
-
-# 运行测试
-vpr test
-
-# 启动特定服务
-vpr @server/app#dev:admin
-vpr @server/app#dev:user
-vpr @server/app#dev:event
-vpr @web/admin#dev
-vpr @web/user#dev
-vpr docs#dev
+cp server/.env.example server/.env
+cp webs/admin/.env.example webs/admin/.env
+cp webs/user/.env.example webs/user/.env
 ```
 
----
+后端示例默认采用生产配置。本地使用前，将 `NODE_ENV` 改为 `development`、替换密钥，并在 `server/.env` 中设置本地连接：
+
+```dotenv
+DATABASE_URL=postgresql://admin:guard_plus@localhost:8699/guard-plus
+REDIS_URL=redis://localhost:6379
+REDIS_PASSWORD=
+ADMIN_API_ORIGIN=http://localhost:3600
+ADMIN_WEB_ORIGINS=http://localhost:3000
+USER_API_ORIGIN=http://localhost:3800
+USER_WEB_ORIGINS=http://localhost:3001
+```
+
+启动事件接入前，还需要填写 `BILI_ROOM` 与登录同步服务配置。启动本地数据库和 Redis，再初始化 Schema：
+
+```bash
+docker compose -f server/compose.dev.yml up -d --wait
+vpr @server/app#db:push
+vpr @server/app#db:seed
+vpr @server/app#build:types
+```
+
+`db:seed` 会填充开发数据，仅对本地开发数据库执行。
+
+### 2. 启动应用
+
+每个命令在独立终端执行：
+
+| 应用       | 命令                             | 默认地址                |
+| ---------- | -------------------------------- | ----------------------- |
+| 管理端 API | `vpr @server/app#dev:admin`      | `http://localhost:3600` |
+| 用户端 API | `vpr @server/app#dev:user`       | `http://localhost:3800` |
+| 事件运行时 | `vpr @server/app#dev:event`      | `http://localhost:3700` |
+| 管理端 Web | `vpr @web/admin#dev --port 3000` | `http://localhost:3000` |
+| 用户端 Web | `vpr @web/user#dev --port 3001`  | `http://localhost:3001` |
+| 文档站     | `vpr docs#dev --port 3002`       | `http://localhost:3002` |
+
+邮件 Worker 随用户 API 启动，事件任务随事件运行时启动，没有独立的 `queue` 命令。
+
+### 3. 检查与构建
+
+```bash
+vpr check
+vpr test
+vpr @server/app#build
+vpr @server/app#build:types
+vpr @web/admin#build
+vpr @web/user#build
+vpr docs#build
+```
+
+`vpr check` 会生成 Eden 类型，并执行全工作区格式化、Lint 和类型检查。后端测试使用 Docker 服务与 `server/.env.test`，配置见 [后端说明](https://github.com/viyuni/guard-plus/blob/main/server/README.md)。
 
 [返回首页](/zh)

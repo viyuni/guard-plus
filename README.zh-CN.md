@@ -6,10 +6,12 @@
   </picture>
 </p>
 
-<h1 align="center" style="margin-top: 2rem">Guard Plus - 哔哩哔哩大航海奖励系统</h1>
+<hr />
+
+<p align="center">哔哩哔哩大航海奖励管理与履约系统</p>
 
 <p align="center">
-  <a href="./package.json"> 
+  <a href="./package.json">
     <img src="https://img.shields.io/github/package-json/v/viyuni/guard-plus?filename=package.json&label=version" alt="Version" />
   </a>
   <a href="https://github.com/viyuni/guard-plus/actions/workflows/ci.yml">
@@ -30,136 +32,168 @@
   <strong>简体中文</strong>
 </p>
 
-Guard Plus 是一个面向哔哩哔哩大航海会员的奖励管理与履约系统，帮助主播、运营人员和管理员管理奖励规则、领取流程及履约记录。
+<p align="center">
+  <a href="#功能特性">功能特性</a> ·
+  <a href="#本地开发">本地开发</a> ·
+  <a href="./webs/docs/content/zh/deploy.md">部署指南</a> ·
+  <a href="./webs/docs/content/zh/about.md">项目文档</a>
+</p>
 
-系统适用于舰长、提督、总督等大航海会员等级，支持会员奖励查询、奖励领取、订单处理、积分管理以及异步事件处理等业务场景。
+Guard Plus 帮助主播与运营人员管理哔哩哔哩大航海会员的奖励，从会员事件、奖励规则，到领取、积分、订单和履约记录。
 
-本项目是一个基于 **Vite+ 和 TypeScript** 的 Monorepo，包含 Nuxt 管理端和用户端、共享 Vue UI 组件库、Elysia 后端服务、后台任务队列以及跨包共享的 TypeScript 类型契约。
+管理端负责日常运营，用户端为舰长、提督和总督提供查询与领取奖励的入口。
 
-## Features
+## 功能特性
 
-- **大航海奖励管理**：配置和管理围绕哔哩哔哩直播大航海会员等级的奖励。
-- **管理控制台**：供运营人员审核、配置和处理奖励、用户、订单及积分相关数据。
-- **用户领取平台**：允许大航海用户查询并领取当前可用的奖励。
-- **事件与队列处理**：通过事件接入和后台任务处理异步奖励业务流程。
-- **积分管理**：支持积分类型、积分账户、积分流水、兑换规则及积分转换。
-- **类型安全协作**：通过共享 TypeScript 和 Valibot 契约保持前端、后端及数据结构一致。
-- **多应用架构**：分别提供管理员 API、用户 API、事件服务及后台队列运行时。
+| 模块          | 提供的能力                                         |
+| ------------- | -------------------------------------------------- |
+| 🎁 大航海奖励 | 按会员等级配置奖励规则并管理履约                   |
+| 🛡️ 管理控制台 | 用户、商品、库存、订单、奖励和积分管理             |
+| 👥 用户门户   | 奖励查询与领取、积分余额和订单记录                 |
+| ⚡ 事件与任务 | Bilibili 事件接入、持久化事件任务和内嵌邮件 Worker |
+| 🧩 共享契约   | 前后端共用 Valibot Schema 与 Eden 类型             |
 
-## Packages
+## 本地开发
 
-- [`@server/app`](./server/)：位于 `server/`，包含管理员和用户 API、事件接入、后台队列、共享后端模块、Drizzle 数据库结构、迁移，以及面向前端的 Eden 类型导出。
-- [`@shared/schema`](./packages/schema/)：位于 `packages/schema/`，包含 Valibot API Schema、请求与响应类型，以及跨包共享契约。
-- [`@web/admin`](./webs/admin/)：基于 Nuxt 的管理控制台，用于奖励配置和运营管理。
-- [`@web/user`](./webs/user/)：基于 Nuxt 的用户端应用，用于奖励查询和领取。
-- [`@web/ui`](./webs/ui/)：共享 Vue 组件、样式、Nuxt 模块集成及组件元数据。
-- [`@web/base`](./webs/base/)：Web 应用共享的 Nuxt 基础层和品牌静态资源。
+使用 Vite+ CLI（`vp` / `vpr`）、Bun **1.4.2**，以及 Docker Compose 提供本地基础设施。以下命令均从仓库根目录执行。
 
-## Directory Structure
-
-```text
-.
-├── server/                  # @server/app：Elysia 应用、事件运行时、队列、后端模块和数据库
-├── packages/
-│   └── schema/              # @shared/schema：共享 Schema 和类型
-├── webs/
-│   ├── admin/               # @web/admin：Nuxt 管理端
-│   ├── base/                # @web/base：共享基础应用和品牌静态资源
-│   ├── user/                # @web/user：Nuxt 用户端
-│   └── ui/                  # @web/ui：共享 UI 组件库
-├── AGENTS.md                # Agent 与项目工作流说明
-├── package.json             # Workspace 脚本和依赖目录
-└── vite.config.ts           # 根目录 Vite+ 配置
-```
-
-## Development
-
-安装依赖并配置 Git Hooks：
+### 1. 准备工作区
 
 ```bash
 vp install
 vp config
+cp server/.env.example server/.env
+cp webs/admin/.env.example webs/admin/.env
+cp webs/user/.env.example webs/user/.env
 ```
 
-运行整个工作区的格式化、代码检查和类型检查：
+后端示例默认采用生产配置。本地使用前，将 `NODE_ENV` 改为 `development`、替换密钥，并在 `server/.env` 中设置本地连接：
 
-```bash
-vpr check
+```dotenv
+DATABASE_URL=postgresql://admin:guard_plus@localhost:8699/guard-plus
+REDIS_URL=redis://localhost:6379
+REDIS_PASSWORD=
+ADMIN_API_ORIGIN=http://localhost:3600
+ADMIN_WEB_ORIGINS=http://localhost:3000
+USER_API_ORIGIN=http://localhost:3800
+USER_WEB_ORIGINS=http://localhost:3001
 ```
 
-运行整个工作区的测试：
+启动事件接入前，还需要填写 `BILI_ROOM` 与登录同步服务配置。启动本地数据库和 Redis，再初始化 Schema：
 
 ```bash
-vpr test
-```
-
-启动指定应用或服务：
-
-```bash
-vpr @server/app#dev:admin
-vpr @server/app#dev:user
-vpr @server/app#dev:event
-vpr @server/app#queue
-vpr @web/admin#dev
-vpr @web/user#dev
-```
-
-构建后端二进制文件并生成 Eden 类型：
-
-```bash
-vpr @server/app#build
+docker compose -f server/compose.dev.yml up -d --wait
+vpr @server/app#db:push
+vpr @server/app#db:seed
 vpr @server/app#build:types
 ```
 
-运行指定范围的类型检查：
+`db:seed` 会填充开发数据，仅对本地开发数据库执行。
+
+### 2. 启动应用
+
+每个命令在独立终端执行：
+
+| 应用       | 命令                             | 默认地址                |
+| ---------- | -------------------------------- | ----------------------- |
+| 管理端 API | `vpr @server/app#dev:admin`      | `http://localhost:3600` |
+| 用户端 API | `vpr @server/app#dev:user`       | `http://localhost:3800` |
+| 事件运行时 | `vpr @server/app#dev:event`      | `http://localhost:3700` |
+| 管理端 Web | `vpr @web/admin#dev --port 3000` | `http://localhost:3000` |
+| 用户端 Web | `vpr @web/user#dev --port 3001`  | `http://localhost:3001` |
+| 文档站     | `vpr docs#dev --port 3002`       | `http://localhost:3002` |
+
+邮件 Worker 随用户 API 启动，事件任务随事件运行时启动，没有独立的 `queue` 命令。
+
+### 3. 检查与构建
 
 ```bash
-vpr typecheck
-vpr typecheck:schema
-vpr typecheck:server
-vpr typecheck:web
-vpr @server/app#typecheck
+vpr check
+vpr test
+vpr @server/app#build
+vpr @server/app#build:types
+vpr @web/admin#build
+vpr @web/user#build
+vpr docs#build
 ```
 
-## Backend
+`vpr check` 会生成 Eden 类型，并执行全工作区格式化、Lint 和类型检查。后端测试使用 Docker 服务与 `server/.env.test`，配置见 [后端说明](./server/README.md)。
 
-后端包为 [`@server/app`](./server/)，位于 `server/`。
+## 部署
 
-- [`server/src/apps/admin`](./server/src/apps/admin/)：管理员 HTTP 应用，含配置、组合根、`http/` 路由与应用专属 `features/`。
-- [`server/src/apps/user`](./server/src/apps/user/)：用户 HTTP 应用，结构同上。
-- [`server/src/apps/event`](./server/src/apps/event/)：直播事件接入运行时。
-- [`server/src/apps/seed`](./server/src/apps/seed/)：开发种子脚本及其组合根。
-- [`server/src/modules`](./server/src/modules/)：可复用业务能力，每个模块只有一个公共入口并默认导出 Ripple Manifest 对象。
-- [`server/src/infrastructure`](./server/src/infrastructure/)：db、redis、queue、logger、mail、storage 与 HTTP 适配器。
-- [`server/src/config`](./server/src/config/)：环境变量片段，以及共享配置 ripple 与由它派生的能力 ripple。
-- [`server/src/shared`](./server/src/shared/)：与业务无关的错误与工具函数。
-- [`server/src/config`](./server/src/config/)：纯环境变量 Schema 片段，只由 App 配置边界导入。
-- [`server/src/eden.ts`](./server/src/eden.ts)：供 Web 包使用的 Eden 类型导出入口。
-
-## Database tasks
+前后端使用独立的 Compose 项目和环境文件，分别构建与启动：
 
 ```bash
-vpr @server/app#db:generate
-vpr @server/app#db:push
-vpr @server/app#db:push:test
-vpr @server/app#db:seed
-vpr @server/app#db:studio
+cp server/.env.example server/.env.prod
+cp webs/.env.example webs/.env.prod
+# Configure production domains and secrets before starting.
+docker compose --env-file server/.env.prod -f server/compose.prod.yml up -d --build
+docker compose --env-file webs/.env.prod -f webs/compose.prod.yml up -d --build
 ```
 
-本地开发命令默认使用 `.env`，测试数据库相关命令使用 `.env.test`。
+Web 镜像使用 Nginx 托管生成的 SPA。构建时分别注入 `ADMIN_API_ORIGIN` 与 `USER_API_ORIGIN`；修改 API 地址后，需要重新构建对应 Web 镜像。
 
-## UI Component Manifest
+端口、持久化目录、反向代理、更新流程和 Docker 文件职责见 [部署指南](./webs/docs/content/zh/deploy.md)。
 
-[`@web/ui`](./webs/ui/) 通过包子路径导出和 Nuxt 组件解析器暴露组件。
+## 工作区包
 
-在 `webs/ui/src/components` 中添加、删除或重命名组件后，需要运行：
+| 包               | 职责                                       | 说明                                  |
+| ---------------- | ------------------------------------------ | ------------------------------------- |
+| `@server/app`    | Elysia API、事件、任务、数据库与 Eden 类型 | [后端](./server/README.md)            |
+| `@shared/schema` | Valibot Schema 与共享请求、响应契约        | [Schema](./packages/schema/README.md) |
+| `@web/admin`     | Nuxt 管理控制台                            | [管理端](./webs/admin/README.md)      |
+| `@web/user`      | Nuxt 用户门户                              | [用户端](./webs/user/README.md)       |
+| `@web/ui`        | Vue 组件、样式、字体与 Nuxt 集成           | [UI](./webs/ui/README.md)             |
+| `@web/base`      | 共享 Nuxt 基础层与品牌资源                 | [基础层](./webs/base/README.md)       |
+| `docs`           | Nuxt Content 中英文文档站                  | [文档站](./webs/docs/README.md)       |
+
+## 项目结构
+
+```text
+.
+├── server/                 # API、事件运行时、业务模块与基础设施
+├── packages/schema/        # 跨包共享契约
+├── webs/
+│   ├── admin/              # 管理端 SPA
+│   ├── user/               # 用户端 SPA
+│   ├── docs/               # 双语文档站
+│   ├── base/               # 共享 Nuxt 基础层
+│   ├── ui/                 # 共享 UI 组件
+│   ├── Dockerfile          # Web 静态镜像的统一构建
+│   └── compose.prod.yml    # 独立前端生产栈
+├── tools/oxlint-plugin/    # 依赖命名与架构边界规则
+├── AGENTS.md               # 协作约定与开发命令
+└── vite.config.ts          # Vite+ 任务、格式化与 Lint 配置
+```
+
+## 参与开发
+
+导入边界、检查流程和提交规范见 [AGENTS.md](./AGENTS.md)。检查 Web 包前先构建 Eden 类型，并同步维护中英文 README 与文档页面。
+
+添加、删除或重命名共享 UI 组件后，重新生成组件元数据：
 
 ```bash
 vpr @web/ui#generate:manifest
 ```
 
-该命令会更新以下文件：
+<details>
+<summary>数据库任务与定向检查</summary>
 
-- [`webs/ui/package.json`](./webs/ui/package.json)
-- [`webs/ui/nuxt/components.json`](./webs/ui/nuxt/components.json)
-- [`webs/ui/types.d.ts`](./webs/ui/types.d.ts)
+```bash
+vpr @server/app#db:generate
+vpr @server/app#db:push
+vpr @server/app#db:push:test
+vpr @server/app#db:studio
+vpr @server/app#db:studio:test
+vpr typecheck:schema
+vpr typecheck:server
+vpr typecheck:web
+```
+
+数据库任务读取 `server/.env`，测试任务读取 `server/.env.test`。Schema Push 会直接修改所连接的数据库。
+
+</details>
+
+## 许可证
+
+见 [LICENSE](./LICENSE)。

@@ -21,8 +21,8 @@ const positiveInteger = () =>
 export const eventEnv = createEnv({
   server: {
     EVENT_PORT: v.optional(port(), 3700),
-    VIYUNI_LOGIN_SYNC_URL: v.string(),
-    VIYUNI_LOGIN_SYNC_PASSWORD: v.string(),
+    LOGIN_SYNC_URL: v.string(),
+    LOGIN_SYNC_PASSWORD: v.string(),
     EVENT_WORKER_CONCURRENCY: v.optional(positiveInteger(), 5),
     EVENT_WORKER_LEASE_MS: v.optional(positiveInteger(), 60_000),
     EVENT_WORKER_MAX_RETRIES: v.optional(positiveInteger(), 5),
@@ -60,8 +60,8 @@ export const eventConfig: EventConfig = {
   biliRoom: configEnv.BILI_ROOM,
   port: eventEnv.EVENT_PORT,
   loginSync: {
-    url: eventEnv.VIYUNI_LOGIN_SYNC_URL,
-    password: eventEnv.VIYUNI_LOGIN_SYNC_PASSWORD,
+    url: eventEnv.LOGIN_SYNC_URL,
+    password: eventEnv.LOGIN_SYNC_PASSWORD,
   },
   worker: {
     concurrency: eventEnv.EVENT_WORKER_CONCURRENCY,

@@ -1,0 +1,37 @@
+name: guard-plus-web
+
+x-web-build: &web-build
+  context: ..
+  dockerfile: webs/Dockerfile
+  target: web
+
+x-logging: &logging
+  driver: local
+  options:
+    max-size: '20m'
+    max-file: '10'
+
+services:
+  admin-web:
+    build:
+      <<: *web-build
+      args:
+        WEB_APP: admin
+        NUXT_PUBLIC_API_BASE_URL: ${ADMIN_API_ORIGIN:?set ADMIN_API_ORIGIN in .env.prod}
+    image: ${IMAGE_REGISTRY:-local}/guard-plus-admin-web:latest
+    restart: unless-stopped
+    logging: *logging
+    ports:
+      - '${ADMIN_WEB_PUBLISHED_PORT:-3996}:80'
+
+  user-web:
+    build:
+      <<: *web-build
+      args:
+        WEB_APP: user
+        NUXT_PUBLIC_API_BASE_URL: ${USER_API_ORIGIN:?set USER_API_ORIGIN in .env.prod}
+    image: ${IMAGE_REGISTRY:-local}/guard-plus-user-web:latest
+    restart: unless-stopped
+    logging: *logging
+    ports:
+      - '${USER_WEB_PUBLISHED_PORT:-3998}:80'

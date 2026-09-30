@@ -18,12 +18,12 @@
 
 ```dotenv
 LOG_LEVEL=info
-GUARD_PLUS_LOG_PATH=/home/guard-plus-data/logs
+LOG_PATH=/home/guard-plus-data/logs
 LOG_MAX_SIZE_MB=20
 LOG_MAX_FILES=10
 ```
 
-`GUARD_PLUS_LOG_PATH` 必须是部署宿主机的绝对路径。Compose 为三个服务分别挂载子目录，
+`LOG_PATH` 必须是部署宿主机的绝对路径。Compose 为三个服务分别挂载子目录，
 容器内统一为 `/app/logs`，并设置 `LOG_DIRECTORY=/app/logs`。单个目录只允许一个服务进程
 写入；扩容时应按实例区分目录。容器必须有目录写权限。
 
@@ -64,7 +64,7 @@ jq -c 'select(.biliEventId == "替换为事件ID")' /home/guard-plus-data/logs/e
 jq -c 'select(.level >= 40)' /home/guard-plus-data/logs/{admin,user,event}/*.log
 ```
 
-自定义 `GUARD_PLUS_LOG_PATH` 时替换上述宿主机路径。`*.log` 包括所有轮转文件；
+自定义 `LOG_PATH` 时替换上述宿主机路径。`*.log` 包括所有轮转文件；
 文件序号超过 9 后不能依赖文件名的字典顺序判断时间，应查看 JSON 中的毫秒时间戳 `time`。
 
 ## HTTP 请求失败

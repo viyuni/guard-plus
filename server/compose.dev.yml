@@ -3,8 +3,8 @@ name: guard-plus-dev
 x-logging: &logging
   driver: local
   options:
-    max-size: 20m
-    max-file: 5
+    max-size: '20m'
+    max-file: '5'
 
 services:
   db:
@@ -18,7 +18,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-guard-plus}
     ports:
       - target: 5432
-        published: ${GUARD_PLUS_POSTGRES_PUBLISHED_PORT:-8699}
+        published: ${POSTGRES_PUBLISHED_PORT:-8699}
         protocol: tcp
         host_ip: 127.0.0.1
     volumes:
@@ -53,7 +53,7 @@ services:
       - '60 10000'
     ports:
       - target: 6379
-        published: ${GUARD_PLUS_REDIS_PUBLISHED_PORT:-6379}
+        published: ${REDIS_PUBLISHED_PORT:-6379}
         protocol: tcp
         host_ip: 127.0.0.1
     volumes:

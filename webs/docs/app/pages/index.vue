@@ -1,5 +1,8 @@
 <script setup lang="ts">
 const { t } = useI18n();
+const localePath = useLocalePath();
+
+const quickStart = ['vp install', 'vpr docs#dev --port 3002'].join('\n');
 
 useHead({
   title: t('meta.title'),
@@ -67,29 +70,29 @@ useHead({
         <div class="mx-auto grid max-w-4xl gap-4 sm:grid-cols-3">
           <DocsCard :title="$t('home.frontend')" icon="Monitor">
             <ul class="space-y-1">
-              <li><strong>Nuxt 4</strong> with SSR</li>
-              <li><strong>Vue 3</strong> Composition API</li>
-              <li><strong>Tailwind CSS</strong> / shadcn-vue</li>
-              <li><strong>Pinia</strong> state management</li>
-              <li><strong>TanStack</strong> tables &amp; forms</li>
+              <li>{{ $t('home.stackNuxt') }}</li>
+              <li>{{ $t('home.stackVue') }}</li>
+              <li>{{ $t('home.stackStyles') }}</li>
+              <li>{{ $t('home.stackState') }}</li>
+              <li>{{ $t('home.stackForms') }}</li>
             </ul>
           </DocsCard>
           <DocsCard :title="$t('home.backend')" icon="Server">
             <ul class="space-y-1">
-              <li><strong>Elysia</strong> HTTP framework</li>
-              <li><strong>Drizzle ORM</strong> + PostgreSQL</li>
-              <li><strong>Redis</strong> for queues &amp; caching</li>
-              <li><strong>Bun</strong> JavaScript runtime</li>
-              <li><strong>Eden</strong> type-safe RPC</li>
+              <li>{{ $t('home.stackHttp') }}</li>
+              <li>{{ $t('home.stackDatabase') }}</li>
+              <li>{{ $t('home.stackJobs') }}</li>
+              <li>{{ $t('home.stackRuntime') }}</li>
+              <li>{{ $t('home.stackTypes') }}</li>
             </ul>
           </DocsCard>
           <DocsCard :title="$t('home.tooling')" icon="Wrench">
             <ul class="space-y-1">
-              <li><strong>TypeScript 6.x</strong> throughout</li>
-              <li><strong>Vite+</strong> monorepo tooling</li>
-              <li><strong>Valibot</strong> schema validation</li>
-              <li><strong>Docker</strong> containerization</li>
-              <li><strong>GitHub Actions</strong> CI/CD</li>
+              <li>{{ $t('home.stackTypeScript') }}</li>
+              <li>{{ $t('home.stackToolchain') }}</li>
+              <li>{{ $t('home.stackValidation') }}</li>
+              <li>{{ $t('home.stackDocker') }}</li>
+              <li>{{ $t('home.stackCi') }}</li>
             </ul>
           </DocsCard>
         </div>
@@ -103,10 +106,12 @@ useHead({
           {{ $t('home.getStarted') }}
         </h2>
         <div class="mx-auto max-w-xl">
-          <DocsCode language="bash" label="Terminal">
-            # Install dependencies vp install # Run all checks vpr check # Start development servers
-            vpr @web/admin#dev vpr @web/user#dev</DocsCode
-          >
+          <DocsCode language="bash" label="Terminal" :code="quickStart" />
+          <p class="mt-6 text-center">
+            <NuxtLink :to="localePath('/about')" class="text-primary underline underline-offset-4">
+              {{ $t('home.developmentGuide') }}
+            </NuxtLink>
+          </p>
           <p class="mt-6 text-center">
             <a
               href="https://github.com/viyuni/guard-plus"
