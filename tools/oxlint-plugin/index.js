@@ -369,6 +369,11 @@ const rippleDepsPascalCase = {
  * config → shared，导入只能顺着这个方向走；另外还有两条模块级约束：
  * 跨模块只能走 `#modules/<name>` 公共入口，App 之间不能互相导入。
  *
+ * config 层有点特殊：它同时是"环境变量 Schema"和"派生出来的配置 ripple"的所在地。
+ * 前者（`#config/*` 片段与原始解析结果 `configEnv`）只允许在 config 层内部与
+ * `apps/<app>/config.ts` 出现，后者（`LoggerConfig`、`DatabaseUrl`、`RedisOptions` …）
+ * 就是给各层按需 import 的能力，跟随上面的分层规则即可。
+ *
  * 判据只看源码里的 `#` 别名导入，因此 relative import 仍留给人工判断
  * （同一模块内部的 relative import 是允许且推荐的）。
  */
@@ -433,6 +438,45 @@ function resolveAliasLayer(specifier) {
   }
 
   return null;
+}
+
+const CONFIG_ALIAS = '#config';
+
+/** App 配置边界：唯一允许接触原始环境变量的业务文件。 */
+const APP_CONFIG_FILE = /^apps\/[^/]+\/config\.ts$/;
+
+/** `#config` 里的原始解析结果，等价于直接读 `process.env`。 */
+const RAW_ENV_EXPORT = 'configEnv';
+
+/**
+ * 判断一次 `#config` 导入是否触碰"原始环境变量表面"。
+ *
+ * - `#config/<fragment>`：直接引用 env schema 片段；
+ * - `#config` 的 `configEnv`（含 namespace 导入）：等价于直接读 `process.env`。
+ *
+ * 由 config 层派生出来的配置 ripple 不在此列——它们才是给各层按需 import 的能力。
+ *
+ * @param {string} specifier
+ * @param {any} node import/export 声明节点
+ */
+function touchesRawEnv(specifier, node) {
+  if (specifier.startsWith(`${CONFIG_ALIAS}/`)) {
+    return true;
+  }
+
+  if (specifier !== CONFIG_ALIAS) {
+    return false;
+  }
+
+  return (node.specifiers ?? []).some(item => {
+    if (item.type === 'ImportNamespaceSpecifier') {
+      return true;
+    }
+
+    const name = item.imported?.name ?? item.imported?.value ?? item.local?.name;
+
+    return name === RAW_ENV_EXPORT;
+  });
 }
 
 const architectureImportBoundary = {
