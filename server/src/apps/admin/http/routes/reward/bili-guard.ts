@@ -3,7 +3,7 @@ import {
   BiliEventPageQuerySchema,
   CreateManualBiliGuardEventSchema,
 } from '@shared/schema/reward';
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
 import Reward from '#modules/reward';
@@ -11,6 +11,7 @@ import Reward from '#modules/reward';
 import { AdminAuthGuard } from '../../auth';
 
 export const RewardBiliGuardRoutes = ripple(
+  'RewardBiliGuardRoutes',
   {
     AdminAuthGuard,
     ManualRewardUseCase: Reward.ManualRewardUseCase,
@@ -65,5 +66,4 @@ export const RewardBiliGuardRoutes = ripple(
           },
         },
       ),
-  { debugName: 'RewardBiliGuardRoutes' },
 );

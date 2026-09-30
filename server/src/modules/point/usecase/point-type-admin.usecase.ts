@@ -3,7 +3,7 @@ import type {
   PointTypeIconUploadBody,
   UpdatePointTypeBody,
 } from '@shared/schema/point-type';
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
 import { ImageStorage } from '#composition/tokens';
 
@@ -23,6 +23,7 @@ import { PointTypeQuery } from './point-type-query';
  * 才绑定 `ImageStorage`。
  */
 export const PointTypeAdminUseCase = ripple(
+  'PointTypeAdminUseCase',
   {
     ImageStorage,
     PointTypeQuery,
@@ -99,7 +100,6 @@ export const PointTypeAdminUseCase = ripple(
       return PointTypeRepo.updateStatus(pointTypeId, 'disabled');
     },
   }),
-  { debugName: 'PointTypeAdminUseCase' },
 );
 
 export type PointTypeAdminUseCase = InferInput<typeof PointTypeAdminUseCase>;

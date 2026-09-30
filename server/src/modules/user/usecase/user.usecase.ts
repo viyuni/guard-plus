@@ -4,7 +4,7 @@ import type {
   UserPageQuery,
   UserRegisterBody,
 } from '@shared/schema/user';
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
 import type { DbExecutor } from '#infrastructure/db';
 import { InvalidCredentialsError, PasswordUtil } from '#shared';
@@ -18,6 +18,7 @@ import {
 import { UserRepo } from '../repository';
 
 export const UserUseCase = ripple(
+  'UserUseCase',
   {
     UserBasicInfoCrypto,
     UserRepo,
@@ -208,7 +209,6 @@ export const UserUseCase = ripple(
       },
     };
   },
-  { debugName: 'UserUseCase' },
 );
 
 export type UserUseCase = InferInput<typeof UserUseCase>;

@@ -40,7 +40,7 @@ async function createAppUseCases() {
   appRuntimes.push(runtime);
 
   return {
-    container: await runtime.start(),
+    container: runtime.ripples,
     runtime,
   };
 }
@@ -571,7 +571,7 @@ describeWithDatabase('奖励发放真实数据库', () => {
           }
         : null;
 
-    const registerUseCase = await runtime.resolve(Auth.BiliRegisterUseCase);
+    const registerUseCase = runtime.resolve(Auth.BiliRegisterUseCase);
 
     spyOn(registerUseCase, 'getOwnedChallenge').mockImplementation(async (code, actualVerifier) =>
       getBiliRegisterChallenge(code, actualVerifier),

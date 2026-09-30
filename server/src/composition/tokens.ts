@@ -1,4 +1,4 @@
-import { token } from 'cyrenejs';
+import { InvalidDependencyError, ripple, type Dependency } from 'cyrenex';
 
 import type { DbClient } from '#infrastructure/db';
 import type { AppLogger } from '#infrastructure/logger';
@@ -10,9 +10,19 @@ import type { ImageStorage as ImageStorageService } from '#infrastructure/storag
  * 组合层令牌。
  *
  * 令牌只表达"能力", 不表达实现: 基础设施与配置都在 App Composition Root
- * 绑定具体值。模块与 HTTP adapter 只依赖令牌, 因此既不读环境变量,
- * 也不直接引用具体实现。
+ * 由 `override()` 换成真正的 ripple。模块与 HTTP adapter 只依赖令牌, 因此既不读
+ * 环境变量, 也不直接引用具体实现。
+ *
+ * 令牌本身也是 ripple —— 未绑定时工厂会抛错, 忘记绑定在首次解析就会拿到
+ * 明确的错误, 而不是静默的 undefined。
  */
+
+/** 声明一个只表达能力、等待 Composition Root 绑定的令牌。 */
+function token<T>(key: string): Dependency<T, {}, false> {
+  return ripple(key, () => {
+    throw new InvalidDependencyError(`组合层令牌 "${key}" 尚未绑定`);
+  }) as unknown as Dependency<T, {}, false>;
+}
 
 /** 数据库客户端 */
 export const Database = token<DbClient>('Database');

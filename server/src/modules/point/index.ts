@@ -1,5 +1,3 @@
-import { defineRipples } from 'cyrenejs';
-
 import {
   LegacyPointMigrationRepo,
   PointAccountRepo,
@@ -20,7 +18,7 @@ import {
 export * from './domain';
 
 /** point 模块的 Ripple Manifest。 */
-export default defineRipples({
+export default {
   PointAccountRepo,
   PointConversionRuleRepo,
   PointTransactionRepo,
@@ -33,4 +31,4 @@ export default defineRipples({
   PointBalanceUseCase,
   PointConversionUseCase,
   PointTransactionUseCase,
-});
+};

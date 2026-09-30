@@ -1,5 +1,5 @@
 import { CreateOrderSchema, OrderPageQuerySchema } from '@shared/schema/order';
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
 import Order from '#modules/order';
@@ -7,6 +7,7 @@ import Order from '#modules/order';
 import { UserAuthGuard } from '../auth';
 
 export const OrderRoutes = ripple(
+  'OrderRoutes',
   {
     OrderUseCase: Order.OrderUseCase,
     UserAuthGuard,
@@ -56,5 +57,4 @@ export const OrderRoutes = ripple(
           },
         },
       ),
-  { debugName: 'OrderRoutes' },
 );

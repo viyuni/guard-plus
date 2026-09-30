@@ -1,4 +1,4 @@
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 import { SignJWT, jwtVerify } from 'jose';
 import { nanoid } from 'nanoid';
 
@@ -22,6 +22,7 @@ function getTokenExpiresInSeconds(type: AuthTokenType) {
 }
 
 export const AuthUseCase = ripple(
+  'AuthUseCase',
   {
     AuthSessionRepo,
     JwtSecret,
@@ -232,7 +233,6 @@ export const AuthUseCase = ripple(
       },
     };
   },
-  { debugName: 'AuthUseCase' },
 );
 
 export type AuthUseCase = InferInput<typeof AuthUseCase>;

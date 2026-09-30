@@ -1,21 +1,27 @@
-import { Cyrene, defineRipples } from 'cyrenejs';
+import { Cyrene } from 'cyrenex';
 
 import AdminFeature from '#apps/admin/features/admin';
 import AdminAuthFeature from '#apps/admin/features/auth';
 import AdminUserFeature from '#apps/admin/features/user';
 import UserAuthFeature from '#apps/user/features/auth';
 import {
-  apiOriginBinding,
   biliRoomBinding,
+  BiliRoom,
+  Database,
   databaseBinding,
+  DataSecret,
   dataSecretBinding,
+  ImageSavePath,
   imageSavePathBinding,
-  imageStorageBinding,
+  ImageStorage,
+  JwtSecret,
   jwtSecretBinding,
+  Logger,
   loggerBinding,
+  Redis,
   redisBinding,
+  RegisterCodeTtl,
   registerCodeTtlBinding,
-  webOriginsBinding,
 } from '#composition';
 import type { DbClient } from '#infrastructure/db';
 import { createLogger } from '#infrastructure/logger';
@@ -36,7 +42,7 @@ import User from '#modules/user';
  * 与 App 组合根一样是显式清单, 只是把 Admin App 的 feature 也装了进来,
  * 便于在同一个 Runtime 里覆盖跨模块事务。
  */
-const TestRipples = defineRipples({
+const TestRipples = {
   ...Auth,
   ...BiliEvent,
   ...Dashboard,
@@ -50,7 +56,7 @@ const TestRipples = defineRipples({
   ...AdminAuthFeature,
   ...AdminUserFeature,
   ...UserAuthFeature,
-});
+};
 
 export interface TestContainerOptions {
   db: DbClient;
@@ -58,21 +64,17 @@ export interface TestContainerOptions {
   imageSavePath?: string;
 }
 
+/** 只绑这张测试依赖图真正可达的令牌 —— 不可达的绑定会被构图直接拒绝。 */
 export function createTestContainer({ db, redis, imageSavePath = '' }: TestContainerOptions) {
-  return new Cyrene({
-    ripples: TestRipples,
-    bindings: [
-      databaseBinding(db),
-      redisBinding(redis),
-      loggerBinding(createLogger({ level: 'silent', pretty: false })),
-      dataSecretBinding('test-data-secret'),
-      biliRoomBinding(721),
-      registerCodeTtlBinding(300),
-      jwtSecretBinding('test-jwt-secret'),
-      apiOriginBinding('http://api.test.localhost'),
-      webOriginsBinding(['http://test.localhost']),
-      imageSavePathBinding(imageSavePath),
-      imageStorageBinding(LocalImageStorage),
-    ],
-  });
+  return new Cyrene()
+    .use(...Object.values(TestRipples))
+    .override(Database, databaseBinding(db))
+    .override(Redis, redisBinding(redis))
+    .override(Logger, loggerBinding(createLogger({ level: 'silent', pretty: false })))
+    .override(DataSecret, dataSecretBinding('test-data-secret'))
+    .override(BiliRoom, biliRoomBinding(721))
+    .override(RegisterCodeTtl, registerCodeTtlBinding(300))
+    .override(JwtSecret, jwtSecretBinding('test-jwt-secret'))
+    .override(ImageSavePath, imageSavePathBinding(imageSavePath))
+    .override(ImageStorage, LocalImageStorage);
 }

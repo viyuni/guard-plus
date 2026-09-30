@@ -1,17 +1,27 @@
-import { Cyrene, defineRipples } from 'cyrenejs';
+import { elysiaCyrene } from '@cyrenex/elysia';
 
 import {
   apiOriginBinding,
+  ApiOrigin,
   biliRoomBinding,
+  BiliRoom,
   databaseBinding,
+  Database,
   dataSecretBinding,
+  DataSecret,
   imageSavePathBinding,
-  imageStorageBinding,
+  ImageSavePath,
+  ImageStorage,
   jwtSecretBinding,
+  JwtSecret,
   loggerBinding,
+  Logger,
   redisBinding,
+  Redis,
   registerCodeTtlBinding,
+  RegisterCodeTtl,
   webOriginsBinding,
+  WebOrigins,
 } from '#composition';
 import { createDatabase } from '#infrastructure/db';
 import { createLogger } from '#infrastructure/logger';
@@ -46,7 +56,7 @@ import { AdminUserRoutes } from './http/routes/user';
  *
  * 显式列出每个节点: 新增 export 不会隐式改变 Runtime 的依赖图。
  */
-const AdminAppRipples = defineRipples({
+const AdminAppRipples = {
   ...Auth,
   ...BiliEvent,
   ...Dashboard,
@@ -73,12 +83,12 @@ const AdminAppRipples = defineRipples({
   RewardRoutes,
 
   AdminHttp,
-});
+};
 
 /**
  * Admin App 的组合根。
  *
- * 一个 App = 一个 Composition Root = 一个 Cyrene Runtime。
+ * 一个 App = 一个 Composition Root = 一个 Cyrene 容器。
  */
 export async function createAdminApp() {
   const config = adminConfig;
@@ -91,29 +101,32 @@ export async function createAdminApp() {
   const db = createDatabase(config.databaseUrl);
   const redis = createRedisClient(config.redis, logger);
 
-  const runtime = new Cyrene({
-    ripples: AdminAppRipples,
+  // Elysia 插件持有容器: HTTP 停止时由它关闭依赖图。
+  const container = elysiaCyrene();
+
+  const runtime = container.decorator.cyrene
+    .use(...Object.values(AdminAppRipples))
     // 逐令牌绑定: 只列这张依赖图真正需要的令牌。
-    bindings: [
-      databaseBinding(db),
-      redisBinding(redis),
-      loggerBinding(logger),
-      dataSecretBinding(config.dataSecret),
-      biliRoomBinding(config.biliRoom),
-      registerCodeTtlBinding(config.registerCodeTtlSeconds),
-      jwtSecretBinding(config.jwtSecret),
-      apiOriginBinding(config.apiOrigin),
-      webOriginsBinding(config.webOrigins),
-      imageSavePathBinding(config.imageSavePath),
-      imageStorageBinding(LocalImageStorage),
-    ],
-  });
+    .override(Database, databaseBinding(db))
+    .override(Redis, redisBinding(redis))
+    .override(Logger, loggerBinding(logger))
+    .override(DataSecret, dataSecretBinding(config.dataSecret))
+    .override(BiliRoom, biliRoomBinding(config.biliRoom))
+    .override(RegisterCodeTtl, registerCodeTtlBinding(config.registerCodeTtlSeconds))
+    .override(JwtSecret, jwtSecretBinding(config.jwtSecret))
+    .override(ApiOrigin, apiOriginBinding(config.apiOrigin))
+    .override(WebOrigins, webOriginsBinding(config.webOrigins))
+    .override(ImageSavePath, imageSavePathBinding(config.imageSavePath))
+    .override(ImageStorage, LocalImageStorage);
 
   try {
-    const container = await runtime.start();
+    // 构图期校验: 不执行工厂, 但会立刻暴露重复 key、强依赖环与不可达的绑定。
+    runtime.inspect();
+
+    const ripples = runtime.ripples;
 
     // 启动期业务初始化由组合根触发, 而不是靠模块的隐式副作用。
-    await container.AdminUseCase.initDefaultAdmin(
+    await ripples.AdminUseCase.initDefaultAdmin(
       config.superAdmin,
       config.nodeEnv === 'development',
     );
@@ -124,6 +137,7 @@ export async function createAdminApp() {
       db,
       logger,
       redis,
+      ripples,
       runtime,
     };
   } catch (error) {

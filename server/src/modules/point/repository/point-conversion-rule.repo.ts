@@ -1,4 +1,4 @@
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 import { and, eq } from 'drizzle-orm';
 
 import { Database } from '#composition/tokens';
@@ -11,6 +11,7 @@ import {
 } from '#infrastructure/db/schema';
 
 export const PointConversionRuleRepo = ripple(
+  'PointConversionRuleRepo',
   {
     Database,
   },
@@ -166,7 +167,6 @@ export const PointConversionRuleRepo = ripple(
       },
     };
   },
-  { debugName: 'PointConversionRuleRepository' },
 );
 
 export type PointConversionRuleRepository = InferInput<typeof PointConversionRuleRepo>;

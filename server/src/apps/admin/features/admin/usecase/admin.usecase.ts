@@ -4,7 +4,7 @@ import type {
   AdminUpdateBody,
   AdminUpdatePasswordBody,
 } from '@shared/schema/admin';
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
 import { Logger } from '#composition/tokens';
 import type { AdminRole } from '#infrastructure/db/schema';
@@ -25,6 +25,7 @@ export interface AdminDefaultAccount {
 }
 
 export const AdminUseCase = ripple(
+  'AdminUseCase',
   {
     AdminRepo,
     Logger,
@@ -210,7 +211,6 @@ export const AdminUseCase = ripple(
       },
     };
   },
-  { debugName: 'AdminUseCase' },
 );
 
 export type AdminUseCase = InferInput<typeof AdminUseCase>;

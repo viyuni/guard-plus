@@ -1,5 +1,5 @@
 import type { OrderPageQuery } from '@shared/schema/order';
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 import { and, eq, inArray } from 'drizzle-orm';
 
 import { Database } from '#composition/tokens';
@@ -39,6 +39,7 @@ function buildManageWhere(query: OrderPageQuery) {
 }
 
 export const OrderRepo = ripple(
+  'OrderRepo',
   {
     Database,
   },
@@ -174,7 +175,6 @@ export const OrderRepo = ripple(
       return row ?? null;
     },
   }),
-  { debugName: 'OrderRepository' },
 );
 
 export type OrderRepository = InferInput<typeof OrderRepo>;

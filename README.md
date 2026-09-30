@@ -124,7 +124,7 @@ The backend package is `@server/app` in `server/`.
 - `server/src/apps/user`: user HTTP app — same layout.
 - `server/src/apps/event`: event ingestion runtime.
 - `server/src/apps/seed`: development seed script and its composition root.
-- `server/src/modules`: reusable business capabilities, each with a single public entry exporting `defineRipples(...)`.
+- `server/src/modules`: reusable business capabilities, each with a single public entry default-exporting a Ripple Manifest object.
 - `server/src/infrastructure`: db, redis, queue, logger, mail, storage, and the HTTP adapter kit.
 - `server/src/composition`: infrastructure/config tokens and binding helpers.
 - `server/src/shared`: business-agnostic errors and utilities.

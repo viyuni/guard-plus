@@ -10,11 +10,11 @@ import { createAdminApp } from './composition';
 /**
  * Admin HTTP Server。
  *
- * Elysia 只出现在这一层: 组合根提供已经装配好的 `AdminHttp` 根 Ripple,
- * 这里只负责 serve 配置、CORS、错误映射、静态资源与文档。
+ * Elysia 只出现在这一层: 组合根提供持有依赖图的 cyrene 插件与装配好的
+ * `AdminHttp` 根 Ripple, 这里只负责 serve 配置、CORS、错误映射、静态资源与文档。
  */
 export async function createAdminServer() {
-  const { runtime, container, logger, config } = await createAdminApp();
+  const { config, container, logger, ripples } = await createAdminApp();
 
   const app = new Elysia({
     name: 'AdminServer',
@@ -30,7 +30,9 @@ export async function createAdminServer() {
         credentials: true,
       }),
     )
-    .use(container.AdminHttp)
+    // cyrene 插件必须先安装: 它提供容器并负责停止时释放依赖图。
+    .use(container)
+    .use(ripples.AdminHttp)
     .use(createErrorHandler(logger))
     .use(health)
     .use(createImageAssets({ assets: config.imageSavePath }))
@@ -44,9 +46,6 @@ export async function createAdminServer() {
       }),
     );
   }
-
-  // App 拥有 Runtime: HTTP 停止时释放依赖图。
-  app.onStop(() => runtime.dispose());
 
   return {
     app,

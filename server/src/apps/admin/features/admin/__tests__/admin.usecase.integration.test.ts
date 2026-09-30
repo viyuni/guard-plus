@@ -1,9 +1,9 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test';
 
-import { Cyrene } from 'cyrenejs';
+import { Cyrene } from 'cyrenex';
 import { eq, inArray, like } from 'drizzle-orm';
 
-import { Database, Logger } from '#composition/tokens';
+import { Database, databaseBinding, Logger, loggerBinding } from '#composition';
 import type { DbClient } from '#infrastructure/db';
 import { admins } from '#infrastructure/db/schema';
 import { createLogger } from '#infrastructure/logger';
@@ -105,17 +105,14 @@ beforeEach(async () => {
 
   await clearAdmins();
 
-  const runtime = new Cyrene({
-    ripples: { AdminRepo, AdminUseCase },
-    bindings: [
-      { token: Database, value: db },
-      { token: Logger, value: createLogger({ level: 'silent', pretty: false }) },
-    ],
-  });
+  const runtime = new Cyrene()
+    .use(AdminRepo, AdminUseCase)
+    .override(Database, databaseBinding(db))
+    .override(Logger, loggerBinding(createLogger({ level: 'silent', pretty: false })));
 
   runtimes.push(runtime);
 
-  useCase = (await runtime.start()).AdminUseCase;
+  useCase = runtime.ripples.AdminUseCase;
 });
 
 afterEach(async () => {

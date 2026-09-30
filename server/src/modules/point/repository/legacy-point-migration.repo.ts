@@ -1,5 +1,5 @@
 import type { LegacyPointMigrationPageQuery } from '@shared/schema/point-account';
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 import { and, eq, isNull } from 'drizzle-orm';
 
 import { Database } from '#composition/tokens';
@@ -24,6 +24,7 @@ function resolveReplayedAtFilter(
 }
 
 export const LegacyPointMigrationRepo = ripple(
+  'LegacyPointMigrationRepo',
   {
     Database,
   },
@@ -104,7 +105,6 @@ export const LegacyPointMigrationRepo = ripple(
       return row ?? null;
     },
   }),
-  { debugName: 'LegacyPointMigrationRepository' },
 );
 
 export type LegacyPointMigrationRepository = InferInput<typeof LegacyPointMigrationRepo>;

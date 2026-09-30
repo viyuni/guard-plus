@@ -1,5 +1,3 @@
-import { defineRipples } from 'cyrenejs';
-
 import { OrderRepo } from './repository';
 import { OrderUseCase } from './usecase';
 
@@ -7,7 +5,7 @@ import { OrderUseCase } from './usecase';
 export * from './domain';
 
 /** order 模块的 Ripple Manifest。 */
-export default defineRipples({
+export default {
   OrderRepo,
   OrderUseCase,
-});
+};

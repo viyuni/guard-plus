@@ -1,4 +1,4 @@
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 
 import { ApiOrigin, WebOrigins } from '#composition/tokens';
 import { createAuthCookieOptions, createAuthGuard } from '#infrastructure/http';
@@ -14,6 +14,7 @@ import Auth, {
  * 有效期来自 auth 模块的静态常量, 是否 Secure 由 API Origin 推导。
  */
 export const UserAuthCookies = ripple(
+  'UserAuthCookies',
   {
     ApiOrigin,
     WebOrigins,
@@ -28,7 +29,6 @@ export const UserAuthCookies = ripple(
         biliRegisterSeconds: BILI_REGISTER_EXPIRES_IN_SECONDS,
       },
     }),
-  { debugName: 'UserAuthCookies' },
 );
 
 /**
@@ -37,10 +37,10 @@ export const UserAuthCookies = ripple(
  * 提供 `requiredAuth` 宏以及带类型的 `auth` 上下文。
  */
 export const UserAuthGuard = ripple(
+  'UserAuthGuard',
   {
     AuthUseCase: Auth.AuthUseCase,
     UserAuthCookies,
   },
   ({ AuthUseCase, UserAuthCookies }) => createAuthGuard(AuthUseCase, UserAuthCookies),
-  { debugName: 'UserAuthGuard' },
 );

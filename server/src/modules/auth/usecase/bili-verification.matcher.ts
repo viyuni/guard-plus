@@ -1,4 +1,4 @@
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
 import { BiliPasswordResetRepo, BiliRegisterRepo } from '../repository';
 import type { BiliRegisterRedisRepository } from '../repository';
@@ -43,6 +43,7 @@ export function createBiliVerificationMatcher({
 
 /** 将 B 站弹幕路由到对应的短生命周期验证码仓储。 */
 export const BiliVerificationMatcher = ripple(
+  'BiliVerificationMatcher',
   {
     BiliPasswordResetRepo,
     BiliRegisterRepo,
@@ -52,7 +53,6 @@ export const BiliVerificationMatcher = ripple(
       passwordResetRepo: deps.BiliPasswordResetRepo,
       registerRepo: deps.BiliRegisterRepo,
     }),
-  { debugName: 'BiliVerificationMatcher' },
 );
 
 export type BiliVerificationMatcher = InferInput<typeof BiliVerificationMatcher>;

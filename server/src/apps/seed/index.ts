@@ -1,9 +1,9 @@
 /* eslint-disable no-console */
 import { fakerZH_CN as faker } from '@faker-js/faker';
-import { Cyrene } from 'cyrenejs';
+import { Cyrene } from 'cyrenex';
 import { seed as drizzleSeed } from 'drizzle-seed';
 
-import { biliRoomBinding, databaseBinding, dataSecretBinding, loggerBinding } from '#composition';
+import { Database, databaseBinding, DataSecret, dataSecretBinding } from '#composition';
 import { createDatabase, type DbClient } from '#infrastructure/db';
 import {
   admins,
@@ -18,7 +18,6 @@ import {
   type InsertRewardRule,
   type PointType,
 } from '#infrastructure/db/schema';
-import { createLogger } from '#infrastructure/logger';
 import BiliEvent from '#modules/bili-event';
 import Point from '#modules/point';
 import Reward, { type BiliGuardRewardEvent } from '#modules/reward';
@@ -431,6 +430,22 @@ async function seedPointConversionRules(targetDb: DbClient, pointTypeMap: SeedRe
   });
 }
 
+/** seed 只装奖励发放链路需要的节点: 其他 App 的能力不进这张图。 */
+const SeedRewardRipples = {
+  BiliEventRepo: BiliEvent.BiliEventRepo,
+  PointAccountRepo: Point.PointAccountRepo,
+  PointBalanceUseCase: Point.PointBalanceUseCase,
+  PointTransactionRepo: Point.PointTransactionRepo,
+  PointTypeQuery: Point.PointTypeQuery,
+  PointTypeRepo: Point.PointTypeRepo,
+  BiliGuardRewardUseCase: Reward.BiliGuardRewardUseCase,
+  RewardProcessor: Reward.RewardProcessor,
+  RewardRuleRepo: Reward.RewardRuleRepo,
+  UserBasicInfoCrypto: User.UserBasicInfoCrypto,
+  UserRepo: User.UserRepo,
+  UserUseCase: User.UserUseCase,
+};
+
 async function seedBiliGuardRewardEvents(targetDb: DbClient) {
   const pointTypeMap = {
     activity: await findPointType(targetDb, '活动积分'),
@@ -442,32 +457,16 @@ async function seedBiliGuardRewardEvents(targetDb: DbClient) {
   await seedRewardRules(targetDb, pointTypeMap);
   await seedPointConversionRules(targetDb, pointTypeMap);
 
-  await using runtime = new Cyrene({
-    ripples: {
-      BiliEventRepo: BiliEvent.BiliEventRepo,
-      PointAccountRepo: Point.PointAccountRepo,
-      PointBalanceUseCase: Point.PointBalanceUseCase,
-      PointTransactionRepo: Point.PointTransactionRepo,
-      PointTypeQuery: Point.PointTypeQuery,
-      PointTypeRepo: Point.PointTypeRepo,
-      BiliGuardRewardUseCase: Reward.BiliGuardRewardUseCase,
-      RewardProcessor: Reward.RewardProcessor,
-      RewardRuleRepo: Reward.RewardRuleRepo,
-      UserBasicInfoCrypto: User.UserBasicInfoCrypto,
-      UserRepo: User.UserRepo,
-      UserUseCase: User.UserUseCase,
-    },
-    bindings: [
-      databaseBinding(targetDb),
-      loggerBinding(createLogger({ level: 'info', pretty: false })),
+  await using runtime = new Cyrene()
+    .use(...Object.values(SeedRewardRipples))
+    .override(Database, databaseBinding(targetDb))
+    .override(
+      DataSecret,
       dataSecretBinding(Bun.env.DATA_SECRET ?? 'seed-data-secret-seed-data-secret'),
-      biliRoomBinding(0),
-    ],
-  });
-  const reward = await runtime.start();
+    );
 
   for (const event of seedBiliGuardEvents) {
-    await reward.BiliGuardRewardUseCase.rewardBiliGuard(event);
+    await runtime.ripples.BiliGuardRewardUseCase.rewardBiliGuard(event);
   }
 }
 

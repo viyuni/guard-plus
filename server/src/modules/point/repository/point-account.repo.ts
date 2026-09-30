@@ -1,4 +1,4 @@
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 import { and, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 
 import { Database } from '#composition/tokens';
@@ -17,6 +17,7 @@ import {
 const POSTGRES_INTEGER_MAX = 2_147_483_647;
 
 export const PointAccountRepo = ripple(
+  'PointAccountRepo',
   {
     Database,
   },
@@ -169,7 +170,6 @@ export const PointAccountRepo = ripple(
       },
     };
   },
-  { debugName: 'PointAccountRepository' },
 );
 
 export type PointAccountRepository = InferInput<typeof PointAccountRepo>;

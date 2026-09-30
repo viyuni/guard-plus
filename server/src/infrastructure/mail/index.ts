@@ -15,6 +15,8 @@ export interface Mailer {
   notifyEmails: string[];
   send(input: SendMailInput): Promise<unknown>;
   close(): void;
+  /** 交给依赖图按资源协议释放, 无需在容器外手工 close。 */
+  [Symbol.asyncDispose](): Promise<void>;
 }
 
 /** SMTP 技术配置, 由 App Boundary 从环境变量映射而来。 */
@@ -50,6 +52,10 @@ class SmtpMailer implements Mailer {
     this.transporter.close();
   }
 
+  async [Symbol.asyncDispose]() {
+    this.close();
+  }
+
   send(input: SendMailInput) {
     return this.transporter.sendMail({
       from: this.config.from,
@@ -69,6 +75,10 @@ class UnconfiguredMailer implements Mailer {
   notifyEmails: string[] = [];
 
   close() {}
+
+  async [Symbol.asyncDispose]() {
+    // 降级实现不持有任何需要释放的资源
+  }
 
   async send(): Promise<never> {
     throw new BadRequestError('SMTP 未配置，无法发送邮件');

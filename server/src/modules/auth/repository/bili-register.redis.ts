@@ -1,4 +1,4 @@
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
 import { Redis } from '#composition/tokens';
 import { RegisterCodeTtl } from '#composition/tokens';
@@ -90,6 +90,7 @@ function createBiliRegisterRedisRepository({
 }
 
 export const BiliRegisterRepo = ripple(
+  'BiliRegisterRepo',
   {
     Redis,
     RegisterCodeTtl,
@@ -100,10 +101,10 @@ export const BiliRegisterRepo = ripple(
       redis: deps.Redis,
       ttlSeconds: deps.RegisterCodeTtl,
     }),
-  { debugName: 'BiliRegisterRepository' },
 );
 
 export const BiliPasswordResetRepo = ripple(
+  'BiliPasswordResetRepo',
   {
     Redis,
     RegisterCodeTtl,
@@ -114,7 +115,6 @@ export const BiliPasswordResetRepo = ripple(
       redis: deps.Redis,
       ttlSeconds: deps.RegisterCodeTtl,
     }),
-  { debugName: 'BiliPasswordResetRepository' },
 );
 
 export type BiliRegisterRedisRepository = InferInput<typeof BiliRegisterRepo>;

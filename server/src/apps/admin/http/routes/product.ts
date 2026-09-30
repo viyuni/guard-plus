@@ -6,7 +6,7 @@ import {
   UpdateProductSchema,
 } from '@shared/schema/product';
 import { StockAdjustmentSchema, StockMovementPageQuerySchema } from '@shared/schema/stock';
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
 import Product from '#modules/product';
@@ -14,6 +14,7 @@ import Product from '#modules/product';
 import { AdminAuthGuard } from '../auth';
 
 export const AdminProductRoutes = ripple(
+  'AdminProductRoutes',
   {
     AdminAuthGuard,
     ProductUseCase: Product.ProductUseCase,
@@ -195,5 +196,4 @@ export const AdminProductRoutes = ripple(
           },
         },
       ),
-  { debugName: 'AdminProductRoutes' },
 );

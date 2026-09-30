@@ -10,13 +10,14 @@
   ],
   "type": "module",
   "scripts": {
-    "prepare": "vp config"
+    "prepare": "vp config && skills-npm"
   },
   "devDependencies": {
     "@stylistic/eslint-plugin": "^5.10.0",
     "@tsconfig/node24": "catalog:",
     "bun-types": "catalog:",
     "changelogen": "catalog:",
+    "skills-npm": "^4.0.0",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plus": "catalog:"

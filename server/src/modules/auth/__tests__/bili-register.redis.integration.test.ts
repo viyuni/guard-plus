@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
 import { createHash } from 'node:crypto';
 
-import { Cyrene } from 'cyrenejs';
+import { Cyrene } from 'cyrenex';
 import { createClient } from 'redis';
 
-import { Redis, RegisterCodeTtl } from '#composition/tokens';
+import { Redis, redisBinding, RegisterCodeTtl, registerCodeTtlBinding } from '#composition';
 import type { RedisClient } from '#infrastructure/redis';
 
 import type { BiliRegisterRedisRepository } from '../repository';
@@ -67,23 +67,20 @@ beforeEach(async () => {
   redis = createClient({ url: testRedisUrl });
   await redis.connect();
 
-  const runtime = new Cyrene({
-    ripples: {
+  const runtime = new Cyrene()
+    .use(
       BiliPasswordResetRepo,
       BiliPasswordResetUseCase,
       BiliRegisterRepo,
       BiliRegisterUseCase,
       BiliVerificationMatcher,
-    },
-    bindings: [
-      { token: Redis, value: redis },
-      { token: RegisterCodeTtl, value: ttlSeconds },
-    ],
-  });
+    )
+    .override(Redis, redisBinding(redis))
+    .override(RegisterCodeTtl, registerCodeTtlBinding(ttlSeconds));
 
   runtimes.push(runtime);
 
-  const container = await runtime.start();
+  const container = runtime.ripples;
 
   repo = container.BiliRegisterRepo;
   useCase = container.BiliRegisterUseCase;

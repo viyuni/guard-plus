@@ -1,4 +1,4 @@
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
 import { Logger } from '#composition/tokens';
 import BiliEventModule from '#modules/bili-event';
@@ -13,6 +13,7 @@ import { BiliGuardRewardUseCase } from './bili-guard-reward.usecase';
  * 回放是可重试任务: 单个事件失败必须被记录并继续处理其余事件。
  */
 export const RewardReplayUseCase = ripple(
+  'RewardReplayUseCase',
   {
     BiliEventRepo: BiliEventModule.BiliEventRepo,
     BiliGuardRewardUseCase,
@@ -66,7 +67,6 @@ export const RewardReplayUseCase = ripple(
       };
     },
   }),
-  { debugName: 'RewardReplayUseCase' },
 );
 
 export type RewardReplayUseCase = InferInput<typeof RewardReplayUseCase>;

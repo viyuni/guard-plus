@@ -1,5 +1,5 @@
 import type { PointTransactionPageQuery } from '@shared/schema/point-transaction';
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 import { eq } from 'drizzle-orm';
 
 import { Database } from '#composition/tokens';
@@ -10,6 +10,7 @@ import { pointTransactions, type InsertPointTransaction } from '#infrastructure/
 import { PointTransactionNotFoundError } from '../domain';
 
 export const PointTransactionRepo = ripple(
+  'PointTransactionRepo',
   {
     Database,
   },
@@ -134,7 +135,6 @@ export const PointTransactionRepo = ripple(
         .paginate();
     },
   }),
-  { debugName: 'PointTransactionRepository' },
 );
 
 export type PointTransactionRepository = InferInput<typeof PointTransactionRepo>;

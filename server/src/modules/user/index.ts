@@ -1,5 +1,3 @@
-import { defineRipples } from 'cyrenejs';
-
 import { UserBasicInfoCrypto } from './domain';
 import { UserRepo } from './repository';
 import { UserUseCase } from './usecase';
@@ -9,8 +7,8 @@ export * from './domain';
 export type { UserRepository } from './repository';
 
 /** user 模块的 Ripple Manifest。 */
-export default defineRipples({
+export default {
   UserBasicInfoCrypto,
   UserRepo,
   UserUseCase,
-});
+};

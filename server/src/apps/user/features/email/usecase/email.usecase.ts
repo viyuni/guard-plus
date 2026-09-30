@@ -1,4 +1,4 @@
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 import ejs from 'ejs';
 
 import { Mailer } from '#composition/tokens';
@@ -45,6 +45,7 @@ function formatOrderStatus(input: string) {
  * 收件人来自组合根绑定的 Mailer; 未配置通知收件人时直接跳过发送。
  */
 export const EmailUseCase = ripple(
+  'EmailUseCase',
   {
     Mailer,
   },
@@ -91,7 +92,6 @@ export const EmailUseCase = ripple(
       },
     };
   },
-  { debugName: 'EmailUseCase' },
 );
 
 export type EmailUseCase = InferInput<typeof EmailUseCase>;

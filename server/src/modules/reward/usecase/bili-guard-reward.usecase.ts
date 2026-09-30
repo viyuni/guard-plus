@@ -1,4 +1,4 @@
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
 import BiliEventModule, {
   BiliEventNotFoundError,
@@ -10,6 +10,7 @@ import { RewardProcessor } from './reward-processor';
 
 /** 手动补录、测试和回放使用的同步大航海奖励编排。 */
 export const BiliGuardRewardUseCase = ripple(
+  'BiliGuardRewardUseCase',
   {
     BiliEventRepo: BiliEventModule.BiliEventRepo,
     RewardProcessor,
@@ -99,7 +100,6 @@ export const BiliGuardRewardUseCase = ripple(
       },
     };
   },
-  { debugName: 'BiliGuardRewardUseCase' },
 );
 
 export type BiliGuardRewardUseCase = InferInput<typeof BiliGuardRewardUseCase>;

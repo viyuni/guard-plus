@@ -5,8 +5,12 @@
  * - `ripple-deps-each-on-own-line`：强制 `ripple()` 的依赖对象每个属性独占一行。
  *   Cyrene 的 provider 输入是这份项目里唯一的“依赖清单”，
  *   竖排后新增/删除依赖在 diff 里一眼可见，也便于 review 依赖边界。
- * - `ripple-pascal-case`：强制 `ripple()` 返回的 provider 定义用 PascalCase 命名。
+ * - `ripple-pascal-case`：强制 `ripple()` 的声明 key 与返回的 provider 定义都用 PascalCase。
+ *   cyrenex 的 key 是声明身份，也是 `app.ripples` 上的属性名，必须与定义同名。
  * - `ripple-deps-pascal-case`：强制 `ripple()` 的依赖键与注入定义同名（PascalCase 简写）。
+ *
+ * cyrenex 的调用形态是 `ripple(key, deps, factory)`，所以依赖对象在第二个参数；
+ * 依赖对象一律通过 `getDepsObject` 定位，不写死下标。
  *
  * 注意：oxfmt 会保留对象字面量里用户写的换行（不会把短对象折叠回一行），
  * 所以第一条规则的 autofix 结果不会被 `vp fmt` 撤销。
@@ -27,6 +31,28 @@ function toPascalCase(name) {
     .filter(Boolean)
     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
     .join('');
+}
+
+/**
+ * 定位 `ripple()` 的依赖对象。
+ *
+ * cyrenex 的形态是 `ripple(key, deps, factory)`；没有 key 的旧形态
+ * （`ripple(deps, factory)`）也一并兼容，便于渐进迁移。
+ *
+ * @param {any} node `ripple()` 调用节点
+ */
+function getDepsObject(node) {
+  const [first, second] = node.arguments ?? [];
+
+  if (!first) {
+    return null;
+  }
+
+  if (first.type === 'Literal' && typeof first.value === 'string') {
+    return second?.type === 'ObjectExpression' ? second : null;
+  }
+
+  return first.type === 'ObjectExpression' ? first : null;
 }
 
 /**
@@ -139,9 +165,9 @@ const rippleDepsEachOnOwnLine = {
           return;
         }
 
-        const deps = node.arguments?.[0];
+        const deps = getDepsObject(node);
 
-        if (!deps || deps.type !== 'ObjectExpression' || deps.properties.length === 0) {
+        if (!deps || deps.properties.length === 0) {
           return;
         }
 
@@ -162,10 +188,10 @@ const rippleDepsEachOnOwnLine = {
 /**
  * `ripple()` 返回的是一个 provider 定义，语义上等同于“类”：`token()` 和
  * `InferInput<typeof X>` 的类型名已经是 PascalCase，返回值也统一成 PascalCase 后，
- * provider 定义、它的实例类型和 `container` 上的键名就是同一个名字。
+ * provider 定义、声明 key、它的实例类型和 `app.ripples` 上的键名就是同一个名字。
  *
- * 依赖对象里的键不受此规则约束——令牌别名（`apiOrigin: ApiOrigin`）仍然是 camelCase，
- * 只有“返回值被绑定到哪个名字”需要大写开头。
+ * 依赖对象里的键不受此规则约束——令牌别名仍然是 camelCase，
+ * 只有声明 key 与“返回值被绑定到哪个名字”需要大写开头。
  *
  * 不提供 autofix：这里的 provider 基本都是 `export` 的，跨文件引用无法在单文件 fix 里改到，
  * 只报错并给出建议名，改名交给调用方统一处理。
@@ -174,17 +200,46 @@ const ripplePascalCase = {
   meta: {
     type: 'suggestion',
     docs: {
-      description: 'ripple() 返回的 provider 必须用 PascalCase 命名',
+      description: 'ripple() 的 key 与返回的 provider 必须用 PascalCase 命名',
     },
     schema: [],
     messages: {
       pascalCase:
         'ripple() 返回的是 provider 定义，请用 PascalCase 命名："{{name}}" 应改为 "{{suggestion}}"',
+      pascalCaseKey:
+        'ripple() 的 key 是声明身份，请用 PascalCase 命名："{{name}}" 应改为 "{{suggestion}}"',
     },
   },
 
   create(context) {
     return {
+      CallExpression(node) {
+        const callee = node.callee;
+
+        if (!callee || callee.type !== 'Identifier' || callee.name !== RIPPLE_CALLEE_NAME) {
+          return;
+        }
+
+        const key = node.arguments?.[0];
+
+        if (!key || key.type !== 'Literal' || typeof key.value !== 'string') {
+          return;
+        }
+
+        if (PASCAL_CASE.test(key.value)) {
+          return;
+        }
+
+        context.report({
+          node: key,
+          messageId: 'pascalCaseKey',
+          data: {
+            name: key.value,
+            suggestion: toPascalCase(key.value),
+          },
+        });
+      },
+
       VariableDeclarator(node) {
         const id = node.id;
 
@@ -293,9 +348,9 @@ const rippleDepsPascalCase = {
           return;
         }
 
-        const deps = node.arguments?.[0];
+        const deps = getDepsObject(node);
 
-        if (!deps || deps.type !== 'ObjectExpression') {
+        if (!deps) {
           return;
         }
 

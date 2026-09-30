@@ -1,0 +1,55 @@
+{
+  "version": 3,
+  "skills": {
+    "cyrenex": {
+      "package": "cyrenex",
+      "version": "0.0.1-beta.0",
+      "skillPath": "skills/cyrenex/SKILL.md"
+    },
+    "cyrenex-elysia": {
+      "package": "@cyrenex/elysia",
+      "version": "0.0.1-beta.0",
+      "skillPath": "skills/cyrenex-elysia/SKILL.md"
+    },
+    "drizzle": {
+      "package": "drizzle-kit",
+      "version": "1.0.0-rc.5-ab785fc",
+      "skillPath": "skills/drizzle/SKILL.md"
+    },
+    "drizzle-generate": {
+      "package": "drizzle-kit",
+      "version": "1.0.0-rc.5-ab785fc",
+      "skillPath": "skills/drizzle-generate/SKILL.md"
+    },
+    "drizzle-hints": {
+      "package": "drizzle-kit",
+      "version": "1.0.0-rc.5-ab785fc",
+      "skillPath": "skills/drizzle-hints/SKILL.md"
+    },
+    "drizzle-migrations": {
+      "package": "drizzle-kit",
+      "version": "1.0.0-rc.5-ab785fc",
+      "skillPath": "skills/drizzle-migrations/SKILL.md"
+    },
+    "drizzle-output-modes": {
+      "package": "drizzle-kit",
+      "version": "1.0.0-rc.5-ab785fc",
+      "skillPath": "skills/drizzle-output-modes/SKILL.md"
+    },
+    "drizzle-pull": {
+      "package": "drizzle-kit",
+      "version": "1.0.0-rc.5-ab785fc",
+      "skillPath": "skills/drizzle-pull/SKILL.md"
+    },
+    "drizzle-push": {
+      "package": "drizzle-kit",
+      "version": "1.0.0-rc.5-ab785fc",
+      "skillPath": "skills/drizzle-push/SKILL.md"
+    },
+    "drizzle-responses-and-errors": {
+      "package": "drizzle-kit",
+      "version": "1.0.0-rc.5-ab785fc",
+      "skillPath": "skills/drizzle-responses-and-errors/SKILL.md"
+    }
+  }
+}

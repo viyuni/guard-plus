@@ -1,4 +1,4 @@
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
 import { AdminRoutes } from './routes/admin';
@@ -16,6 +16,7 @@ import { AdminUserRoutes } from './routes/user';
  * 组合根只需要把它装进 Runtime；具体路由拓扑由本文件显式声明。
  */
 export const AdminHttp = ripple(
+  'AdminHttp',
   {
     AdminAuthRoutes,
     AdminOrderRoutes,
@@ -38,5 +39,4 @@ export const AdminHttp = ripple(
       .use(routes.AdminProductRoutes)
       .use(routes.AdminOrderRoutes)
       .use(routes.AdminUserRoutes),
-  { debugName: 'AdminHttp' },
 );

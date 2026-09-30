@@ -4,7 +4,7 @@ import {
   PointTypeIdParamsSchema,
   UpdatePointTypeSchema,
 } from '@shared/schema/point-type';
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
 import Point from '#modules/point';
@@ -12,6 +12,7 @@ import Point from '#modules/point';
 import { AdminAuthGuard } from '../../auth';
 
 export const PointTypeRoutes = ripple(
+  'PointTypeRoutes',
   {
     AdminAuthGuard,
     PointTypeAdminUseCase: Point.PointTypeAdminUseCase,
@@ -124,5 +125,4 @@ export const PointTypeRoutes = ripple(
           },
         },
       ),
-  { debugName: 'PointTypeRoutes' },
 );

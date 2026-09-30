@@ -1,5 +1,5 @@
 import type { UserLoginBody, UserRegisterBody, UserResetPasswordBody } from '@shared/schema/user';
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
 import { BiliRoom, Database, Logger } from '#composition/tokens';
 import Auth from '#modules/auth';
@@ -9,6 +9,7 @@ import User from '#modules/user';
 import { BadRequestError, InvalidCredentialsError, PasswordUtil } from '#shared';
 
 export const UserAuthUseCase = ripple(
+  'UserAuthUseCase',
   {
     AuthUseCase: Auth.AuthUseCase,
     BiliPasswordResetUseCase: Auth.BiliPasswordResetUseCase,
@@ -261,7 +262,6 @@ export const UserAuthUseCase = ripple(
       },
     };
   },
-  { debugName: 'UserAuthUseCase' },
 );
 
 export type UserAuthUseCase = InferInput<typeof UserAuthUseCase>;

@@ -3,7 +3,7 @@ import type {
   PointTransactionPageQuery,
   PointTransactionType,
 } from '@shared/schema/point-transaction';
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
 import { Database } from '#composition/tokens';
 
@@ -46,6 +46,7 @@ function toMineItem<
 }
 
 export const PointTransactionUseCase = ripple(
+  'PointTransactionUseCase',
   {
     Database,
     PointAccountRepo,
@@ -108,7 +109,6 @@ export const PointTransactionUseCase = ripple(
       };
     },
   }),
-  { debugName: 'PointTransactionUseCase' },
 );
 
 export type PointTransactionUseCase = InferInput<typeof PointTransactionUseCase>;

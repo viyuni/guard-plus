@@ -1,5 +1,5 @@
 import type { UserPageQuery } from '@shared/schema/user';
-import { ripple, type InferInput } from 'cyrenejs';
+import { ripple, type InferInput } from 'cyrenex';
 import { and, eq } from 'drizzle-orm';
 
 import { Database } from '#composition/tokens';
@@ -15,6 +15,7 @@ const userSelectCols = defineSelectColumns(
 );
 
 export const UserRepo = ripple(
+  'UserRepo',
   {
     Database,
   },
@@ -218,7 +219,6 @@ export const UserRepo = ripple(
         .paginate();
     },
   }),
-  { debugName: 'UserRepository' },
 );
 
 export type UserRepository = InferInput<typeof UserRepo>;

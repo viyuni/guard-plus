@@ -1,4 +1,4 @@
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
 import { AuthRoutes } from './routes/auth';
@@ -15,6 +15,7 @@ import { UserRoutes } from './routes/user';
  * 组合根只需要把它装进 Runtime；具体路由拓扑由本文件显式声明。
  */
 export const UserHttp = ripple(
+  'UserHttp',
   {
     AuthRoutes,
     OrderRoutes,
@@ -35,5 +36,4 @@ export const UserHttp = ripple(
       .use(routes.PointTransactionRoutes)
       .use(routes.ProductRoutes)
       .use(routes.UserRoutes),
-  { debugName: 'UserHttp' },
 );

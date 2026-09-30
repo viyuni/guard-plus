@@ -1,5 +1,5 @@
 import { AdminLoginSchema } from '@shared/schema/admin';
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
 import AdminAuthFeature from '#apps/admin/features/auth';
@@ -14,6 +14,7 @@ import Auth from '#modules/auth';
 import { AdminAuthCookies } from '../auth';
 
 export const AdminAuthRoutes = ripple(
+  'AdminAuthRoutes',
   {
     AdminAuthCookies,
     AdminAuthUseCase: AdminAuthFeature.AdminAuthUseCase,
@@ -82,5 +83,4 @@ export const AdminAuthRoutes = ripple(
           },
         },
       ),
-  { debugName: 'AdminAuthRoutes' },
 );

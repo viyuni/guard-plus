@@ -1,5 +1,5 @@
 import { Worker } from 'bunqueue/client';
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 
 import { NOTIFY_QUEUE_NAME, type NewOrderEmailInput } from '#infrastructure/queue';
 
@@ -29,15 +29,16 @@ export class NotifyQueueWorker {
   get instance() {
     return this.worker;
   }
+
+  async [Symbol.asyncDispose]() {
+    await this.worker.close();
+  }
 }
 
 export const NotifyWorker = ripple(
+  'NotifyWorker',
   {
     EmailUseCase,
   },
   deps => new NotifyQueueWorker({ emailUseCase: deps.EmailUseCase }),
-  {
-    debugName: 'NotifyWorker',
-    dispose: worker => worker.instance.close(),
-  },
 );

@@ -87,11 +87,10 @@ export async function expectRejectsInstanceOf<T extends Error>(
 
 export async function createDeps() {
   const runtime = createTestContainer({ db, redis: getTestRedis() });
-  const container = await runtime.start();
 
   runtimes.add(runtime);
 
-  return container;
+  return runtime.ripples;
 }
 
 export async function seedPointType(name: string) {

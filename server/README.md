@@ -17,7 +17,7 @@ the `guard-plus/architecture-import-boundary` lint rule.
 - `src/modules`: reusable business capabilities (`auth`, `bili-event`, `dashboard`,
   `order`, `point`, `product`, `reward`, `user`).
 - `src/infrastructure`: `db`, `redis`, `queue`, `logger`, `mail`, `storage`, `http`.
-- `src/composition`: infrastructure/config `token`s and shared binding helpers.
+- `src/composition`: infrastructure/config `token` ripples and shared binding helpers.
 - `src/shared`: business-agnostic errors and utilities.
 - `src/config`: pure env schema fragments, imported only by each app's `config.ts`.
 - `src/eden.ts`: exported Eden app types.
@@ -29,11 +29,11 @@ the `guard-plus/architecture-import-boundary` lint rule.
 Each module exposes exactly one public entry, `src/modules/<name>/index.ts`:
 
 ```ts
-export default defineRipples({
+export default {
   UserBasicInfoCrypto,
   UserRepo,
   UserUseCase,
-});
+};
 ```
 
 The default export is the module's Ripple Manifest — it is the only way another
@@ -43,6 +43,7 @@ module may reach its injectable capabilities:
 import User, { UserNotFoundError } from '#modules/user';
 
 export const OrderUseCase = ripple(
+  'OrderUseCase',
   {
     UserUseCase: User.UserUseCase,
   },
@@ -56,37 +57,44 @@ Named exports carry the static domain API (errors, policies, types). Deep import
 such as `#modules/user/repository` are rejected by lint, so module internals stay
 refactorable.
 
-Every runnable app owns one Composition Root and one Cyrene runtime:
+Every runnable app owns one Composition Root and one Cyrene container:
 `createAdminApp()`, `createUserApp()`, `createEventApp()`. The composition root lists
-every node explicitly (no scanning, no `providersOf`) and uses
-`new Cyrene({ ripples, bindings })`.
+every node explicitly (no scanning, no `providersOf`) and registers it with
+`new Cyrene().use(...Object.values(Manifest))`. The admin and user HTTP apps take their
+container from `elysiaCyrene()`, so stopping Elysia disposes the graph.
 
 ### Dependency injection
 
-Provider definitions use cyrenejs `ripple`. A provider definition is PascalCase
-(`OrderUseCase`) and so is every dependency key, so injections stay shorthand
-(`{ Database, OrderRepo }`); `guard-plus/ripple-pascal-case` and
+Provider definitions use cyrenex `ripple(key, deps, factory)`. The declaration key is
+PascalCase (`OrderUseCase`) and equals the exported definition name, so it doubles as
+the `app.ripples` property; every dependency key is PascalCase too, so injections stay
+shorthand (`{ Database, OrderRepo }`). `guard-plus/ripple-pascal-case` and
 `guard-plus/ripple-deps-pascal-case` enforce both. Cross-module keys are qualified
 through the manifest (`UserUseCase: User.UserUseCase`). Business classes keep ordinary
 constructor dependencies.
 
-`src/composition/tokens.ts` holds only infrastructure and configuration tokens
+`src/composition/tokens.ts` declares infrastructure and configuration tokens
 (`Database`, `Redis`, `Logger`, `Mailer`, `ImageStorage`, `JwtSecret`, `ApiOrigin`,
-`WebOrigins`, `DataSecret`, `BiliRoom`, `RegisterCodeTtl`, `ImageSavePath`).
-`src/composition/bindings.ts` exposes **one factory per token**; a composition root
-calls only the ones its graph actually resolves, so no app prepares a value for a
-token it never uses:
+`WebOrigins`, `DataSecret`, `BiliRoom`, `RegisterCodeTtl`, `ImageSavePath`) as ripples
+whose factory throws until a composition root binds them.
+`src/composition/bindings.ts` exposes **one factory per token**, each returning the
+ripple that implements it; a graph binds only the tokens it actually reaches, because
+cyrenex rejects unreachable overrides during graph validation:
 
 ```ts
-bindings: [
-  databaseBinding(db),
-  redisBinding(redis),
-  loggerBinding(logger),
-  dataSecretBinding(config.dataSecret),
-  biliRoomBinding(config.biliRoom),
-  registerCodeTtlBinding(config.registerCodeTtlSeconds),
-],
+const runtime = new Cyrene()
+  .use(...Object.values(AdminAppRipples))
+  .override(Database, databaseBinding(db))
+  .override(Redis, redisBinding(redis))
+  .override(Logger, loggerBinding(logger))
+  .override(DataSecret, dataSecretBinding(config.dataSecret))
+  .override(BiliRoom, biliRoomBinding(config.biliRoom))
+  .override(RegisterCodeTtl, registerCodeTtlBinding(config.registerCodeTtlSeconds));
 ```
+
+Config and environment values are ripples too: every binding factory closes over its
+value (`ripple('DataSecret', () => secret, { ownership: 'borrowed' })`), so the graph
+never carries untyped value bindings.
 
 Optional capabilities are modelled as explicit implementations instead of
 `T | undefined`: `Mailer` always resolves (an unconfigured SMTP degrades to a no-op
@@ -104,8 +112,12 @@ they depend on tokens, and the composition root binds concrete values or
 implementations.
 
 Externally created DB/Redis clients are owned by the app composition root, which also
-closes them if startup fails. Runtime instances are disposed when the Elysia app stops
-(`app.onStop(() => runtime.dispose())`); scripts use `await using`.
+closes them if startup fails. The admin and user apps get their container from
+`elysiaCyrene()`, whose `onStop` hook disposes the graph when Elysia stops; the event
+app and scripts dispose their runtime explicitly / with `await using`. Disposable
+resources declare `Symbol.asyncDispose` on the instance (for example `Mailer` and the
+queue worker), which is also why bindings for externally owned instances are marked
+`ownership: 'borrowed'`.
 
 ### HTTP layer
 

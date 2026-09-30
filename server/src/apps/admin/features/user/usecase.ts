@@ -1,5 +1,5 @@
 import type { UserRegisterBody } from '@shared/schema/user';
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
 import { Database } from '#composition/tokens';
 import Point from '#modules/point';
@@ -13,6 +13,7 @@ import User from '#modules/user';
  * 大航海奖励按事件独立事务回放并支持重试，故在注册事务提交后执行。
  */
 export const AdminUserUseCase = ripple(
+  'AdminUserUseCase',
   {
     Database,
     PointAccountUseCase: Point.PointAccountUseCase,
@@ -34,7 +35,6 @@ export const AdminUserUseCase = ripple(
       return user;
     },
   }),
-  { debugName: 'AdminUserUseCase' },
 );
 
 export type AdminUserUseCase = InferInput<typeof AdminUserUseCase>;

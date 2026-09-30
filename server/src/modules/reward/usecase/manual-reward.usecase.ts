@@ -1,5 +1,5 @@
 import { BiliGuardType, type CreateManualBiliGuardEventBody } from '@shared/schema/reward';
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
 import { BiliRoom } from '#composition/tokens';
 
@@ -71,6 +71,7 @@ function getManualBiliGuardMeta(guardType: CreateManualBiliGuardEventBody['guard
 
 /** 管理端手动补录大航海事件并按规则发放奖励。 */
 export const ManualRewardUseCase = ripple(
+  'ManualRewardUseCase',
   {
     BiliRoom,
     BiliGuardRewardUseCase,
@@ -133,7 +134,6 @@ export const ManualRewardUseCase = ripple(
       },
     };
   },
-  { debugName: 'ManualRewardUseCase' },
 );
 
 export type ManualRewardUseCase = InferInput<typeof ManualRewardUseCase>;

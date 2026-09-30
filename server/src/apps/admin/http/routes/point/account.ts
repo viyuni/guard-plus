@@ -4,7 +4,7 @@ import {
   LegacyPointMigrationIdParamsSchema,
   LegacyPointMigrationPageQuerySchema,
 } from '@shared/schema/point-account';
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
 import Point from '#modules/point';
@@ -12,6 +12,7 @@ import Point from '#modules/point';
 import { AdminAuthGuard } from '../../auth';
 
 export const PointAccountRoutes = ripple(
+  'PointAccountRoutes',
   {
     AdminAuthGuard,
     PointAccountUseCase: Point.PointAccountUseCase,
@@ -66,5 +67,4 @@ export const PointAccountRoutes = ripple(
           },
         },
       ),
-  { debugName: 'PointAccountRoutes' },
 );

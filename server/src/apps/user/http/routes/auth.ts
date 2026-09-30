@@ -4,7 +4,7 @@ import {
   UserRegisterSchema,
   UserResetPasswordSchema,
 } from '@shared/schema/user';
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
 import UserAuthFeature from '#apps/user/features/auth';
@@ -53,6 +53,7 @@ function removeBiliPasswordResetCookies(
 }
 
 export const AuthRoutes = ripple(
+  'AuthRoutes',
   {
     AuthUseCase: Auth.AuthUseCase,
     UserAuthCookies,
@@ -248,5 +249,4 @@ export const AuthRoutes = ripple(
           },
         },
       ),
-  { debugName: 'AuthRoutes' },
 );

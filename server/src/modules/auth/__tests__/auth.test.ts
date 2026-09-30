@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, mock, setSystemTime, spyOn } from 'bun:test';
 
-import { Cyrene } from 'cyrenejs';
+import { Cyrene } from 'cyrenex';
 import Elysia from 'elysia';
 import { decodeJwt } from 'jose';
 
-import { JwtSecret, Redis } from '#composition/tokens';
+import { JwtSecret, jwtSecretBinding, Redis, redisBinding } from '#composition';
 import {
   createAuthCookieOptions,
   createAuthGuard,
@@ -56,18 +56,15 @@ async function createAuthUseCase() {
   const refreshResults = new Map<string, AuthTokenPair>();
   const refreshLocks = new Set<string>();
 
-  const runtime = new Cyrene({
-    ripples: { AuthSessionRepo, AuthUseCase },
-    bindings: [
-      // 会话仓库的方法会被下面整体替换, 这里只需要一个占位客户端。
-      { token: Redis, value: {} as RedisClient },
-      { token: JwtSecret, value: 'test-secret' },
-    ],
-  });
+  const runtime = new Cyrene()
+    .use(AuthSessionRepo, AuthUseCase)
+    // 会话仓库的方法会被下面整体替换, 这里只需要一个占位客户端。
+    .override(Redis, redisBinding({} as RedisClient))
+    .override(JwtSecret, jwtSecretBinding('test-secret'));
 
   runtimes.push(runtime);
 
-  const container = await runtime.start();
+  const container = runtime.ripples;
   const repo = container.AuthSessionRepo;
 
   spyOn(repo, 'create').mockImplementation(

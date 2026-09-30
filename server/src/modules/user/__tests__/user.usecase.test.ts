@@ -1,8 +1,8 @@
 import { afterAll, expect, it, spyOn } from 'bun:test';
 
-import { Cyrene } from 'cyrenejs';
+import { Cyrene } from 'cyrenex';
 
-import { Database, DataSecret } from '#composition/tokens';
+import { Database, databaseBinding, DataSecret, dataSecretBinding } from '#composition';
 import type { DbClient } from '#infrastructure/db';
 import User, { type UserRepository } from '#modules/user';
 import { InvalidCredentialsError, PasswordUtil } from '#shared';
@@ -26,18 +26,15 @@ async function createFixture() {
     passwordHash,
   } as unknown as UserRow;
 
-  const runtime = new Cyrene({
-    ripples: { UserRepo: User.UserRepo, UserUseCase: User.UserUseCase },
-    bindings: [
-      // 只验证依赖装配与业务分支, 不连接数据库。
-      { token: Database, value: {} as DbClient },
-      { token: DataSecret, value: 'test-data-secret' },
-    ],
-  });
+  const runtime = new Cyrene()
+    .use(User.UserRepo, User.UserUseCase)
+    // 只验证依赖装配与业务分支, 不连接数据库。
+    .override(Database, databaseBinding({} as DbClient))
+    .override(DataSecret, dataSecretBinding('test-data-secret'));
 
   runtimes.push(runtime);
 
-  const container = await runtime.start();
+  const container = runtime.ripples;
 
   const findById = spyOn(container.UserRepo, 'findById').mockResolvedValue(user);
 

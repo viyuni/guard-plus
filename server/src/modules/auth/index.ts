@@ -1,5 +1,3 @@
-import { defineRipples } from 'cyrenejs';
-
 import { AuthSessionRepo, BiliPasswordResetRepo, BiliRegisterRepo } from './repository';
 import {
   AuthUseCase,
@@ -26,7 +24,7 @@ export type {
  *
  * injectable 能力只通过默认导出暴露；具名导出只提供静态领域 API。
  */
-export default defineRipples({
+export default {
   AuthSessionRepo,
   BiliRegisterRepo,
   BiliPasswordResetRepo,
@@ -34,4 +32,4 @@ export default defineRipples({
   BiliRegisterUseCase,
   BiliPasswordResetUseCase,
   BiliVerificationMatcher,
-});
+};

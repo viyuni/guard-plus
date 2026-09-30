@@ -1,11 +1,15 @@
-import { Cyrene, defineRipples } from 'cyrenejs';
+import { Cyrene } from 'cyrenex';
 
 import {
-  biliRoomBinding,
+  Database,
   databaseBinding,
+  DataSecret,
   dataSecretBinding,
+  Logger,
   loggerBinding,
+  Redis,
   redisBinding,
+  RegisterCodeTtl,
   registerCodeTtlBinding,
 } from '#composition';
 import { createDatabase } from '#infrastructure/db';
@@ -30,7 +34,7 @@ import { BiliGuardWorker } from './workers';
  * 只挑选事件链路需要的 Ripple: 其他 App 使用某个模块,
  * 不代表事件进程需要把整个系统装进 Runtime。
  */
-const EventAppRipples = defineRipples({
+const EventAppRipples = {
   BiliEventRepo: BiliEvent.BiliEventRepo,
 
   BiliPasswordResetRepo: Auth.BiliPasswordResetRepo,
@@ -52,12 +56,12 @@ const EventAppRipples = defineRipples({
 
   BiliGuardConsumer,
   BiliVerificationConsumer,
-});
+};
 
 /**
  * Event App 的组合根。
  *
- * 一个 App = 一个 Composition Root = 一个 Cyrene Runtime。
+ * 一个 App = 一个 Composition Root = 一个 Cyrene 容器。
  */
 export async function createEventApp() {
   const config = eventConfig;
@@ -70,35 +74,34 @@ export async function createEventApp() {
   const db = createDatabase(config.databaseUrl);
   const redis = createRedisClient(config.redis, logger);
 
-  const runtime = new Cyrene({
-    ripples: EventAppRipples,
-    // 事件进程只绑这 6 个令牌: 没有 HTTP 鉴权、图片与邮件配置。
-    bindings: [
-      databaseBinding(db),
-      redisBinding(redis),
-      loggerBinding(logger),
-      dataSecretBinding(config.dataSecret),
-      biliRoomBinding(config.biliRoom),
-      registerCodeTtlBinding(config.registerCodeTtlSeconds),
-    ],
-  });
+  const runtime = new Cyrene()
+    .use(...Object.values(EventAppRipples))
+    // 事件进程只绑这条链路真正用到的令牌: 没有 HTTP 鉴权、图片与邮件配置。
+    .override(Database, databaseBinding(db))
+    .override(Redis, redisBinding(redis))
+    .override(Logger, loggerBinding(logger))
+    .override(DataSecret, dataSecretBinding(config.dataSecret))
+    .override(RegisterCodeTtl, registerCodeTtlBinding(config.registerCodeTtlSeconds));
 
   try {
-    const container = await runtime.start();
+    // 构图期校验: 不执行工厂, 但会立刻暴露重复 key、强依赖环与不可达的绑定。
+    runtime.inspect();
+
+    const ripples = runtime.ripples;
 
     const worker = new BiliGuardWorker(
       {
-        biliEventRepo: container.BiliEventRepo,
+        biliEventRepo: ripples.BiliEventRepo,
         logger,
-        rewardProcessor: container.RewardProcessor,
+        rewardProcessor: ripples.RewardProcessor,
       },
       config.worker,
     );
 
     const source = createBilibiliSource(config, {
-      guardConsumer: container.BiliGuardConsumer,
+      guardConsumer: ripples.BiliGuardConsumer,
       logger,
-      verificationConsumer: container.BiliVerificationConsumer,
+      verificationConsumer: ripples.BiliVerificationConsumer,
       wakeGuardWorker: () => worker.wake(),
     });
 

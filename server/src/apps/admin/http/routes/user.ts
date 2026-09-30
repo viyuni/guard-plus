@@ -4,7 +4,7 @@ import {
   UserRegisterSchema,
   UserUpdateSchema,
 } from '@shared/schema/user';
-import { ripple } from 'cyrenejs';
+import { ripple } from 'cyrenex';
 import Elysia from 'elysia';
 
 import AdminUserFeature from '#apps/admin/features/user';
@@ -13,6 +13,7 @@ import User from '#modules/user';
 import { AdminAuthGuard } from '../auth';
 
 export const AdminUserRoutes = ripple(
+  'AdminUserRoutes',
   {
     AdminAuthGuard,
     AdminUserUseCase: AdminUserFeature.AdminUserUseCase,
@@ -116,5 +117,4 @@ export const AdminUserRoutes = ripple(
           },
         },
       ),
-  { debugName: 'AdminUserRoutes' },
 );

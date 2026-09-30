@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 import { customAlphabet } from 'nanoid';
 
 import { RegisterCodeTtl } from '#composition/tokens';
@@ -112,6 +112,7 @@ function createBiliRegisterUseCase({
 }
 
 export const BiliRegisterUseCase = ripple(
+  'BiliRegisterUseCase',
   {
     BiliRegisterRepo,
     RegisterCodeTtl,
@@ -122,7 +123,6 @@ export const BiliRegisterUseCase = ripple(
       codePrefix: BILI_REGISTER_CODE_PREFIX,
       ttlSeconds: deps.RegisterCodeTtl,
     }),
-  { debugName: 'BiliRegisterUseCase' },
 );
 
 export function normalizeBiliVerificationCode(code: string) {
@@ -130,6 +130,7 @@ export function normalizeBiliVerificationCode(code: string) {
 }
 
 export const BiliPasswordResetUseCase = ripple(
+  'BiliPasswordResetUseCase',
   {
     BiliPasswordResetRepo,
     RegisterCodeTtl,
@@ -140,7 +141,6 @@ export const BiliPasswordResetUseCase = ripple(
       codePrefix: BILI_PASSWORD_RESET_CODE_PREFIX,
       ttlSeconds: deps.RegisterCodeTtl,
     }),
-  { debugName: 'BiliPasswordResetUseCase' },
 );
 
 export type BiliRegisterUseCase = InferInput<typeof BiliRegisterUseCase>;

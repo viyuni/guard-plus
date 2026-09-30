@@ -58,7 +58,7 @@ Elysia API apps for admin and user clients, event ingestion, background queues, 
 - `server/src/apps/admin` — Admin HTTP app (config, composition root, `http/` routes, app-only features)
 - `server/src/apps/user` — User HTTP app (same layout)
 - `server/src/apps/event` — Event ingestion runtime
-- `server/src/modules` — Reusable business modules, each default-exporting a `defineRipples(...)` manifest
+- `server/src/modules` — Reusable business modules, each default-exporting a Ripple Manifest object
 - `server/src/infrastructure` — db, redis, queue, logger, mail, storage, and HTTP adapters
 - `server/src/composition` — Infrastructure/config tokens and binding helpers
 - `server/src/shared` — Business-agnostic errors and utilities

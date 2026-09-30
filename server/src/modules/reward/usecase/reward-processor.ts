@@ -1,4 +1,4 @@
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
 import { Database } from '#composition/tokens';
 import type { DbTransaction } from '#infrastructure/db';
@@ -28,6 +28,7 @@ import { RewardRuleRepo } from '../repository';
  * 重试和最终状态由调用方负责，避免领域执行器与后台任务状态互相覆盖。
  */
 export const RewardProcessor = ripple(
+  'RewardProcessor',
   {
     Database,
     PointAccountRepo: Point.PointAccountRepo,
@@ -189,7 +190,6 @@ export const RewardProcessor = ripple(
       },
     };
   },
-  { debugName: 'RewardProcessor' },
 );
 
 export type RewardProcessor = InferInput<typeof RewardProcessor>;

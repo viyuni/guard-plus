@@ -1,5 +1,5 @@
 import type { CreateRewardRuleBody, UpdateRewardRuleBody } from '@shared/schema/reward';
-import { type InferInput, ripple } from 'cyrenejs';
+import { type InferInput, ripple } from 'cyrenex';
 
 import type { InsertRewardRule, UpdateRewardRule } from '#infrastructure/db/schema';
 import Point from '#modules/point';
@@ -12,6 +12,7 @@ import {
 import { RewardRuleRepo } from '../repository';
 
 export const RewardRuleUseCase = ripple(
+  'RewardRuleUseCase',
   {
     PointTypeQuery: Point.PointTypeQuery,
     RewardRuleRepo,
@@ -134,7 +135,6 @@ export const RewardRuleUseCase = ripple(
       },
     };
   },
-  { debugName: 'RewardRuleUseCase' },
 );
 
 export type RewardRuleUseCase = InferInput<typeof RewardRuleUseCase>;
