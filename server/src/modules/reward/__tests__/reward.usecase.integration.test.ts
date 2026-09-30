@@ -3,7 +3,8 @@ import { afterEach, expect, it, spyOn } from 'bun:test';
 import { count, eq } from 'drizzle-orm';
 
 import { pointTransactions } from '#infrastructure/db/schema';
-import Auth, { type BiliRegisterChallenge } from '#modules/auth';
+import Auth from '#modules/auth';
+import type { BiliRegisterChallenge } from '#modules/auth';
 import {
   createDeps,
   createBiliGuardEvent,
@@ -21,7 +22,8 @@ import { createTestContainer } from '#test-helpers/test-container';
 import { getTestRedis } from '#test-helpers/test-redis';
 
 import { PointIdempotencyKey } from '../../point';
-import { type BiliGuardRewardEvent, RewardRuleNameExistsError } from '../domain';
+import { RewardRuleNameExistsError } from '../domain';
+import type { BiliGuardRewardEvent } from '../domain';
 
 installConcurrencyTestHooks();
 
@@ -38,6 +40,7 @@ async function createAppUseCases() {
   const runtime = createTestContainer({ db, redis: getTestRedis() });
 
   appRuntimes.push(runtime);
+  await runtime.init();
 
   return {
     container: runtime.ripples,

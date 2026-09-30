@@ -3,29 +3,19 @@ import { afterEach, expect, it, spyOn } from 'bun:test';
 import { Cyrene } from 'cyrenex';
 import { createClient } from 'redis';
 
-import {
-  biliRoomBinding,
-  BiliRoom,
-  Database,
-  databaseBinding,
-  DataSecret,
-  dataSecretBinding,
-  JwtSecret,
-  jwtSecretBinding,
-  Logger,
-  loggerBinding,
-  Redis,
-  redisBinding,
-  RegisterCodeTtl,
-  registerCodeTtlBinding,
-} from '#composition';
+import { BiliRoom, DataSecret, JwtSecret, RegisterCodeTtl } from '#config';
+import { Database } from '#infrastructure/db';
 import type { DbClient } from '#infrastructure/db';
+import { Logger } from '#infrastructure/logger';
 import { createLogger } from '#infrastructure/logger';
-import Auth, { type BiliRegisterChallenge } from '#modules/auth';
+import { Redis } from '#infrastructure/redis';
+import Auth from '#modules/auth';
+import type { BiliRegisterChallenge } from '#modules/auth';
 import Point from '#modules/point';
 import Reward from '#modules/reward';
 import User from '#modules/user';
 import { BadRequestError } from '#shared';
+import { stub } from '#test-helpers/stub';
 
 import { UserAuthUseCase } from '../usecase';
 
@@ -64,15 +54,17 @@ async function createUseCase(
   const runtime = new Cyrene()
     .use(UserAuthUseCase)
     // 只提供占位基础设施与配置, 不建立真实连接。
-    .override(Database, databaseBinding(database))
-    .override(Redis, redisBinding(createClient({})))
-    .override(Logger, loggerBinding(createLogger({ level: 'silent', pretty: false })))
-    .override(DataSecret, dataSecretBinding('test-data-secret'))
-    .override(JwtSecret, jwtSecretBinding('test-jwt-secret'))
-    .override(BiliRoom, biliRoomBinding(1))
-    .override(RegisterCodeTtl, registerCodeTtlBinding(300));
+    .override(Database, stub('Database', database))
+    .override(Redis, stub('Redis', createClient({})))
+    .override(Logger, stub('Logger', createLogger({ level: 'silent', pretty: false })))
+    .override(DataSecret, stub('DataSecret', 'test-data-secret'))
+    .override(JwtSecret, stub('JwtSecret', 'test-jwt-secret'))
+    .override(BiliRoom, stub('BiliRoom', 1))
+    .override(RegisterCodeTtl, stub('RegisterCodeTtl', 300));
 
   runtimes.push(runtime);
+
+  await runtime.init();
 
   const container = runtime.ripples;
 

@@ -1,6 +1,6 @@
 import { type InferInput, ripple } from 'cyrenex';
 
-import { Logger } from '#composition/tokens';
+import { Logger } from '#infrastructure/logger';
 import BiliEventModule from '#modules/bili-event';
 import UserModule from '#modules/user';
 

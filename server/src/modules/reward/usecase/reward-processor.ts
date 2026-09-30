@@ -1,6 +1,6 @@
 import { type InferInput, ripple } from 'cyrenex';
 
-import { Database } from '#composition/tokens';
+import { Database } from '#infrastructure/db';
 import type { DbTransaction } from '#infrastructure/db';
 import type {
   BiliEventRewardItemSnapshot,

@@ -1,10 +1,10 @@
 /* eslint-disable no-console */
-import { fakerZH_CN as faker } from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 import { Cyrene } from 'cyrenex';
 import { seed as drizzleSeed } from 'drizzle-seed';
 
-import { Database, databaseBinding, DataSecret, dataSecretBinding } from '#composition';
-import { createDatabase, type DbClient } from '#infrastructure/db';
+import { createDatabase } from '#infrastructure/db';
+import type { DbClient } from '#infrastructure/db';
 import {
   admins,
   pointTypes,
@@ -13,14 +13,17 @@ import {
   productStockMovements,
   rewardRules,
   users,
-  type InsertPointConversionRule,
-  type InsertPointType,
-  type InsertRewardRule,
-  type PointType,
+} from '#infrastructure/db/schema';
+import type {
+  InsertPointConversionRule,
+  InsertPointType,
+  InsertRewardRule,
+  PointType,
 } from '#infrastructure/db/schema';
 import BiliEvent from '#modules/bili-event';
 import Point from '#modules/point';
-import Reward, { type BiliGuardRewardEvent } from '#modules/reward';
+import Reward from '#modules/reward';
+import type { BiliGuardRewardEvent } from '#modules/reward';
 import User from '#modules/user';
 
 const seedValue = 1270;
@@ -457,13 +460,10 @@ async function seedBiliGuardRewardEvents(targetDb: DbClient) {
   await seedRewardRules(targetDb, pointTypeMap);
   await seedPointConversionRules(targetDb, pointTypeMap);
 
-  await using runtime = new Cyrene()
-    .use(...Object.values(SeedRewardRipples))
-    .override(Database, databaseBinding(targetDb))
-    .override(
-      DataSecret,
-      dataSecretBinding(Bun.env.DATA_SECRET ?? 'seed-data-secret-seed-data-secret'),
-    );
+  // 奖励发放链路使用组合层声明好的配置与数据库 ripple（与 targetDb 同一个 DATABASE_URL）。
+  await using runtime = new Cyrene().use(...Object.values(SeedRewardRipples));
+
+  await runtime.init();
 
   for (const event of seedBiliGuardEvents) {
     await runtime.ripples.BiliGuardRewardUseCase.rewardBiliGuard(event);

@@ -1,7 +1,7 @@
 import { type InferInput, ripple } from 'cyrenex';
 import { and, eq } from 'drizzle-orm';
 
-import { Database } from '#composition/tokens';
+import { Database } from '#infrastructure/db';
 import type { DbExecutor } from '#infrastructure/db';
 import { deletedAtIsNull } from '#infrastructure/db/helper';
 import {

@@ -2,10 +2,13 @@ import { afterAll, expect, it, spyOn } from 'bun:test';
 
 import { Cyrene } from 'cyrenex';
 
-import { Database, databaseBinding, DataSecret, dataSecretBinding } from '#composition';
+import { DataSecret } from '#config';
+import { Database } from '#infrastructure/db';
 import type { DbClient } from '#infrastructure/db';
-import User, { type UserRepository } from '#modules/user';
+import User from '#modules/user';
+import type { UserRepository } from '#modules/user';
 import { InvalidCredentialsError, PasswordUtil } from '#shared';
+import { stub } from '#test-helpers/stub';
 
 type UserRow = NonNullable<Awaited<ReturnType<UserRepository['findById']>>>;
 
@@ -29,10 +32,12 @@ async function createFixture() {
   const runtime = new Cyrene()
     .use(User.UserRepo, User.UserUseCase)
     // 只验证依赖装配与业务分支, 不连接数据库。
-    .override(Database, databaseBinding({} as DbClient))
-    .override(DataSecret, dataSecretBinding('test-data-secret'));
+    .override(Database, stub('Database', {} as DbClient))
+    .override(DataSecret, stub('DataSecret', 'test-data-secret'));
 
   runtimes.push(runtime);
+
+  await runtime.init();
 
   const container = runtime.ripples;
 

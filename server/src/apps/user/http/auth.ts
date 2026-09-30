@@ -1,12 +1,13 @@
 import { ripple } from 'cyrenex';
 
-import { ApiOrigin, WebOrigins } from '#composition/tokens';
 import { createAuthCookieOptions, createAuthGuard } from '#infrastructure/http';
 import Auth, {
   ACCESS_TOKEN_EXPIRES_IN_SECONDS,
   BILI_REGISTER_EXPIRES_IN_SECONDS,
   REFRESH_TOKEN_EXPIRES_IN_SECONDS,
 } from '#modules/auth';
+
+import { ApiOrigin, WebOrigins } from '../config';
 
 /**
  * 用户端鉴权 Cookie 配置。

@@ -126,7 +126,7 @@ The backend package is `@server/app` in `server/`.
 - `server/src/apps/seed`: development seed script and its composition root.
 - `server/src/modules`: reusable business capabilities, each with a single public entry default-exporting a Ripple Manifest object.
 - `server/src/infrastructure`: db, redis, queue, logger, mail, storage, and the HTTP adapter kit.
-- `server/src/composition`: infrastructure/config tokens and binding helpers.
+- `server/src/config`: env schema fragments plus the shared config ripples and the capability ripples derived from them.
 - `server/src/shared`: business-agnostic errors and utilities.
 - `server/src/config`: pure env schema fragments, imported only by app config boundaries.
 - `server/src/eden.ts`: Eden type export surface consumed by web packages.

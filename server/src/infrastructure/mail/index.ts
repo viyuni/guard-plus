@@ -1,6 +1,8 @@
+import { ripple } from 'cyrenex';
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 
+import { SmtpConfig } from '#config';
 import { BadRequestError } from '#shared';
 
 export interface SendMailInput {
@@ -88,3 +90,12 @@ class UnconfiguredMailer implements Mailer {
 export function createMailer(config: SmtpMailConfig | undefined) {
   return config ? new SmtpMailer(config) : new UnconfiguredMailer();
 }
+
+/** SMTP 邮件发送能力; 未配置 SMTP 时是明确的降级实现。 */
+export const Mailer = ripple(
+  'Mailer',
+  {
+    SmtpConfig,
+  },
+  ({ SmtpConfig }) => createMailer(SmtpConfig),
+);

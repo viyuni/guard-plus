@@ -1,7 +1,7 @@
 import { type InferInput, ripple } from 'cyrenex';
 import { and, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 
-import { Database } from '#composition/tokens';
+import { Database } from '#infrastructure/db';
 import type { DbExecutor, DbTransaction } from '#infrastructure/db';
 import { pointAccounts } from '#infrastructure/db/schema';
 

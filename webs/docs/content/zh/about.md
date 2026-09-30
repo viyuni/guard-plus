@@ -60,7 +60,7 @@ Elysia API 应用，包含管理端和用户端 API、事件接入、后台队�
 - `server/src/apps/event` — 事件接入运行时
 - `server/src/modules` — 可复用的业务模块，每个模块默认导出 Ripple Manifest 清单
 - `server/src/infrastructure` — db、redis、queue、logger、mail、storage 与 HTTP 适配器
-- `server/src/composition` — 基础设施与配置令牌、绑定辅助函数
+- `server/src/config` — 环境变量片段，以及共享配置 ripple 与由它派生的能力 ripple
 - `server/src/shared` — 与业务无关的错误与工具函数
 
 ### `@shared/schema` — 共享契约

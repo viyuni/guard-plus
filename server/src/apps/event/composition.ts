@@ -1,20 +1,6 @@
 import { Cyrene } from 'cyrenex';
 
-import {
-  Database,
-  databaseBinding,
-  DataSecret,
-  dataSecretBinding,
-  Logger,
-  loggerBinding,
-  Redis,
-  redisBinding,
-  RegisterCodeTtl,
-  registerCodeTtlBinding,
-} from '#composition';
-import { createDatabase } from '#infrastructure/db';
-import { createLogger } from '#infrastructure/logger';
-import { createRedisClient } from '#infrastructure/redis';
+import { Logger } from '#infrastructure/logger';
 import Auth from '#modules/auth';
 import BiliEvent from '#modules/bili-event';
 import Point from '#modules/point';
@@ -62,32 +48,19 @@ const EventAppRipples = {
  * Event App 的组合根。
  *
  * 一个 App = 一个 Composition Root = 一个 Cyrene 容器。
+ * 配置与基础设施都是声明好的 ripple, 这里只负责注册依赖图并预热。
  */
 export async function createEventApp() {
   const config = eventConfig;
 
-  const logger = createLogger({
-    level: config.logLevel,
-    pretty: config.nodeEnv === 'development',
-  });
-
-  const db = createDatabase(config.databaseUrl);
-  const redis = createRedisClient(config.redis, logger);
-
-  const runtime = new Cyrene()
-    .use(...Object.values(EventAppRipples))
-    // 事件进程只绑这条链路真正用到的令牌: 没有 HTTP 鉴权、图片与邮件配置。
-    .override(Database, databaseBinding(db))
-    .override(Redis, redisBinding(redis))
-    .override(Logger, loggerBinding(logger))
-    .override(DataSecret, dataSecretBinding(config.dataSecret))
-    .override(RegisterCodeTtl, registerCodeTtlBinding(config.registerCodeTtlSeconds));
+  const runtime = new Cyrene().use(...Object.values(EventAppRipples), Logger);
 
   try {
-    // 构图期校验: 不执行工厂, 但会立刻暴露重复 key、强依赖环与不可达的绑定。
-    runtime.inspect();
+    // 启动期预热: 校验完整依赖图并初始化所有可达 singleton。
+    await runtime.init();
 
     const ripples = runtime.ripples;
+    const logger = ripples.Logger;
 
     const worker = new BiliGuardWorker(
       {
@@ -106,18 +79,15 @@ export async function createEventApp() {
     });
 
     return new EventService({
-      db,
       healthServer: createEventHealthServer(source, config.port),
       logger,
-      redis,
       runtime,
       source,
       worker,
     });
   } catch (error) {
+    // 数据库、Redis 等 owned 资源由容器统一释放。
     await runtime.dispose();
-    redis.destroy();
-    await db.$client.end().catch(() => undefined);
 
     throw error;
   }

@@ -5,7 +5,7 @@ import type {
 } from '@shared/schema/point-conversion';
 import { type InferInput, ripple } from 'cyrenex';
 
-import { Database } from '#composition/tokens';
+import { Database } from '#infrastructure/db';
 import type {
   InsertPointConversionRule,
   UpdatePointConversionRule,

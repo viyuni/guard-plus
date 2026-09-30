@@ -8,9 +8,10 @@ import type {
 import type { StockAdjustmentBody } from '@shared/schema/stock';
 import { type InferInput, ripple } from 'cyrenex';
 
-import { Database, ImageStorage } from '#composition/tokens';
+import { Database } from '#infrastructure/db';
 import type { DbTransaction } from '#infrastructure/db';
 import type { InsertProduct, Product, UpdateProduct } from '#infrastructure/db/schema';
+import { ImageStorage } from '#infrastructure/storage';
 import Point from '#modules/point';
 
 import {

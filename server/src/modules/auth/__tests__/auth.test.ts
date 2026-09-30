@@ -4,13 +4,15 @@ import { Cyrene } from 'cyrenex';
 import Elysia from 'elysia';
 import { decodeJwt } from 'jose';
 
-import { JwtSecret, jwtSecretBinding, Redis, redisBinding } from '#composition';
+import { JwtSecret } from '#config';
 import {
   createAuthCookieOptions,
   createAuthGuard,
   getAuthStateCookieOptions,
 } from '#infrastructure/http';
+import { Redis } from '#infrastructure/redis';
 import type { RedisClient } from '#infrastructure/redis';
+import { stub } from '#test-helpers/stub';
 
 import type { AuthTokenPair } from '../domain';
 import { AuthSessionRepo } from '../repository';
@@ -59,10 +61,12 @@ async function createAuthUseCase() {
   const runtime = new Cyrene()
     .use(AuthSessionRepo, AuthUseCase)
     // 会话仓库的方法会被下面整体替换, 这里只需要一个占位客户端。
-    .override(Redis, redisBinding({} as RedisClient))
-    .override(JwtSecret, jwtSecretBinding('test-secret'));
+    .override(Redis, stub('Redis', {} as RedisClient))
+    .override(JwtSecret, stub('JwtSecret', 'test-secret'));
 
   runtimes.push(runtime);
+
+  await runtime.init();
 
   const container = runtime.ripples;
   const repo = container.AuthSessionRepo;

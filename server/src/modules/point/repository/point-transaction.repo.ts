@@ -2,7 +2,7 @@ import type { PointTransactionPageQuery } from '@shared/schema/point-transaction
 import { type InferInput, ripple } from 'cyrenex';
 import { eq } from 'drizzle-orm';
 
-import { Database } from '#composition/tokens';
+import { Database } from '#infrastructure/db';
 import type { DbExecutor, DbTransaction } from '#infrastructure/db';
 import { QueryPageBuilder } from '#infrastructure/db/helper';
 import { pointTransactions, type InsertPointTransaction } from '#infrastructure/db/schema';

@@ -1,7 +1,7 @@
 import { type InferInput, ripple } from 'cyrenex';
 import ejs from 'ejs';
 
-import { Mailer } from '#composition/tokens';
+import { Mailer } from '#infrastructure/mail';
 import type { NewOrderEmailInput } from '#infrastructure/queue';
 
 import newOrderTemplate from '../new-order.template.ejs' with { type: 'text' };

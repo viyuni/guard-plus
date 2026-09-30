@@ -1,32 +1,7 @@
 import { elysiaCyrene } from '@cyrenex/elysia';
 
-import {
-  apiOriginBinding,
-  ApiOrigin,
-  biliRoomBinding,
-  BiliRoom,
-  databaseBinding,
-  Database,
-  dataSecretBinding,
-  DataSecret,
-  imageSavePathBinding,
-  ImageSavePath,
-  ImageStorage,
-  jwtSecretBinding,
-  JwtSecret,
-  loggerBinding,
-  Logger,
-  redisBinding,
-  Redis,
-  registerCodeTtlBinding,
-  RegisterCodeTtl,
-  webOriginsBinding,
-  WebOrigins,
-} from '#composition';
-import { createDatabase } from '#infrastructure/db';
-import { createLogger } from '#infrastructure/logger';
-import { createRedisClient } from '#infrastructure/redis';
-import { LocalImageStorage } from '#infrastructure/storage';
+import { ImageSavePath } from '#config';
+import { Logger } from '#infrastructure/logger';
 import Auth from '#modules/auth';
 import BiliEvent from '#modules/bili-event';
 import Dashboard from '#modules/dashboard';
@@ -36,7 +11,7 @@ import Product from '#modules/product';
 import Reward from '#modules/reward';
 import User from '#modules/user';
 
-import { adminConfig } from './config';
+import { adminConfig, WebOrigins } from './config';
 import AdminFeature from './features/admin';
 import AdminAuthFeature from './features/auth';
 import AdminUserFeature from './features/user';
@@ -89,39 +64,25 @@ const AdminAppRipples = {
  * Admin App 的组合根。
  *
  * 一个 App = 一个 Composition Root = 一个 Cyrene 容器。
+ * 配置与基础设施都是组合层声明好的 ripple, 这里只负责注册依赖图并预热。
  */
 export async function createAdminApp() {
   const config = adminConfig;
 
-  const logger = createLogger({
-    level: config.logLevel,
-    pretty: config.nodeEnv === 'development',
-  });
-
-  const db = createDatabase(config.databaseUrl);
-  const redis = createRedisClient(config.redis, logger);
-
   // Elysia 插件持有容器: HTTP 停止时由它关闭依赖图。
   const container = elysiaCyrene();
 
-  const runtime = container.decorator.cyrene
-    .use(...Object.values(AdminAppRipples))
-    // 逐令牌绑定: 只列这张依赖图真正需要的令牌。
-    .override(Database, databaseBinding(db))
-    .override(Redis, redisBinding(redis))
-    .override(Logger, loggerBinding(logger))
-    .override(DataSecret, dataSecretBinding(config.dataSecret))
-    .override(BiliRoom, biliRoomBinding(config.biliRoom))
-    .override(RegisterCodeTtl, registerCodeTtlBinding(config.registerCodeTtlSeconds))
-    .override(JwtSecret, jwtSecretBinding(config.jwtSecret))
-    .override(ApiOrigin, apiOriginBinding(config.apiOrigin))
-    .override(WebOrigins, webOriginsBinding(config.webOrigins))
-    .override(ImageSavePath, imageSavePathBinding(config.imageSavePath))
-    .override(ImageStorage, LocalImageStorage);
+  const runtime = container.decorator.cyrene.use(
+    ...Object.values(AdminAppRipples),
+    Logger,
+    ImageSavePath,
+    WebOrigins,
+  );
 
   try {
-    // 构图期校验: 不执行工厂, 但会立刻暴露重复 key、强依赖环与不可达的绑定。
-    runtime.inspect();
+    // 启动期预热: 校验完整依赖图并初始化所有可达 singleton,
+    // 重复 key、强依赖环、不可达声明与初始化失败都在这里直接暴露。
+    await runtime.init();
 
     const ripples = runtime.ripples;
 
@@ -134,16 +95,12 @@ export async function createAdminApp() {
     return {
       config,
       container,
-      db,
-      logger,
-      redis,
       ripples,
       runtime,
     };
   } catch (error) {
+    // 数据库、Redis 等 owned 资源由容器统一释放。
     await runtime.dispose();
-    redis.destroy();
-    await db.$client.end().catch(() => undefined);
 
     throw error;
   }

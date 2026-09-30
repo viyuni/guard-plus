@@ -1,7 +1,7 @@
 import { type InferInput, ripple } from 'cyrenex';
 import { and, count, desc, eq, gte, isNull, lt, sql, sum } from 'drizzle-orm';
 
-import { Database } from '#composition/tokens';
+import { Database } from '#infrastructure/db';
 import { biliEvents, orders, pointTransactions, users } from '#infrastructure/db/schema';
 
 export const DashboardRepo = ripple(

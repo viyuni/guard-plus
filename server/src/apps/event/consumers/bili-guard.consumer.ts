@@ -1,7 +1,7 @@
 import type { Guard } from '@viyuni/bevent-relay/events';
 import { type InferInput, ripple } from 'cyrenex';
 
-import { Logger } from '#composition/tokens';
+import { Logger } from '#infrastructure/logger';
 import BiliEvent from '#modules/bili-event';
 import { getBiliGuardEventTime } from '#modules/reward';
 

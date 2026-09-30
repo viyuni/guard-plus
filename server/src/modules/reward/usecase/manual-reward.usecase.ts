@@ -1,7 +1,7 @@
 import { BiliGuardType, type CreateManualBiliGuardEventBody } from '@shared/schema/reward';
 import { type InferInput, ripple } from 'cyrenex';
 
-import { BiliRoom } from '#composition/tokens';
+import { BiliRoom } from '#config';
 
 import type { BiliGuardRewardEvent } from '../domain';
 import { BiliGuardRewardUseCase } from './bili-guard-reward.usecase';

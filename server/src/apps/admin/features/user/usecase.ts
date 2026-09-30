@@ -1,7 +1,7 @@
 import type { UserRegisterBody } from '@shared/schema/user';
 import { type InferInput, ripple } from 'cyrenex';
 
-import { Database } from '#composition/tokens';
+import { Database } from '#infrastructure/db';
 import Point from '#modules/point';
 import Reward from '#modules/reward';
 import User from '#modules/user';

@@ -1,16 +1,12 @@
-import type { DbClient } from '#infrastructure/db';
 import type { AppLogger } from '#infrastructure/logger';
-import type { RedisClient } from '#infrastructure/redis';
 
 import type { createEventHealthServer } from './http';
 import type { BilibiliSource } from './source';
 import type { BiliGuardWorker } from './workers';
 
 interface EventServiceDeps {
-  db: DbClient;
   healthServer: ReturnType<typeof createEventHealthServer>;
   logger: AppLogger;
-  redis: RedisClient;
   runtime: {
     dispose: () => Promise<void>;
   };
@@ -60,15 +56,9 @@ export class EventService {
 
     await this.close('Bilibili guard worker', () => this.deps.worker.stop());
     await this.close('Event health server', () => this.deps.healthServer.stop());
+    // 数据库与 Redis 由容器持有, dispose() 会按资源协议释放。
     await this.close('Event dependency runtime', () => this.deps.runtime.dispose());
 
-    try {
-      this.deps.redis.destroy();
-    } catch (error) {
-      this.deps.logger.error(error, 'Event Redis client stop failed');
-    }
-
-    await this.close('Event database client', () => this.deps.db.$client.end());
     this.isStarted = false;
   }
 

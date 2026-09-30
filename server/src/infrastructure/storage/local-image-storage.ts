@@ -4,17 +4,18 @@ import path from 'node:path';
 
 import { type InferInput, ripple } from 'cyrenex';
 
-import { ImageSavePath } from '#composition/tokens';
+import { ImageSavePath } from '#config';
 
 import { InvalidImageSizeError } from './errors';
 
 /**
  * 本地磁盘图片存储。
  *
- * 技术能力, 不含业务规则; 对外只通过 `ImageStorage` 令牌被消费方使用。
+ * 技术能力, 不含业务规则; 消费方只依赖 `ImageStorage` 这一条声明,
+ * 存储目录来自组合层的 `ImageSavePath` 配置 ripple。
  */
-export const LocalImageStorage = ripple(
-  'LocalImageStorage',
+export const ImageStorage = ripple(
+  'ImageStorage',
   {
     ImageSavePath,
   },
@@ -79,4 +80,4 @@ export const LocalImageStorage = ripple(
   },
 );
 
-export type ImageStorage = InferInput<typeof LocalImageStorage>;
+export type ImageStorage = InferInput<typeof ImageStorage>;

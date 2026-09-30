@@ -32,7 +32,7 @@
       "name": "@server/app",
       "version": "0.0.0",
       "dependencies": {
-        "@cyrenex/elysia": "0.0.1-beta.0",
+        "@cyrenex/elysia": "0.0.1-beta.1",
         "@elysia/cors": "^1.4.2",
         "@elysia/html": "^1.4.1",
         "@elysia/openapi": "^1.4.16",
@@ -42,7 +42,7 @@
         "@valibot/to-json-schema": "^1.8.0",
         "@viyuni/bevent-relay": "0.0.7",
         "bunqueue": "^2.9.5",
-        "cyrenex": "0.0.1-beta.0",
+        "cyrenex": "0.0.1-beta.1",
         "drizzle-orm": "^1.0.0-rc.5-ab785fc",
         "ejs": "^6.0.1",
         "elysia": "^1.4.30",
@@ -382,7 +382,7 @@
 
     "@csstools/selector-specificity": ["@csstools/selector-specificity@5.0.0", "", { "peerDependencies": { "postcss-selector-parser": "^7.0.0" } }, "sha512-PCqQV3c4CoVm3kdPhyeZ07VmBRdH2EpMFA/pd9OASpOEC3aXNGoqPDAZ80D0cLpMBxnmk0+yNhGsEx31hq7Gtw=="],
 
-    "@cyrenex/elysia": ["@cyrenex/elysia@0.0.1-beta.0", "", { "peerDependencies": { "cyrenex": "~0.0.1-beta.0", "elysia": "^1.4.0" } }, "sha512-HVLnnu7S3pMvMrqpCsICb//ligCTK96tEPEppL626bO99zVDi48xPMRVkUxRfdv6LWyHU0JJWcmkSy/TDWtLgQ=="],
+    "@cyrenex/elysia": ["@cyrenex/elysia@0.0.1-beta.1", "", { "peerDependencies": { "cyrenex": "~0.0.1-beta.1", "elysia": "^1.4.0" } }, "sha512-bEu7Oupn3Kr6ekbGdQ4CZmxqRuEsKEvHcHOtZgu2ZSMpFmV4uxn8SiwXAn+C2/hwJ9N2rEjSKqL/cFWS9ZKSSA=="],
 
     "@dotenvx/dotenvx": ["@dotenvx/dotenvx@2.28.2", "", { "dependencies": { "@dotenvx/primitives": "^3.0.2", "@dotenvx/tooling": "^1.0.3", "global-agent": "^3.0.0", "node-forge": "^1.4.0", "undici": "^6.28.1", "yocto-spinner": "^1.2.1" }, "bin": { "dx": "src/cli/dotenvx.js", "dotenvx": "src/cli/dotenvx.js" } }, "sha512-8UZfVEj4rrYQcaq/3Ox7te1qC1znOUOavv6F0BQiGhLLjqaD4xDQ4j3ddla/afC5ukBrnWx3c4RPsh6i1SQUSw=="],
 
@@ -1812,7 +1812,7 @@
 
     "csstype": ["csstype@3.2.3", "", {}, "sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ=="],
 
-    "cyrenex": ["cyrenex@0.0.1-beta.0", "", {}, "sha512-IzcUjIblWHg4tY3/wPsUkbFr1IVycMnMxRDGGQeY+g3oYWb6NK0Jf0gQBplsF7cX3N2KgolmFo2g6CEQkjG7bQ=="],
+    "cyrenex": ["cyrenex@0.0.1-beta.1", "", {}, "sha512-4prlR7zJJYG36LOJNDjRqfJswVp8XbLZ8R2YIsNDY21/2Qi3Od/DmK5h5zQ18j9yEuDsVQ4hLBN/Cyr2HP+CYQ=="],
 
     "d3": ["d3@7.9.0", "", { "dependencies": { "d3-array": "3", "d3-axis": "3", "d3-brush": "3", "d3-chord": "3", "d3-color": "3", "d3-contour": "4", "d3-delaunay": "6", "d3-dispatch": "3", "d3-drag": "3", "d3-dsv": "3", "d3-ease": "3", "d3-fetch": "3", "d3-force": "3", "d3-format": "3", "d3-geo": "3", "d3-hierarchy": "3", "d3-interpolate": "3", "d3-path": "3", "d3-polygon": "3", "d3-quadtree": "3", "d3-random": "3", "d3-scale": "4", "d3-scale-chromatic": "3", "d3-selection": "3", "d3-shape": "3", "d3-time": "3", "d3-time-format": "4", "d3-timer": "3", "d3-transition": "3", "d3-zoom": "3" } }, "sha512-e1U46jVP+w7Iut8Jt8ri1YsPOvFpg46k+K8TpCb0P+zjCkjkPnV7WzfDJzMHy1LnA+wj5pLT1wjO901gLXeEhA=="],
 

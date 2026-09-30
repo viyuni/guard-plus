@@ -3,12 +3,14 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test
 import { Cyrene } from 'cyrenex';
 import { eq, inArray, like } from 'drizzle-orm';
 
-import { Database, databaseBinding, Logger, loggerBinding } from '#composition';
+import { Database } from '#infrastructure/db';
 import type { DbClient } from '#infrastructure/db';
 import { admins } from '#infrastructure/db/schema';
+import { Logger } from '#infrastructure/logger';
 import { createLogger } from '#infrastructure/logger';
 import { InvalidCredentialsError } from '#shared';
 import { PasswordUtil } from '#shared';
+import { stub } from '#test-helpers/stub';
 import { getTestDatabase } from '#test-helpers/test-database';
 
 import { AdminNotFoundError, AdminSuperAdminCannotBeBannedError } from '../domain/errors';
@@ -107,10 +109,12 @@ beforeEach(async () => {
 
   const runtime = new Cyrene()
     .use(AdminRepo, AdminUseCase)
-    .override(Database, databaseBinding(db))
-    .override(Logger, loggerBinding(createLogger({ level: 'silent', pretty: false })));
+    .override(Database, stub('Database', db))
+    .override(Logger, stub('Logger', createLogger({ level: 'silent', pretty: false })));
 
   runtimes.push(runtime);
+
+  await runtime.init();
 
   useCase = runtime.ripples.AdminUseCase;
 });

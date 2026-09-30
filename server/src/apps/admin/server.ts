@@ -1,6 +1,7 @@
 import { cors } from '@elysia/cors';
 import { Elysia } from 'elysia';
 
+import { imageSavePath } from '#config';
 import { createErrorHandler, health, openapi } from '#infrastructure/http';
 import { createImageAssets } from '#infrastructure/storage';
 import { version } from '~/package.json' with { type: 'json' };
@@ -14,7 +15,8 @@ import { createAdminApp } from './composition';
  * `AdminHttp` 根 Ripple, 这里只负责 serve 配置、CORS、错误映射、静态资源与文档。
  */
 export async function createAdminServer() {
-  const { config, container, logger, ripples } = await createAdminApp();
+  const { config, container, ripples } = await createAdminApp();
+  const logger = ripples.Logger;
 
   const app = new Elysia({
     name: 'AdminServer',
@@ -25,7 +27,7 @@ export async function createAdminServer() {
   })
     .use(
       cors({
-        origin: config.webOrigins,
+        origin: ripples.WebOrigins,
         allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
         credentials: true,
       }),
@@ -35,7 +37,7 @@ export async function createAdminServer() {
     .use(ripples.AdminHttp)
     .use(createErrorHandler(logger))
     .use(health)
-    .use(createImageAssets({ assets: config.imageSavePath }))
+    .use(createImageAssets({ assets: imageSavePath }))
     .get('/', () => 'Viyuni Guard plus server running... :)');
 
   if (config.nodeEnv === 'development') {

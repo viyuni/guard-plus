@@ -2,7 +2,7 @@ import type { UserPageQuery } from '@shared/schema/user';
 import { ripple, type InferInput } from 'cyrenex';
 import { and, eq } from 'drizzle-orm';
 
-import { Database } from '#composition/tokens';
+import { Database } from '#infrastructure/db';
 import type { DbExecutor } from '#infrastructure/db';
 import { defineSelectColumns, QueryPageBuilder } from '#infrastructure/db/helper';
 import type { InsertUser, UpdateUser } from '#infrastructure/db/schema';

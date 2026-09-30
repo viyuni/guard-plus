@@ -1,28 +1,21 @@
-import path from 'node:path';
-
 import { bilibiliUid, envOrigins, port } from '@shared/schema';
 import { createEnv } from '@t3-oss/env-core';
+import { ripple } from 'cyrenex';
 import * as v from 'valibot';
 
-import { biliEnv } from '#config/bili';
-import { databaseEnv } from '#config/database';
-import { imageEnv } from '#config/image';
-import { redisEnv } from '#config/redis';
-import { type NodeEnv, sharedEnv } from '#config/shared';
-import type { RedisConnectionOptions } from '#infrastructure/redis';
+import { configEnv, type NodeEnv } from '#config';
 import { PasswordUtil } from '#shared';
 
-const defaultImageSavePath = path.join(process.cwd(), 'public', 'images');
 const superAdminPasswordSchema = v.pipe(v.string(), v.regex(/^(?=.*[A-Za-z])(?=.*\d).{8,32}$/));
 
+/**
+ * Admin App 专属的环境变量。
+ *
+ * 共享变量由 `#config` 统一解析成配置 ripple; 这里只保留
+ * 只有 Admin 进程才会拿到的变量, 并按同样方式暴露成配置 ripple。
+ */
 export const adminEnv = createEnv({
   server: {
-    ...sharedEnv,
-    ...databaseEnv,
-    ...biliEnv,
-    ...imageEnv,
-    ...redisEnv,
-
     /**
      * 管理员服务端口
      */
@@ -62,18 +55,14 @@ export const adminEnv = createEnv({
   emptyStringAsUndefined: true,
 });
 
+/** 当前 App 对外暴露的 API Origin */
+export const ApiOrigin = ripple('ApiOrigin', () => adminEnv.ADMIN_API_ORIGIN);
+
+/** 当前 App 允许的 Web Origin */
+export const WebOrigins = ripple('WebOrigins', () => adminEnv.ADMIN_WEB_ORIGINS);
+
 export interface AdminConfig {
   nodeEnv: NodeEnv;
-  logLevel: 'debug' | 'info' | 'warn' | 'error';
-  dataSecret: string;
-  databaseUrl: string;
-  redis: RedisConnectionOptions;
-  jwtSecret: string;
-  biliRoom: number;
-  registerCodeTtlSeconds: number;
-  imageSavePath: string;
-  apiOrigin: string;
-  webOrigins: string[];
   port: number;
   superAdmin: {
     uid: string;
@@ -85,26 +74,10 @@ export interface AdminConfig {
 /**
  * Admin App 的配置边界。
  *
- * 只有这里知道 `ADMIN_` 前缀；下游模块与适配器依赖的是组合层令牌。
+ * 只有这里知道 `ADMIN_` 前缀; 下游模块与适配器依赖的是配置 ripple。
  */
 export const adminConfig: AdminConfig = {
-  nodeEnv: adminEnv.NODE_ENV,
-  logLevel: adminEnv.LOG_LEVEL,
-  dataSecret: adminEnv.DATA_SECRET,
-  databaseUrl: adminEnv.DATABASE_URL,
-  redis: {
-    url: adminEnv.REDIS_URL,
-    password: adminEnv.REDIS_PASSWORD,
-    connectionTimeoutMs: adminEnv.REDIS_CONNECTION_TIMEOUT_MS,
-    idleTimeoutMs: adminEnv.REDIS_IDLE_TIMEOUT_MS,
-    maxRetries: adminEnv.REDIS_MAX_RETRIES,
-  },
-  jwtSecret: adminEnv.ADMIN_JWT_SECRET,
-  biliRoom: adminEnv.BILI_ROOM,
-  registerCodeTtlSeconds: adminEnv.BILI_REGISTER_CODE_TTL_SECONDS,
-  imageSavePath: adminEnv.IMAGE_SAVE_PATH ?? defaultImageSavePath,
-  apiOrigin: adminEnv.ADMIN_API_ORIGIN,
-  webOrigins: adminEnv.ADMIN_WEB_ORIGINS,
+  nodeEnv: configEnv.NODE_ENV,
   port: adminEnv.ADMIN_PORT,
   superAdmin: {
     uid: adminEnv.SUPER_ADMIN_UID,

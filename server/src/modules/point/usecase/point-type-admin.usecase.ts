@@ -5,7 +5,7 @@ import type {
 } from '@shared/schema/point-type';
 import { type InferInput, ripple } from 'cyrenex';
 
-import { ImageStorage } from '#composition/tokens';
+import { ImageStorage } from '#infrastructure/storage';
 
 import {
   PointTypeNameExistsError,

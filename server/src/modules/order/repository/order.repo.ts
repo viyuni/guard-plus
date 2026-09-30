@@ -2,7 +2,7 @@ import type { OrderPageQuery } from '@shared/schema/order';
 import { type InferInput, ripple } from 'cyrenex';
 import { and, eq, inArray } from 'drizzle-orm';
 
-import { Database } from '#composition/tokens';
+import { Database } from '#infrastructure/db';
 import type { DbExecutor, DbTransaction } from '#infrastructure/db';
 import { QueryPageBuilder } from '#infrastructure/db/helper';
 import {

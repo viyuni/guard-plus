@@ -3,14 +3,17 @@ import { afterAll, describe, expect, spyOn, test } from 'bun:test';
 import { elysiaCyrene } from '@cyrenex/elysia';
 import { Cyrene, DisposedError } from 'cyrenex';
 import Elysia from 'elysia';
-import { createClient, type RedisClientOptions } from 'redis';
+import { createClient } from 'redis';
+import type { RedisClientOptions } from 'redis';
 
-import { Database, databaseBinding, DataSecret, dataSecretBinding } from '#composition';
+import { DataSecret } from '#config';
+import { Database } from '#infrastructure/db';
 import { createDatabase } from '#infrastructure/db';
 import BiliEvent from '#modules/bili-event';
 import Point from '#modules/point';
 import Reward from '#modules/reward';
 import User from '#modules/user';
+import { stub } from '#test-helpers/stub';
 
 import { createTestContainer } from './helpers/test-container';
 
@@ -28,6 +31,9 @@ describe('Cyrene application contexts', () => {
 
     await using firstRuntime = first;
     await using _secondRuntime = second;
+
+    await first.init();
+    await second.init();
 
     const firstContainer = first.ripples;
     const secondContainer = second.ripples;
@@ -68,8 +74,8 @@ describe('Cyrene application contexts', () => {
 
     const runtime = new Cyrene()
       .use(...Object.values(eventGraph))
-      .override(Database, databaseBinding(db))
-      .override(DataSecret, dataSecretBinding('test'));
+      .override(Database, stub('Database', db))
+      .override(DataSecret, stub('DataSecret', 'test'));
 
     await using _runtime = runtime;
 
@@ -86,7 +92,9 @@ describe('Cyrene application contexts', () => {
 
     const runtime = plugin.decorator.cyrene
       .use(Point.PointTypeRepo)
-      .override(Database, databaseBinding(db));
+      .override(Database, stub('Database', db));
+
+    await runtime.init();
 
     const repo = runtime.ripples.PointTypeRepo;
     const closeDb = spyOn(db.$client, 'end');

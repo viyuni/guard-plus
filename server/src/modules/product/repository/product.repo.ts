@@ -3,7 +3,7 @@ import type { ProductPageQuery } from '@shared/schema/product';
 import { type InferInput, ripple } from 'cyrenex';
 import { and, eq, gte, lte, sql } from 'drizzle-orm';
 
-import { Database } from '#composition/tokens';
+import { Database } from '#infrastructure/db';
 import type { DbExecutor, DbTransaction } from '#infrastructure/db';
 import { deletedAtIsNull, QueryPageBuilder } from '#infrastructure/db/helper';
 import {

@@ -8,7 +8,7 @@ import type {
 } from '@shared/schema/order';
 import { type InferInput, ripple } from 'cyrenex';
 
-import { Database } from '#composition/tokens';
+import { Database } from '#infrastructure/db';
 import { publishOrderCreated, type NewOrderEmailInput } from '#infrastructure/queue';
 import Point, { POINT_CHANGE_SOURCE_TYPE, PointIdempotencyKey } from '#modules/point';
 import Product, {

@@ -2,7 +2,7 @@ import type { LegacyPointMigrationPageQuery } from '@shared/schema/point-account
 import { type InferInput, ripple } from 'cyrenex';
 import { and, eq, isNull } from 'drizzle-orm';
 
-import { Database } from '#composition/tokens';
+import { Database } from '#infrastructure/db';
 import type { DbExecutor, DbTransaction } from '#infrastructure/db';
 import { QueryPageBuilder } from '#infrastructure/db/helper';
 import { legacyPointMigrations, type InsertLegacyPointMigration } from '#infrastructure/db/schema';

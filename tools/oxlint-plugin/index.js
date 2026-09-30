@@ -366,7 +366,7 @@ const rippleDepsPascalCase = {
  * 架构边界规则。
  *
  * `server/src` 的顶层目录就是依赖层级：apps → modules → infrastructure →
- * composition → shared，导入只能顺着这个方向走；另外还有两条模块级约束：
+ * config → shared，导入只能顺着这个方向走；另外还有两条模块级约束：
  * 跨模块只能走 `#modules/<name>` 公共入口，App 之间不能互相导入。
  *
  * 判据只看源码里的 `#` 别名导入，因此 relative import 仍留给人工判断
@@ -375,26 +375,22 @@ const rippleDepsPascalCase = {
 
 const SOURCE_LAYERS = {
   // 同层互相依赖始终允许；这里只列"允许向下的层"。
-  apps: new Set(['modules', 'infrastructure', 'composition', 'shared', 'config']),
-  modules: new Set(['infrastructure', 'composition', 'shared']),
-  infrastructure: new Set(['composition', 'shared']),
-  // composition 声明的令牌必须用基础设施能力的类型（Database: DbClient ...），
-  // 因此允许 composition → infrastructure，但基础设施本身不允许反向依赖 composition。
-  composition: new Set(['infrastructure', 'shared']),
+  apps: new Set(['modules', 'infrastructure', 'shared', 'config']),
+  modules: new Set(['infrastructure', 'shared', 'config']),
+  infrastructure: new Set(['shared', 'config']),
+  // config 只依赖 shared：环境变量解析与配置 ripple 都在这层，其它层可以按需 import。
+  config: new Set(['shared']),
   shared: new Set(),
-  // config 只包含无运行时副作用的环境变量 Schema 片段。
-  config: new Set(),
 };
 
 const ALIAS_LAYERS = [
   ['#apps/', 'apps'],
   ['#modules/', 'modules'],
   ['#infrastructure/', 'infrastructure'],
-  ['#composition/', 'composition'],
-  ['#composition', 'composition'],
   ['#shared/', 'shared'],
   ['#shared', 'shared'],
   ['#config/', 'config'],
+  ['#config', 'config'],
 ];
 
 /**
@@ -448,12 +444,10 @@ const architectureImportBoundary = {
     schema: [],
     messages: {
       layerViolation:
-        '{{layer}} 层不允许依赖 {{target}} 层："{{specifier}}" 破坏了 apps → modules → infrastructure → composition → shared 的单向依赖',
+        '{{layer}} 层不允许依赖 {{target}} 层："{{specifier}}" 破坏了 apps → modules → infrastructure → config → shared 的单向依赖',
       moduleDeepImport:
         '跨模块禁止 deep import："{{specifier}}" 只允许该模块内部使用，其他模块请从 "#modules/{{module}}" 默认导出访问能力',
       appDeepImport: 'App 之间禁止互相导入："{{specifier}}" 只允许在 apps/{{app}} 内部使用',
-      configBoundary:
-        '环境变量 Schema 只允许由 apps/<app>/config.ts 导入："{{specifier}}" 出现在 {{relative}}',
     },
   },
 
@@ -475,20 +469,6 @@ const architectureImportBoundary = {
 
       if (!targetLayer) {
         return null;
-      }
-
-      if (
-        targetLayer === 'config' &&
-        source.layer !== 'config' &&
-        !/^apps\/[^/]+\/config\.ts$/.test(source.relative)
-      ) {
-        return {
-          messageId: 'configBoundary',
-          data: {
-            relative: source.relative,
-            specifier,
-          },
-        };
       }
 
       const sameLayer = targetLayer === source.layer;

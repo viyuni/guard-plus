@@ -2,7 +2,7 @@ import { type InferInput, ripple } from 'cyrenex';
 import { SignJWT, jwtVerify } from 'jose';
 import { nanoid } from 'nanoid';
 
-import { JwtSecret } from '#composition/tokens';
+import { JwtSecret } from '#config';
 import { UnauthorizedError } from '#shared';
 
 import { ACCESS_TOKEN_EXPIRES_IN_SECONDS, REFRESH_TOKEN_EXPIRES_IN_SECONDS } from '../constants';

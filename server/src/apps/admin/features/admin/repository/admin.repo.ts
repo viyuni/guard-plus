@@ -2,7 +2,7 @@ import type { AdminPageQuery } from '@shared/schema/admin';
 import { type InferInput, ripple } from 'cyrenex';
 import { and, eq } from 'drizzle-orm';
 
-import { Database } from '#composition/tokens';
+import { Database } from '#infrastructure/db';
 import { QueryPageBuilder } from '#infrastructure/db/helper';
 import { admins, type InsertAdmin, type UpdateAdmin } from '#infrastructure/db/schema';
 import { BadRequestError, BaseErrors } from '#shared';

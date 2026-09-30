@@ -86,6 +86,8 @@ export class ProcessManager {
 
   private startProcess(config: DevProcess): ManagedProcess {
     const proc = Bun.spawn(config.command, {
+      // App 进程按自身 id 注入 APP_ROLE, 供 `#config` 选择 App 专属配置。
+      env: config.kind === 'app' ? { ...process.env, APP_ROLE: config.id } : process.env,
       cwd: this.getProcessCwd(config),
       stdout: 'pipe',
       stderr: 'pipe',

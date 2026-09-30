@@ -4,11 +4,13 @@ import { createHash } from 'node:crypto';
 import { Cyrene } from 'cyrenex';
 import { createClient } from 'redis';
 
-import { Redis, redisBinding, RegisterCodeTtl, registerCodeTtlBinding } from '#composition';
+import { RegisterCodeTtl } from '#config';
+import { Redis } from '#infrastructure/redis';
 import type { RedisClient } from '#infrastructure/redis';
+import { stub } from '#test-helpers/stub';
 
-import type { BiliRegisterRedisRepository } from '../repository';
 import { BiliPasswordResetRepo, BiliRegisterRepo } from '../repository';
+import type { BiliRegisterRedisRepository } from '../repository';
 import {
   BILI_REGISTER_CODE_PREFIX,
   BiliPasswordResetUseCase,
@@ -75,10 +77,12 @@ beforeEach(async () => {
       BiliRegisterUseCase,
       BiliVerificationMatcher,
     )
-    .override(Redis, redisBinding(redis))
-    .override(RegisterCodeTtl, registerCodeTtlBinding(ttlSeconds));
+    .override(Redis, stub('Redis', redis))
+    .override(RegisterCodeTtl, stub('RegisterCodeTtl', ttlSeconds));
 
   runtimes.push(runtime);
+
+  await runtime.init();
 
   const container = runtime.ripples;
 

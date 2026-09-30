@@ -6,7 +6,7 @@ This package contains the admin and user API apps, event ingestion runtime, back
 
 ## Structure
 
-The layering is `apps → modules → infrastructure → composition → shared`, enforced by
+The layering is `apps → modules → infrastructure → config → shared`, enforced by
 the `guard-plus/architecture-import-boundary` lint rule.
 
 - `src/apps/admin`: admin HTTP app — `config.ts`, `composition.ts`, `server.ts`,
@@ -17,9 +17,9 @@ the `guard-plus/architecture-import-boundary` lint rule.
 - `src/modules`: reusable business capabilities (`auth`, `bili-event`, `dashboard`,
   `order`, `point`, `product`, `reward`, `user`).
 - `src/infrastructure`: `db`, `redis`, `queue`, `logger`, `mail`, `storage`, `http`.
-- `src/composition`: infrastructure/config `token` ripples and shared binding helpers.
 - `src/shared`: business-agnostic errors and utilities.
-- `src/config`: pure env schema fragments, imported only by each app's `config.ts`.
+- `src/config`: one env schema fragment per concern plus the shared `Config` ripple and
+  the fine-grained configuration ripples derived from it.
 - `src/eden.ts`: exported Eden app types.
 
 ## Development
@@ -59,9 +59,13 @@ refactorable.
 
 Every runnable app owns one Composition Root and one Cyrene container:
 `createAdminApp()`, `createUserApp()`, `createEventApp()`. The composition root lists
-every node explicitly (no scanning, no `providersOf`) and registers it with
-`new Cyrene().use(...Object.values(Manifest))`. The admin and user HTTP apps take their
-container from `elysiaCyrene()`, so stopping Elysia disposes the graph.
+every node explicitly (no scanning, no `providersOf`), registers it with
+`new Cyrene().use(...Object.values(Manifest))`, and then `await runtime.init()` to
+validate the graph and warm every reachable singleton before the app accepts work.
+There is no `override()` in production wiring: configuration and infrastructure are
+already declarations, so the graph is complete as registered.
+The admin and user HTTP apps take their container from `elysiaCyrene()`, so stopping
+Elysia disposes the graph.
 
 ### Dependency injection
 
@@ -73,28 +77,41 @@ shorthand (`{ Database, OrderRepo }`). `guard-plus/ripple-pascal-case` and
 through the manifest (`UserUseCase: User.UserUseCase`). Business classes keep ordinary
 constructor dependencies.
 
-`src/composition/tokens.ts` declares infrastructure and configuration tokens
-(`Database`, `Redis`, `Logger`, `Mailer`, `ImageStorage`, `JwtSecret`, `ApiOrigin`,
-`WebOrigins`, `DataSecret`, `BiliRoom`, `RegisterCodeTtl`, `ImageSavePath`) as ripples
-whose factory throws until a composition root binds them.
-`src/composition/bindings.ts` exposes **one factory per token**, each returning the
-ripple that implements it; a graph binds only the tokens it actually reaches, because
-cyrenex rejects unreachable overrides during graph validation:
+Configuration and infrastructure are plain declarations, each owned by the layer that
+implements it — "whatever you need, import that ripple":
 
 ```ts
-const runtime = new Cyrene()
-  .use(...Object.values(AdminAppRipples))
-  .override(Database, databaseBinding(db))
-  .override(Redis, redisBinding(redis))
-  .override(Logger, loggerBinding(logger))
-  .override(DataSecret, dataSecretBinding(config.dataSecret))
-  .override(BiliRoom, biliRoomBinding(config.biliRoom))
-  .override(RegisterCodeTtl, registerCodeTtlBinding(config.registerCodeTtlSeconds));
+// src/config/index.ts — 配置源头: env 解析结果就是一条 ripple
+export const Config = ripple('Config', () => configEnv);
+export const DataSecret = ripple('DataSecret', { Config }, ({ Config }) => Config.DATA_SECRET);
+
+// src/infrastructure/db/client.ts — 能力由配置逐级派生, 生命周期归容器
+export const Database = ripple('Database', { DatabaseUrl }, ({ DatabaseUrl }) => …);
 ```
 
-Config and environment values are ripples too: every binding factory closes over its
-value (`ripple('DataSecret', () => secret, { ownership: 'borrowed' })`), so the graph
-never carries untyped value bindings.
+Modules import exactly the declaration they need (`DataSecret`, `RegisterCodeTtl`,
+`Database`, …) instead of receiving a whole config object, so no dependency couples to
+configuration it does not use. Registration stays minimal:
+
+```ts
+const runtime = container.decorator.cyrene.use(
+  ...Object.values(AdminAppRipples),
+  Logger,
+  ImageSavePath,
+);
+
+// 校验完整依赖图并初始化所有可达 singleton; 失败时直接抛错, 由 catch 释放资源。
+await runtime.init();
+
+const ripples = runtime.ripples;
+```
+
+`override()` is reserved for test doubles; the integration fixtures replace `Database`,
+`Redis`, `Logger` and the configuration ripples with `stub(...)` replacements.
+
+`init()` runs every reachable singleton factory concurrently and reports failures only
+after all branches settle; `transient` declarations stay lazy. On-demand resolution
+still works after `init()` and returns the already warmed instance.
 
 Optional capabilities are modelled as explicit implementations instead of
 `T | undefined`: `Mailer` always resolves (an unconfigured SMTP degrades to a no-op
@@ -103,21 +120,23 @@ admin-only needs.
 
 ### Environment and configuration
 
-Environment schemas live in `src/config/*`, one pure field fragment per concern. They
-do not read `process.env` or depend on infrastructure types. Each
-`src/apps/<app>/config.ts` is the app's configuration boundary: it composes only the
-fragments that app needs, validates `process.env`, and maps environment names to the
-app's normalized infrastructure options and semantic config. Modules never read env;
-they depend on tokens, and the composition root binds concrete values or
-implementations.
+`src/config/*` holds one env schema fragment per concern (`shared`, `database`,
+`redis`, `bili`, `image`, `smtp`) and, in `src/config/index.ts`, the single
+`createEnv` call that turns them into the `Config` ripple plus the fine-grained
+configuration ripples derived from it (`DataSecret`, `JwtSecret`, `BiliRoom`,
+`RegisterCodeTtl`, `ImageSavePath`, `DatabaseUrl`, `RedisOptions`, `LoggerConfig`,
+`SmtpConfig`). Only the variables all three processes share are declared there.
 
-Externally created DB/Redis clients are owned by the app composition root, which also
-closes them if startup fails. The admin and user apps get their container from
-`elysiaCyrene()`, whose `onStop` hook disposes the graph when Elysia stops; the event
-app and scripts dispose their runtime explicitly / with `await using`. Disposable
-resources declare `Symbol.asyncDispose` on the instance (for example `Mailer` and the
-queue worker), which is also why bindings for externally owned instances are marked
-`ownership: 'borrowed'`.
+Each `src/apps/<app>/config.ts` remains the app's configuration boundary: it validates
+the app-only variables (`ADMIN_*`, `USER_*`, `EVENT_*`, SMTP) and exposes the ones
+other app code needs as ripples too (`ApiOrigin`, `WebOrigins`). Modules never read
+`process.env`; they depend on the configuration ripples they actually use.
+
+The container owns infrastructure lifetimes: `Database`/`Redis` return instances with
+`Symbol.asyncDispose`, so a single `runtime.dispose()` closes them on shutdown and on
+startup failure. The admin and user apps get their container from `elysiaCyrene()`,
+whose `onStop` hook disposes the graph when Elysia stops; the event app and scripts
+dispose their runtime explicitly / with `await using`.
 
 ### HTTP layer
 

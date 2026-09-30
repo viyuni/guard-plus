@@ -6,8 +6,8 @@ import type {
 } from '@shared/schema/admin';
 import { type InferInput, ripple } from 'cyrenex';
 
-import { Logger } from '#composition/tokens';
 import type { AdminRole } from '#infrastructure/db/schema';
+import { Logger } from '#infrastructure/logger';
 import { InvalidCredentialsError, PasswordUtil } from '#shared';
 
 import {
