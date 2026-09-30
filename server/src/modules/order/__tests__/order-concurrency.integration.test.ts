@@ -3,6 +3,7 @@ import { expect, it } from 'bun:test';
 import { and, count, eq } from 'drizzle-orm';
 
 import { orders, pointTransactions, productStockMovements } from '#infrastructure/db/schema';
+import { createLogger } from '#infrastructure/logger';
 import { OrderIdempotencyKey } from '#modules/order';
 import { PointIdempotencyKey } from '#modules/point';
 import { ProductUnavailableError, StockIdempotencyKey } from '#modules/product';
@@ -33,7 +34,18 @@ describeWithDatabase('订单真实数据库并发保护', () => {
     const prefix = newBatch('order_product_reviewing');
     const pointType = await seedPointType(`${prefix}_point`);
     const user = await seedUser(`${prefix}_user`);
-    const { OrderUseCase, ProductUseCase } = await createDeps();
+    const records: Record<string, unknown>[] = [];
+
+    const logger = createLogger(
+      { level: 'info', pretty: false },
+      {
+        write(line) {
+          records.push(JSON.parse(line));
+        },
+      },
+    );
+
+    const { OrderUseCase, ProductUseCase } = await createDeps(logger);
 
     const product = expectSeeded(
       await ProductUseCase.create({
@@ -76,6 +88,9 @@ describeWithDatabase('订单真实数据库并发保护', () => {
     expect(orderRows?.total).toBe(0);
     expect(account?.balance).toBe(1);
     expect(currentProduct?.stock).toBe(1);
+    expect(records.some(record => record.event === 'order.create.started')).toBe(true);
+    expect(records.some(record => record.event === 'order.create.committed')).toBe(false);
+    expect(records.some(record => record.event === 'notification.enqueued')).toBe(false);
   });
 
   it('订单创建不会并发超扣库存或积分', async () => {

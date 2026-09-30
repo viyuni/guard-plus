@@ -22,7 +22,15 @@ export const BiliGuardConsumer = ripple(
       });
 
       if (persisted) {
-        Logger.info({ biliEventId: event.id }, 'Bilibili guard event persisted');
+        Logger.info(
+          { event: 'bili.guard.enqueued', biliEventId: event.id, biliUid: String(event.uid) },
+          '大航海事件已入队',
+        );
+      } else {
+        Logger.info(
+          { event: 'bili.guard.duplicate', biliEventId: event.id },
+          '重复大航海事件已跳过',
+        );
       }
 
       return persisted;

@@ -10,6 +10,7 @@ import type {
   InsertPointConversionRule,
   UpdatePointConversionRule,
 } from '#infrastructure/db/schema';
+import { Logger } from '#infrastructure/logger';
 
 import {
   POINT_CHANGE_SOURCE_TYPE,
@@ -30,6 +31,7 @@ export const PointConversionUseCase = ripple(
   'PointConversionUseCase',
   {
     Database,
+    Logger,
     PointAccountRepo,
     PointBalanceUseCase,
     PointConversionRuleRepo,
@@ -37,6 +39,7 @@ export const PointConversionUseCase = ripple(
   },
   ({
     Database,
+    Logger,
     PointAccountRepo,
     PointBalanceUseCase,
     PointConversionRuleRepo,
@@ -203,7 +206,7 @@ export const PointConversionUseCase = ripple(
 
         const toAmount = calculatePointConversionToAmount(rule, conversionData.fromAmount);
 
-        return Database.transaction(async tx => {
+        const result = await Database.transaction(async tx => {
           // 获取扣除的积分账户并行锁
           const fromAccount = await PointAccountRepo.ensureAccountAndLock(tx, {
             userId: conversionData.userId,
@@ -267,6 +270,21 @@ export const PointConversionUseCase = ripple(
             to: grantResult,
           };
         });
+
+        Logger.info(
+          {
+            event: 'point.conversion.committed',
+            userId: conversionData.userId,
+            ruleId: rule.id,
+            fromAmount: conversionData.fromAmount,
+            toAmount,
+            consumeTransactionId: result.from.transaction.id,
+            grantTransactionId: result.to.transaction.id,
+            duplicated: result.from.duplicated && result.to.duplicated,
+          },
+          '积分转换事务已提交',
+        );
+        return result;
       },
     };
   },

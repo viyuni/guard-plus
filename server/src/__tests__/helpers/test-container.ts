@@ -15,7 +15,7 @@ import {
   RegisterCodeTtl,
 } from '#config';
 import { Database, type DbClient } from '#infrastructure/db';
-import { createLogger, Logger } from '#infrastructure/logger';
+import { createLogger, Logger, type AppLogger } from '#infrastructure/logger';
 import { Redis, type RedisClient } from '#infrastructure/redis';
 import BiliEvent from '#modules/bili-event';
 import Dashboard from '#modules/dashboard';
@@ -54,18 +54,24 @@ export interface TestContainerOptions {
   db: DbClient;
   redis: RedisClient;
   imageSavePath?: string;
+  logger?: AppLogger;
 }
 
 /**
  * 只替换这张测试依赖图真正可达的声明 —— 不可达的替换会被构图直接拒绝。
  * 生产组合根不使用 override, 这里只用于注入测试替身。
  */
-export function createTestContainer({ db, redis, imageSavePath = '' }: TestContainerOptions) {
+export function createTestContainer({
+  db,
+  redis,
+  imageSavePath = '',
+  logger,
+}: TestContainerOptions) {
   return new Cyrene()
     .use(...Object.values(TestRipples))
     .override(Database, stub('Database', db))
     .override(Redis, stub('Redis', redis))
-    .override(Logger, stub('Logger', createLogger({ level: 'silent', pretty: false })))
+    .override(Logger, stub('Logger', logger ?? createLogger({ level: 'silent', pretty: false })))
     .override(DataSecret, stub('DataSecret', 'test-data-secret'))
     .override(BiliRoom, stub('BiliRoom', 721))
     .override(RegisterCodeTtl, stub('RegisterCodeTtl', 300))

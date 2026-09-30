@@ -7,6 +7,7 @@ import { type InferInput, ripple } from 'cyrenex';
 
 import { Database } from '#infrastructure/db';
 import type { DbTransaction } from '#infrastructure/db';
+import { Logger } from '#infrastructure/logger';
 import User from '#modules/user';
 import { BadRequestError } from '#shared';
 
@@ -19,6 +20,7 @@ export const PointAccountUseCase = ripple(
   'PointAccountUseCase',
   {
     Database,
+    Logger,
     LegacyPointMigrationRepo,
     PointAccountRepo,
     PointBalanceUseCase,
@@ -27,6 +29,7 @@ export const PointAccountUseCase = ripple(
   },
   ({
     Database,
+    Logger,
     LegacyPointMigrationRepo,
     PointAccountRepo,
     PointBalanceUseCase,
@@ -123,7 +126,7 @@ export const PointAccountUseCase = ripple(
       },
 
       async adjustBalance(adminId: string, data: AdjustBalanceBody) {
-        return Database.transaction(async tx => {
+        const result = await Database.transaction(async tx => {
           // 确保账户存在并锁行
           const account = await PointAccountRepo.ensureAccountAndLock(tx, data);
 
@@ -142,6 +145,20 @@ export const PointAccountUseCase = ripple(
             },
           });
         });
+
+        Logger.info(
+          {
+            event: 'point.adjustment.committed',
+            adminId,
+            userId: data.userId,
+            pointTypeId: data.pointTypeId,
+            delta: data.delta,
+            transactionId: result.transaction.id,
+            duplicated: result.duplicated,
+          },
+          '人工积分调整事务已提交',
+        );
+        return result;
       },
     };
   },

@@ -7,6 +7,7 @@ import type {
   BiliEventRewardResultSnapshot,
   User,
 } from '#infrastructure/db/schema';
+import { Logger } from '#infrastructure/logger';
 import Point, { POINT_CHANGE_SOURCE_TYPE, PointIdempotencyKey } from '#modules/point';
 import UserModule, { UserNotFoundError } from '#modules/user';
 
@@ -31,6 +32,7 @@ export const RewardProcessor = ripple(
   'RewardProcessor',
   {
     Database,
+    Logger,
     PointAccountRepo: Point.PointAccountRepo,
     PointBalanceUseCase: Point.PointBalanceUseCase,
     PointTransactionRepo: Point.PointTransactionRepo,
@@ -40,6 +42,7 @@ export const RewardProcessor = ripple(
   },
   ({
     Database,
+    Logger,
     PointAccountRepo,
     PointBalanceUseCase,
     PointTransactionRepo,
@@ -152,7 +155,7 @@ export const RewardProcessor = ripple(
         rewardItems: BiliEventRewardItemSnapshot[],
       ) {
         try {
-          return await Database.transaction(async tx => {
+          const result = await Database.transaction(async tx => {
             const user = await UserUseCase.getAvailableByBiliUid(String(event.uid), tx);
             const items = [];
             const rewardResultSnapshots: BiliEventRewardResultSnapshot[] = [];
@@ -173,6 +176,18 @@ export const RewardProcessor = ripple(
               rewardResultSnapshots,
             };
           });
+
+          Logger.info(
+            {
+              event: 'reward.grant.committed',
+              biliEventId: event.id,
+              userId: result.user.id,
+              rewards: result.rewardResultSnapshots,
+            },
+            '大航海奖励事务已提交',
+          );
+
+          return result;
         } catch (error) {
           if (!(error instanceof UserNotFoundError)) {
             throw error;

@@ -4,7 +4,7 @@ import { Elysia } from 'elysia';
 
 import { Auth } from '#apps/user/auth';
 import { ImageSavePath, imageSavePath } from '#config';
-import { createErrorHandler, health, openapi } from '#infrastructure/http';
+import { createErrorHandler, createRequestLogging, health, openapi } from '#infrastructure/http';
 import { Logger } from '#infrastructure/logger';
 import { createImageAssets } from '#infrastructure/storage';
 import BiliEvent from '#modules/bili-event';
@@ -82,10 +82,12 @@ export async function createUserServer() {
         reusePort: true,
       },
     })
+      .use(createRequestLogging(logger, 'user'))
       .use(
         cors({
           origin: ripples.WebOrigins,
           allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+          exposeHeaders: ['X-Request-Id'],
           methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
           credentials: true,
         }),

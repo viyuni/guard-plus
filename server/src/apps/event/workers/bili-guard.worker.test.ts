@@ -84,6 +84,8 @@ describe('BiliGuardWorker', () => {
       }),
     );
 
+    const logger = createLogger();
+
     const worker = new BiliGuardWorker(
       {
         biliEventRepo: {
@@ -92,7 +94,7 @@ describe('BiliGuardWorker', () => {
           renewClaim: mock(() => Promise.resolve(true)),
           saveClaimedRewardPlan,
         } as unknown as BiliEventRepository,
-        logger: createLogger(),
+        logger,
         rewardProcessor: {
           previewBiliGuard,
           processBiliGuard,
@@ -106,6 +108,10 @@ describe('BiliGuardWorker', () => {
     expect(saveClaimedRewardPlan).toHaveBeenCalledTimes(1);
     expect(processBiliGuard).toHaveBeenCalledWith(eventSnapshot, rewardItems);
     expect(markClaimSucceeded).toHaveBeenCalledTimes(1);
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'bili.guard.succeeded', biliEventId: event.biliEventId }),
+      expect.any(String),
+    );
   });
 
   test('reuses the saved reward plan and schedules a retry after failure', async () => {
@@ -131,6 +137,7 @@ describe('BiliGuardWorker', () => {
 
     const previewBiliGuard = mock(() => Promise.resolve([]));
     const startedAt = Date.now();
+    const logger = createLogger();
 
     const worker = new BiliGuardWorker(
       {
@@ -139,7 +146,7 @@ describe('BiliGuardWorker', () => {
           markClaimFailed,
           renewClaim: mock(() => Promise.resolve(true)),
         } as unknown as BiliEventRepository,
-        logger: createLogger(),
+        logger,
         rewardProcessor: {
           previewBiliGuard,
           processBiliGuard: mock(() => Promise.reject(new Error('temporary failure'))),
@@ -151,6 +158,21 @@ describe('BiliGuardWorker', () => {
     expect(await worker.runOnce()).toBe(true);
     expect(previewBiliGuard).not.toHaveBeenCalled();
     expect(markClaimFailed).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'bili.guard.processing.failed',
+        biliEventId: event.biliEventId,
+      }),
+      expect.any(String),
+    );
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'bili.guard.retry.scheduled', retryCount: 3 }),
+      expect.any(String),
+    );
+    expect(logger.info).not.toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'bili.guard.succeeded' }),
+      expect.any(String),
+    );
 
     const retryInput = markClaimFailed.mock.calls[0]?.[2];
     expect(retryInput?.nextRetryAt.getTime()).toBeGreaterThanOrEqual(
@@ -171,5 +193,43 @@ describe('BiliGuardWorker', () => {
     );
 
     expect(await worker.runOnce()).toBe(false);
+  });
+
+  test('distinguishes retry exhaustion from a lost lease without reporting success', async () => {
+    for (const leaseLost of [false, true]) {
+      const event = createEvent({
+        rewardPlanCreatedAt: new Date(),
+        retryCount: options.maxRetries - 1,
+      });
+
+      const logger = createLogger();
+
+      const worker = new BiliGuardWorker(
+        {
+          biliEventRepo: {
+            claimNextBiliGuard: mock(() => Promise.resolve(event)),
+            markClaimFailed: mock(() => Promise.resolve(leaseLost ? null : event)),
+          } as unknown as BiliEventRepository,
+          logger,
+          rewardProcessor: {
+            processBiliGuard: mock(() => Promise.reject(new Error('failed'))),
+          } as unknown as RewardProcessorService,
+        },
+        options,
+      );
+
+      await worker.runOnce();
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: leaseLost ? 'bili.guard.lease.lost' : 'bili.guard.retry.exhausted',
+          biliEventId: event.biliEventId,
+        }),
+        expect.any(String),
+      );
+      expect(logger.info).not.toHaveBeenCalledWith(
+        expect.objectContaining({ event: 'bili.guard.succeeded' }),
+        expect.any(String),
+      );
+    }
   });
 });

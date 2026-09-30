@@ -4,7 +4,7 @@ import { Elysia } from 'elysia';
 
 import { Auth } from '#apps/admin/auth';
 import { ImageSavePath, imageSavePath } from '#config';
-import { createErrorHandler, health, openapi } from '#infrastructure/http';
+import { createErrorHandler, createRequestLogging, health, openapi } from '#infrastructure/http';
 import { Logger } from '#infrastructure/logger';
 import { createImageAssets } from '#infrastructure/storage';
 import BiliEvent from '#modules/bili-event';
@@ -96,10 +96,12 @@ export async function createAdminServer() {
         reusePort: true,
       },
     })
+      .use(createRequestLogging(logger, 'admin'))
       .use(
         cors({
           origin: ripples.WebOrigins,
           allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+          exposeHeaders: ['X-Request-Id'],
           credentials: true,
         }),
       )
